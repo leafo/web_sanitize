@@ -1,3 +1,4 @@
+-- self closing
 
 import p, dump from require "moon"
 import insert, concat from table
@@ -16,7 +17,15 @@ check_tag = (str, pos, tag) ->
   allowed = whitelist[tag]
   return false unless allowed
   insert tag_stack, tag
-  true, "<#{tag}"
+  true, tag
+
+check_close_tag = (str, pos, tag) ->
+  top_tag = tag_stack[#tag_stack]
+  if top_tag == tag
+    tag_stack[#tag_stack] = nil
+    true, tag
+  else
+    false
 
 check_attribute = (str, pos_end, pos_start, name, value) ->
   tag = tag_stack[#tag_stack]
@@ -50,16 +59,23 @@ value = C(word) + Ct(C(P'"') * C((1 - P'"')^0) * P'"')
 
 attribute = C(word) * white * P"=" * white * value
 
-open_tag = P"<" * white * Cmt(word, check_tag) * Cmt(Cp! * white * attribute, check_attribute)^0 * C(P">")
+open_tag = C(P"<" * white) * Cmt(word, check_tag) * Cmt(Cp! * white * attribute, check_attribute)^0 * C">"
+close_tag = C(P"<" * white * P"/" * white) * Cmt(word, check_close_tag) * C(white * P">")
 
-html = Ct (open_tag + escaped_char + text)^0 * -1
+html = Ct (open_tag + close_tag + escaped_char + text)^0 * -1
 
 t = {
   'what is going on <a href = world anus="dayz"> yeah <b> okay'
-  'hello <script><b>yes</b>'
+  'hello <script dad="world"><b>yes</b></b>'
 }
 
+sanitize = (str) ->
+  tag_stack = {}
+  buffer = html\match str
+  for i=#tag_stack,1,-1
+    insert buffer, "</#{tag_stack[i]}>"
+  concat buffer
 
 for test in *t
-  print "", concat html\match test
+  print "", sanitize test
 
