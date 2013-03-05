@@ -43,7 +43,7 @@ escaped_char = S"<>'&\"" / {
 }
 
 white = S" \t\n"^0
-text = C (1 - S "<")^1
+text = C (1 - escaped_char)^1
 word = (R("az", "AZ", "09") + S"._-")^1
 
 value = C(word) + Ct(C(P'"') * C((1 - P'"')^0) * P'"')
@@ -52,7 +52,14 @@ attribute = C(word) * white * P"=" * white * value
 
 open_tag = P"<" * white * Cmt(word, check_tag) * Cmt(Cp! * white * attribute, check_attribute)^0 * C(P">")
 
-html = Ct (open_tag + text)^0 * -1
+html = Ct (open_tag + escaped_char + text)^0 * -1
 
-print concat html\match 'what is going on <a href = world anus="dayz"> yeah <b> okay'
+t = {
+  'what is going on <a href = world anus="dayz"> yeah <b> okay'
+  'hello <script><b>yes</b>'
+}
+
+
+for test in *t
+  print "", concat html\match test
 
