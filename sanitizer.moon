@@ -6,14 +6,16 @@ import insert, concat from table
 lpeg = require "lpeg"
 
 whitelist = {
-  a: { href: true }
+  a: {
+    href: (value) ->
+      value\match "^https?://"
+  }
   b: true
 }
 
 tag_stack = {}
 
 check_tag = (str, pos, tag) ->
-  print "CHECKING TAG:", tag
   allowed = whitelist[tag]
   return false unless allowed
   insert tag_stack, tag
@@ -31,12 +33,14 @@ check_attribute = (str, pos_end, pos_start, name, value) ->
   tag = tag_stack[#tag_stack]
   allowed_attributes = whitelist[tag]
 
-  print "CHECK ATTRIBUTE", pos_start, pos_end, name, value
   if type(allowed_attributes) != "table"
     return true
 
   attr = allowed_attributes[name]
-  return true unless attr
+  if type(attr) == "function"
+    return true unless attr value
+  else
+    return true unless attr
 
   true, str\sub pos_start, pos_end - 1
 
@@ -47,7 +51,8 @@ escaped_char = S"<>'&\"" / {
   ">": "&gt;"
   "<": "&lt;"
   "&": "&amp;"
-  "'": "&#039;"
+  "'": "&#x27;"
+  "/": "&#x2F;"
   '"': "&quot;"
 }
 
@@ -55,7 +60,7 @@ white = S" \t\n"^0
 text = C (1 - escaped_char)^1
 word = (R("az", "AZ", "09") + S"._-")^1
 
-value = C(word) + Ct(C(P'"') * C((1 - P'"')^0) * P'"')
+value = C(word) + P'"' * C((1 - P'"')^0) * P'"'
 
 attribute = C(word) * white * P"=" * white * value
 
@@ -65,8 +70,14 @@ close_tag = C(P"<" * white * P"/" * white) * Cmt(word, check_close_tag) * C(whit
 html = Ct (open_tag + close_tag + escaped_char + text)^0 * -1
 
 t = {
-  'what is going on <a href = world anus="dayz"> yeah <b> okay'
-  'hello <script dad="world"><b>yes</b></b>'
+  '<a href="hello"></a>'
+  '<a href="http://leafo.net"></a>'
+  '<a href="https://leafo.net"></a>'
+  -- 'what is going on <a href = world anus="dayz"> yeah <b> okay'
+  -- 'hello <script dad="world"><b>yes</b></b>'
+  -- '<something/>'
+  -- [[<IMG """><SCRIPT>alert("XSS")</SCRIPT>">]]
+  -- [[<IMG SRC=javascript:alert(String.fromCharCode(88,83,83))>]]
 }
 
 sanitize = (str) ->
