@@ -93,14 +93,22 @@ check_tag = (str, pos, tag) ->
   insert tag_stack, lower_tag
   true, tag
 
-check_close_tag = (str, pos, tag) ->
+check_close_tag = (str, pos, tag, ...) ->
   lower_tag = tag\lower!
   top_tag = tag_stack[#tag_stack]
   if top_tag == lower_tag
     tag_stack[#tag_stack] = nil
-    true, tag
+    true, tag, ...
   else
     false
+
+pop_tag = (str, pos, ...)->
+  tag_stack[#tag_stack] = nil
+  true, ...
+
+fail_tag = ->
+  tag_stack[#tag_stack] = nil
+  false
 
 check_attribute = (str, pos_end, pos_start, name, value) ->
   tag = tag_stack[#tag_stack]
@@ -154,13 +162,13 @@ value = C(word) + P'"' * C((1 - P'"')^0) * P'"'
 
 attribute = C(word) * white * P"=" * white * value
 
-open_tag = C(P"<" * white) * Cmt(word, check_tag) * Cmt(Cp! * white * attribute, check_attribute)^0 * Cmt("", inject_attributes) * C">"
-close_tag = C(P"<" * white * P"/" * white) * Cmt(word, check_close_tag) * C(white * P">")
+open_tag = C(P"<" * white) * Cmt(word, check_tag) * (Cmt(Cp! * white * attribute, check_attribute)^0 * white * Cmt("", inject_attributes) * Cmt("/" * white, pop_tag)^-1 * C">" + Cmt("", fail_tag))
+close_tag = C(P"<" * white * P"/" * white) * Cmt(word * C(white * P">"), check_close_tag)
 
 html = Ct (open_tag + close_tag + escaped_char + text)^0 * -1
 
 t = {
-  '<a href="hello"></a>'
+  "<a color=red>hi</a wazzaup"
   '<a href="http://leafo.net"></a>'
   '<a href="https://leafo.net"></a>'
   'what is going on <a href = world anus="dayz"> yeah <b> okay'
