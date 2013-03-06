@@ -1,4 +1,4 @@
-# magick
+# web\_sanitize
 
 A Lua library for doing HTML sanitization.
 
