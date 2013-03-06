@@ -82,7 +82,7 @@ value = C(word) + P'"' * C((1 - P'"')^0) * P'"'
 attribute = C(word) * white * P"=" * white * value
 
 open_tag = C(P"<" * white) * Cmt(word, check_tag) * (Cmt(Cp! * white * attribute, check_attribute)^0 * white * Cmt("", inject_attributes) * Cmt("/" * white, pop_tag)^-1 * C">" + Cmt("", fail_tag))
-close_tag = C(P"<" * white * P"/" * white) * Cmt(word * C(white * P">"), check_close_tag)
+close_tag = C(P"<" * white * P"/" * white) * Cmt(C(word) * C(white * P">"), check_close_tag)
 
 html = Ct (open_tag + close_tag + escaped_char + text)^0 * -1
 
