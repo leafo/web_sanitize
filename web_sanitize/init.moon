@@ -1,88 +1,7 @@
--- self closing
-
-import p, dump from require "moon"
 import insert, concat from table
+import whitelist, add_attributes from require "web_sanitize.whitelist"
 
 lpeg = require "lpeg"
-
-url_value = (value) -> value\match("^https?://") and true
-mailto_value = (value) -> value\match("^mailto://") and true
-
--- Adapted from https://github.com/rgrove/sanitize/blob/master/lib/sanitize/config/basic.rb
-whitelist = {
-  { -- any tag
-    title: true, dir: true, lang: true
-  }
-
-  a: {
-    href: (v) -> url_value(v) or mailto_value(v)
-    name: true
-  }
-
-  abbr: { title: true }
-  b: true
-  blockquote: { cite: true }
-  br: true
-  cite: true
-  code: true
-  dd: true
-  dfn: { title: true }
-  dl: true
-  dt: true
-  em: true
-  h1: true
-  h2: true
-  h3: true
-  h4: true
-  h5: true
-  h6: true
-  i: true
-  img: {
-    align: true
-    alt: true
-    height: true
-    src: url_value
-    width: true
-  }
-  kbd: true
-  li: true
-  mark: true
-  ol: true
-  p: true
-  pre: true
-  q: { cite: true }
-  s: true
-  samp: true
-  small: true
-  strike: true
-  strong: true
-  sub: true
-  sup: true
-  table: { summary: true, width: true}
-  tr: true
-  td: { colspan: true, rowspan: true, width: true }
-  th: { colspan: true, rowspan: true, width: true }
-  time: { datetime: true, pubdate: true }
-  u: true
-  ul: true
-  var: true
-}
-
--- set default as metatable for
-if default = whitelist[1]
-  mt = { __index: default }
-  for k,v in pairs(whitelist)
-    continue unless type(k) == "string"
-    if type(v) == "table"
-      setmetatable v, mt
-    else
-      whitelist[k] = default
-
-add_attributes = {
-  a: {
-    rel: "nofollow"
-  }
-}
 
 tag_stack = {}
 
@@ -167,25 +86,12 @@ close_tag = C(P"<" * white * P"/" * white) * Cmt(word * C(white * P">"), check_c
 
 html = Ct (open_tag + close_tag + escaped_char + text)^0 * -1
 
-t = {
-  "<a color=red>hi</a wazzaup"
-  '<a href="http://leafo.net"></a>'
-  '<a href="https://leafo.net"></a>'
-  'what is going on <a href = world anus="dayz"> yeah <b> okay'
-  'hello <script dad="world"><b>yes</b></b>'
-  '<something/>'
-  "<IMG color='red'></IMG>"
-  [[<IMG """><SCRIPT>alert("XSS")</SCRIPT>">]]
-  [[<IMG SRC=javascript:alert(String.fromCharCode(88,83,83))>]]
-}
-
-sanitize = (str) ->
+sanitize_html = (str) ->
   tag_stack = {}
   buffer = html\match str
   for i=#tag_stack,1,-1
     insert buffer, "</#{tag_stack[i]}>"
   concat buffer
 
-for test in *t
-  print "", sanitize test
+{ :sanitize_html }
 
