@@ -117,6 +117,23 @@ check_attribute = (str, pos_end, pos_start, name, value) ->
 
   true, str\sub pos_start, pos_end - 1
 
+inject_attributes = ->
+  top_tag = tag_stack[#tag_stack]
+  inject = add_attributes[top_tag]
+  if inject
+    buff = {}
+    i = 1
+    for k,v in pairs inject
+      buff[i] = " "
+      buff[i + 1] = k
+      buff[i + 2] = '="'
+      buff[i + 3] = v
+      buff[i + 4] = '"'
+      i += 5
+    true, unpack buff
+  else
+    true
+
 import R, S, V, P from lpeg
 import C, Cs, Ct, Cmt, Cg, Cb, Cc, Cp from lpeg
 
@@ -137,7 +154,7 @@ value = C(word) + P'"' * C((1 - P'"')^0) * P'"'
 
 attribute = C(word) * white * P"=" * white * value
 
-open_tag = C(P"<" * white) * Cmt(word, check_tag) * Cmt(Cp! * white * attribute, check_attribute)^0 * C">"
+open_tag = C(P"<" * white) * Cmt(word, check_tag) * Cmt(Cp! * white * attribute, check_attribute)^0 * Cmt("", inject_attributes) * C">"
 close_tag = C(P"<" * white * P"/" * white) * Cmt(word, check_close_tag) * C(white * P">")
 
 html = Ct (open_tag + close_tag + escaped_char + text)^0 * -1
