@@ -57,7 +57,7 @@ check_attribute = (str, pos_end, pos_start, name, value) ->
   if type(allowed_attributes) != "table"
     return true
 
-  attr = allowed_attributes[name]
+  attr = allowed_attributes[name\lower!]
   if type(attr) == "function"
     return true unless attr value
   else
@@ -98,7 +98,7 @@ white = S" \t\n"^0
 text = C (1 - escaped_char)^1
 word = (R("az", "AZ", "09") + S"._-")^1
 
-value = C(word) + P'"' * C((1 - P'"')^0) * P'"'
+value = C(word) + P'"' * C((1 - P'"')^0) * P'"' + P"'" * C((1 - P"'")^0) * P"'"
 
 attribute = C(word) * white * P"=" * white * value
 
