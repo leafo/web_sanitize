@@ -110,8 +110,13 @@ html = Ct (open_tag + close_tag + escaped_char + text)^0 * -1
 sanitize_html = (str) ->
   tag_stack = {}
   buffer = html\match str
+  k = #buffer + 1
   for i=#tag_stack,1,-1
-    insert buffer, "</#{tag_stack[i]}>"
+    buffer[k] = "</"
+    buffer[k + 1] = tag_stack[i]
+    buffer[k + 2] = ">"
+    k += 3
+
   concat buffer
 
 { :sanitize_html }

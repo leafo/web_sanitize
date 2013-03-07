@@ -116,8 +116,12 @@ local sanitize_html
 sanitize_html = function(str)
   tag_stack = { }
   local buffer = html:match(str)
+  local k = #buffer + 1
   for i = #tag_stack, 1, -1 do
-    insert(buffer, "</" .. tostring(tag_stack[i]) .. ">")
+    buffer[k] = "</"
+    buffer[k + 1] = tag_stack[i]
+    buffer[k + 2] = ">"
+    k = k + 3
   end
   return concat(buffer)
 end
