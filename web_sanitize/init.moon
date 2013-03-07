@@ -12,14 +12,35 @@ check_tag = (str, pos, tag) ->
   insert tag_stack, lower_tag
   true, tag
 
-check_close_tag = (str, pos, tag, ...) ->
+check_close_tag = (str, pos, punct, tag, rest) ->
   lower_tag = tag\lower!
-  top_tag = tag_stack[#tag_stack]
-  if top_tag == lower_tag
-    tag_stack[#tag_stack] = nil
-    true, tag, ...
-  else
-    false
+  top = #tag_stack
+  pos = top -- holds position in stack where what we are closing is
+
+  while pos >= 1
+    break if tag_stack[pos] == lower_tag
+    pos -= 1
+
+  if pos == 0
+    return false
+
+  buffer = {}
+
+  k = 1
+  for i=top, pos + 1, -1
+    buffer[k] = "</"
+    buffer[k + 1] = tag_stack[i]
+    buffer[k + 2] = ">"
+    k += 3
+    tag_stack[i] = nil
+
+  tag_stack[pos] = nil
+
+  buffer[k] = punct
+  buffer[k + 1] = tag
+  buffer[k + 2] = rest
+
+  true, unpack buffer
 
 pop_tag = (str, pos, ...)->
   tag_stack[#tag_stack] = nil
@@ -82,7 +103,7 @@ value = C(word) + P'"' * C((1 - P'"')^0) * P'"'
 attribute = C(word) * white * P"=" * white * value
 
 open_tag = C(P"<" * white) * Cmt(word, check_tag) * (Cmt(Cp! * white * attribute, check_attribute)^0 * white * Cmt("", inject_attributes) * Cmt("/" * white, pop_tag)^-1 * C">" + Cmt("", fail_tag))
-close_tag = C(P"<" * white * P"/" * white) * Cmt(C(word) * C(white * P">"), check_close_tag)
+close_tag = Cmt(C(P"<" * white * P"/" * white) * C(word) * C(white * P">"), check_close_tag)
 
 html = Ct (open_tag + close_tag + escaped_char + text)^0 * -1
 
