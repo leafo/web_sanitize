@@ -67,7 +67,7 @@ The returned table has three important items:
 
 It should be pretty fast. It's powered by the wonderful library [LPEG][3]. There is
 only one string concatenation on each call to `sanitize_html`. 200kb of HTML
-can be sanitized in 0.04 seconds on my computer.
+can be sanitized in 0.01 seconds on my computer.
 
 ## Tests
 
