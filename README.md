@@ -13,7 +13,7 @@ print(web_sanitize.sanitize_html([[<h1 onload="alert('XSS')"> This HTML Stinks <
 ## Install
 
 ```bash
-$ luarocks install https://github.com/leafo/web_sanitize/blob/master/web_sanitize-dev-1.rockspec
+$ luarocks install http://rocks.moonscript.org/web_sanitize-dev-1.rockspec
 ```
 
 ## How
