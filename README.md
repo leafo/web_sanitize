@@ -51,9 +51,9 @@ to submit a pull request if there is something missing)
 
 Get access to the whitelist like so:
 
-    ```lua
-    local whitelist = require "web_sanitize.whitelist"
-    ```
+```lua
+local whitelist = require "web_sanitize.whitelist"
+```
 
 See [`whitelist.moon`][2] for an example of the default whitelist.
 
