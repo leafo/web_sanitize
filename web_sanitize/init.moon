@@ -1,5 +1,5 @@
 import insert, concat from table
-import whitelist, add_attributes from require "web_sanitize.whitelist"
+import whitelist, add_attributes, self_closing from require "web_sanitize.whitelist"
 
 lpeg = require "lpeg"
 
@@ -28,11 +28,13 @@ check_close_tag = (str, pos, punct, tag, rest) ->
 
   k = 1
   for i=top, pos + 1, -1
+    next_tag = tag_stack[i]
+    tag_stack[i] = nil
+    continue if self_closing[next_tag]
     buffer[k] = "</"
-    buffer[k + 1] = tag_stack[i]
+    buffer[k + 1] = next_tag
     buffer[k + 2] = ">"
     k += 3
-    tag_stack[i] = nil
 
   tag_stack[pos] = nil
 
@@ -112,8 +114,10 @@ sanitize_html = (str) ->
   buffer = html\match str
   k = #buffer + 1
   for i=#tag_stack,1,-1
+    tag = tag_stack[i]
+    continue if self_closing[tag]
     buffer[k] = "</"
-    buffer[k + 1] = tag_stack[i]
+    buffer[k + 1] = tag
     buffer[k + 2] = ">"
     k += 3
 

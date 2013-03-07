@@ -78,5 +78,10 @@ add_attributes = {
   }
 }
 
-{ :whitelist, :add_attributes }
+-- tags that don't need to be automatically closed
+self_closing = {
+  br: true, img: true
+}
+
+{ :whitelist, :add_attributes, :self_closing }
 

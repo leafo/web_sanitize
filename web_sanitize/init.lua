@@ -1,8 +1,8 @@
 local insert, concat = table.insert, table.concat
-local whitelist, add_attributes
+local whitelist, add_attributes, self_closing
 do
   local _table_0 = require("web_sanitize.whitelist")
-  whitelist, add_attributes = _table_0.whitelist, _table_0.add_attributes
+  whitelist, add_attributes, self_closing = _table_0.whitelist, _table_0.add_attributes, _table_0.self_closing
 end
 local lpeg = require("lpeg")
 local tag_stack = { }
@@ -33,11 +33,23 @@ check_close_tag = function(str, pos, punct, tag, rest)
   local buffer = { }
   local k = 1
   for i = top, pos + 1, -1 do
-    buffer[k] = "</"
-    buffer[k + 1] = tag_stack[i]
-    buffer[k + 2] = ">"
-    k = k + 3
-    tag_stack[i] = nil
+    local _continue_0 = false
+    repeat
+      local next_tag = tag_stack[i]
+      tag_stack[i] = nil
+      if self_closing[next_tag] then
+        _continue_0 = true
+        break
+      end
+      buffer[k] = "</"
+      buffer[k + 1] = next_tag
+      buffer[k + 2] = ">"
+      k = k + 3
+      _continue_0 = true
+    until true
+    if not _continue_0 then
+      break
+    end
   end
   tag_stack[pos] = nil
   buffer[k] = punct
@@ -118,10 +130,22 @@ sanitize_html = function(str)
   local buffer = html:match(str)
   local k = #buffer + 1
   for i = #tag_stack, 1, -1 do
-    buffer[k] = "</"
-    buffer[k + 1] = tag_stack[i]
-    buffer[k + 2] = ">"
-    k = k + 3
+    local _continue_0 = false
+    repeat
+      local tag = tag_stack[i]
+      if self_closing[tag] then
+        _continue_0 = true
+        break
+      end
+      buffer[k] = "</"
+      buffer[k + 1] = tag
+      buffer[k + 2] = ">"
+      k = k + 3
+      _continue_0 = true
+    until true
+    if not _continue_0 then
+      break
+    end
   end
   return concat(buffer)
 end

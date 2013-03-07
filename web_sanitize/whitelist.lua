@@ -119,7 +119,12 @@ local add_attributes = {
     rel = "nofollow"
   }
 }
+local self_closing = {
+  br = true,
+  img = true
+}
 return {
   whitelist = whitelist,
-  add_attributes = add_attributes
+  add_attributes = add_attributes,
+  self_closing = self_closing
 }

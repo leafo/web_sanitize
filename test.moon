@@ -73,13 +73,25 @@ tests = {
   }
 
   {
+    "<br>"
+    '<br>'
+  }
+
+  {
+    "<pre><br><img></pre>"
+    '<pre><br><img></pre>'
+  }
+
+  -- xss
+
+  {
     '<SCRIPT SRC=http://ha.ckers.org/xss.js></SCRIPT>'
     '&lt;SCRIPT SRC=http://ha.ckers.org/xss.js&gt;&lt;/SCRIPT&gt;'
   }
 
   {
     [[<IMG SRC="javascript:alert('XSS');">]]
-    '<IMG></img>'
+    '<IMG>'
   }
 
   {
@@ -120,7 +132,7 @@ tests = {
 
   {
     [[<IMG onmouseover="alert('xxs')">]]
-    '<IMG></img>'
+    '<IMG>'
   }
 
   {
@@ -144,12 +156,12 @@ tests = {
 
   {
     [[<IMG SRC="jav	ascript:alert('XSS');">]]
-    '<IMG></img>'
+    '<IMG>'
   }
 
   {
     [[<IMG SRC="jav&#x09;ascript:alert('XSS');">]]
-    '<IMG></img>'
+    '<IMG>'
   }
 
   {
@@ -184,7 +196,7 @@ tests = {
 
   {
     [[<IMG DYNSRC="javascript:alert('XSS')">]]
-    '<IMG></img>'
+    '<IMG>'
   }
 
   {
@@ -194,12 +206,12 @@ tests = {
 
   {
     [[<IMG SRC='vbscript:msgbox("XSS")'>]]
-    '<IMG></img>'
+    '<IMG>'
   }
 
   {
     [[<BR SIZE="&{alert('XSS')}">]]
-    '<BR></br>'
+    '<BR>'
   }
 
   {
@@ -241,6 +253,8 @@ tests = {
     [[<iframe src=http://ha.ckers.org/scriptlet.html <]]
     '&lt;iframe src=http://ha.ckers.org/scriptlet.html &lt;'
   }
+
+  -- malformed
 
   {
     "<b color=red>hi</b wazzaup"
