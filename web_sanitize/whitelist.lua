@@ -4,7 +4,7 @@ url_value = function(value)
 end
 local mailto_value
 mailto_value = function(value)
-  return value:match("^mailto://") and true
+  return value:match("^mailto:") and true
 end
 local whitelist = {
   {

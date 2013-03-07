@@ -1,6 +1,6 @@
 
 url_value = (value) -> value\match("^https?://") and true
-mailto_value = (value) -> value\match("^mailto://") and true
+mailto_value = (value) -> value\match("^mailto:") and true
 
 -- Adapted from https://github.com/rgrove/sanitize/blob/master/lib/sanitize/config/basic.rb
 whitelist = {
