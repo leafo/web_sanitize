@@ -32,6 +32,7 @@ local whitelist = {
   dfn = {
     title = true
   },
+  div = true,
   dl = true,
   dt = true,
   em = true,
