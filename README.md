@@ -85,9 +85,9 @@ make test
 
 # Contact
 
-Author: Leaf Corcoran (leafo) ([@moonscript](http://twitter.com/moonscript))
-Email: leafot@gmail.com
-Homepage: <http://leafo.net>
+Author: Leaf Corcoran (leafo) ([@moonscript](http://twitter.com/moonscript))  
+Email: leafot@gmail.com  
+Homepage: <http://leafo.net>  
 
  [1]: https://github.com/leafo/web_sanitize/blob/master/test.moon
  [2]: https://github.com/leafo/web_sanitize/blob/master/web_sanitize/whitelist.moon
