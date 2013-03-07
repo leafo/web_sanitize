@@ -59,9 +59,9 @@ See [`whitelist.moon`][2] for an example of the default whitelist.
 
 The returned table has three important items:
 
-* `whitelist` &emdash; a table of valid tag names and their corresponding valid attributes
-* `add_attributes` &emdash; a table of attributes that should be inserted into a tag
-* `self_closing` &emdash; a set of tags that should not be automatically closed
+* `whitelist`: a table of valid tag names and their corresponding valid attributes
+* `add_attributes`: a table of attributes that should be inserted into a tag
+* `self_closing`: a set of tags that should not be automatically closed
 
 ## Fast?
 
