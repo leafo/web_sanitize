@@ -116,14 +116,18 @@ local escaped_char = S("<>'&\"") / {
   ["/"] = "&#x2F;",
   ['"'] = "&quot;"
 }
+local alphanum = R("az", "AZ", "09")
+local num = R("09")
+local hex = R("09", "af", "AF")
+local valid_char = C(P("&") * (alphanum ^ 1 + P("#") * (num ^ 1 + S("xX") * hex ^ 1)) + P(";"))
 local white = S(" \t\n") ^ 0
 local text = C((1 - escaped_char) ^ 1)
-local word = (R("az", "AZ", "09") + S("._-")) ^ 1
+local word = (alphanum + S("._-")) ^ 1
 local value = C(word) + P('"') * C((1 - P('"')) ^ 0) * P('"') + P("'") * C((1 - P("'")) ^ 0) * P("'")
 local attribute = C(word) * white * P("=") * white * value
 local open_tag = C(P("<") * white) * Cmt(word, check_tag) * (Cmt(Cp() * white * attribute, check_attribute) ^ 0 * white * Cmt("", inject_attributes) * Cmt("/" * white, pop_tag) ^ -1 * C(">") + Cmt("", fail_tag))
 local close_tag = Cmt(C(P("<") * white * P("/") * white) * C(word) * C(white * P(">")), check_close_tag)
-local html = Ct((open_tag + close_tag + escaped_char + text) ^ 0 * -1)
+local html = Ct((open_tag + close_tag + valid_char + escaped_char + text) ^ 0 * -1)
 local sanitize_html
 sanitize_html = function(str)
   tag_stack = { }
@@ -148,6 +152,9 @@ sanitize_html = function(str)
     end
   end
   return concat(buffer)
+end
+if ... == "test" then
+  print(sanitize_html("&#x27; &#x2F; &#x2f; &#Xabd93; &#65;"))
 end
 return {
   sanitize_html = sanitize_html

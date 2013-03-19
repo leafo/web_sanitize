@@ -97,9 +97,15 @@ escaped_char = S"<>'&\"" / {
   '"': "&quot;"
 }
 
+alphanum = R "az", "AZ", "09"
+num = R "09"
+hex = R "09", "af", "AF"
+
+valid_char = C P"&" * (alphanum^1 + P"#" * (num^1 + S"xX" * hex^1)) + P";"
+
 white = S" \t\n"^0
 text = C (1 - escaped_char)^1
-word = (R("az", "AZ", "09") + S"._-")^1
+word = (alphanum + S"._-")^1
 
 value = C(word) + P'"' * C((1 - P'"')^0) * P'"' + P"'" * C((1 - P"'")^0) * P"'"
 
@@ -108,7 +114,7 @@ attribute = C(word) * white * P"=" * white * value
 open_tag = C(P"<" * white) * Cmt(word, check_tag) * (Cmt(Cp! * white * attribute, check_attribute)^0 * white * Cmt("", inject_attributes) * Cmt("/" * white, pop_tag)^-1 * C">" + Cmt("", fail_tag))
 close_tag = Cmt(C(P"<" * white * P"/" * white) * C(word) * C(white * P">"), check_close_tag)
 
-html = Ct (open_tag + close_tag + escaped_char + text)^0 * -1
+html = Ct (open_tag + close_tag + valid_char + escaped_char + text)^0 * -1
 
 sanitize_html = (str) ->
   tag_stack = {}
@@ -123,6 +129,9 @@ sanitize_html = (str) ->
     k += 3
 
   concat buffer
+
+if ... == "test"
+  print sanitize_html "&#x27; &#x2F; &#x2f; &#Xabd93; &#65;"
 
 { :sanitize_html }
 
