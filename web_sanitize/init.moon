@@ -130,8 +130,5 @@ sanitize_html = (str) ->
 
   concat buffer
 
-if ... == "test"
-  print sanitize_html "&#x27; &#x2F; &#x2f; &#Xabd93; &#65;"
-
 { :sanitize_html }
 
