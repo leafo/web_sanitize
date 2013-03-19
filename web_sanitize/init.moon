@@ -1,5 +1,6 @@
 import insert, concat from table
-import whitelist, add_attributes, self_closing from require "web_sanitize.whitelist"
+
+{ tags: allowed_tags, :add_attributes, :self_closing } = require "web_sanitize.whitelist"
 
 lpeg = require "lpeg"
 
@@ -7,7 +8,7 @@ tag_stack = {}
 
 check_tag = (str, pos, tag) ->
   lower_tag = tag\lower!
-  allowed = whitelist[lower_tag]
+  allowed = allowed_tags[lower_tag]
   return false unless allowed
   insert tag_stack, lower_tag
   true, tag
@@ -54,7 +55,7 @@ fail_tag = ->
 
 check_attribute = (str, pos_end, pos_start, name, value) ->
   tag = tag_stack[#tag_stack]
-  allowed_attributes = whitelist[tag]
+  allowed_attributes = allowed_tags[tag]
 
   if type(allowed_attributes) != "table"
     return true

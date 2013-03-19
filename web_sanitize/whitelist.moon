@@ -3,7 +3,7 @@ url_value = (value) -> value\match("^https?://") and true
 mailto_value = (value) -> value\match("^mailto:") and true
 
 -- Adapted from https://github.com/rgrove/sanitize/blob/master/lib/sanitize/config/basic.rb
-whitelist = {
+tags = {
   { -- any tag
     title: true, dir: true, lang: true
   }
@@ -64,14 +64,14 @@ whitelist = {
 }
 
 -- set default as metatable for
-if default = whitelist[1]
+if default = tags[1]
   mt = { __index: default }
-  for k,v in pairs(whitelist)
+  for k,v in pairs(tags)
     continue unless type(k) == "string"
     if type(v) == "table"
       setmetatable v, mt
     else
-      whitelist[k] = default
+      tags[k] = default
 
 add_attributes = {
   a: {
@@ -84,5 +84,5 @@ self_closing = {
   br: true, img: true
 }
 
-{ :whitelist, :add_attributes, :self_closing }
+{ :tags, :add_attributes, :self_closing }
 

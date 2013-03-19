@@ -1,15 +1,15 @@
 local insert, concat = table.insert, table.concat
-local whitelist, add_attributes, self_closing
+local allowed_tags, add_attributes, self_closing
 do
-  local _table_0 = require("web_sanitize.whitelist")
-  whitelist, add_attributes, self_closing = _table_0.whitelist, _table_0.add_attributes, _table_0.self_closing
+  local _obj_0 = require("web_sanitize.whitelist")
+  allowed_tags, add_attributes, self_closing = _obj_0.tags, _obj_0.add_attributes, _obj_0.self_closing
 end
 local lpeg = require("lpeg")
 local tag_stack = { }
 local check_tag
 check_tag = function(str, pos, tag)
   local lower_tag = tag:lower()
-  local allowed = whitelist[lower_tag]
+  local allowed = allowed_tags[lower_tag]
   if not (allowed) then
     return false
   end
@@ -70,7 +70,7 @@ end
 local check_attribute
 check_attribute = function(str, pos_end, pos_start, name, value)
   local tag = tag_stack[#tag_stack]
-  local allowed_attributes = whitelist[tag]
+  local allowed_attributes = allowed_tags[tag]
   if type(allowed_attributes) ~= "table" then
     return true
   end

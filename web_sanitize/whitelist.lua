@@ -6,7 +6,7 @@ local mailto_value
 mailto_value = function(value)
   return value:match("^mailto:") and true
 end
-local whitelist = {
+local tags = {
   {
     title = true,
     dir = true,
@@ -90,12 +90,12 @@ local whitelist = {
   var = true
 }
 do
-  local default = whitelist[1]
+  local default = tags[1]
   if default then
     local mt = {
       __index = default
     }
-    for k, v in pairs(whitelist) do
+    for k, v in pairs(tags) do
       local _continue_0 = false
       repeat
         if not (type(k) == "string") then
@@ -105,7 +105,7 @@ do
         if type(v) == "table" then
           setmetatable(v, mt)
         else
-          whitelist[k] = default
+          tags[k] = default
         end
         _continue_0 = true
       until true
@@ -125,7 +125,7 @@ local self_closing = {
   img = true
 }
 return {
-  whitelist = whitelist,
+  tags = tags,
   add_attributes = add_attributes,
   self_closing = self_closing
 }

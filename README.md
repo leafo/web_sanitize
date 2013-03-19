@@ -52,14 +52,14 @@ to submit a pull request if there is something missing)
 Get access to the whitelist like so:
 
 ```lua
-local whitelist = require "web_sanitize.whitelist"
+local tags = require "web_sanitize.whitelist"
 ```
 
 See [`whitelist.moon`][2] for an example of the default whitelist.
 
 The returned table has three important items:
 
-* `whitelist`: a table of valid tag names and their corresponding valid attributes
+* `tags`: a table of valid tag names and their corresponding valid attributes
 * `add_attributes`: a table of attributes that should be inserted into a tag
 * `self_closing`: a set of tags that should not be automatically closed
 
