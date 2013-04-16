@@ -31,6 +31,7 @@ tags = {
   h4: true
   h5: true
   h6: true
+  hr: true
   i: true
   img: {
     align: true
@@ -49,6 +50,7 @@ tags = {
   s: true
   samp: true
   small: true
+  span: true
   strike: true
   strong: true
   sub: true
@@ -81,7 +83,7 @@ add_attributes = {
 
 -- tags that don't need to be automatically closed
 self_closing = {
-  br: true, img: true
+  br: true, img: true, hr: true
 }
 
 { :tags, :add_attributes, :self_closing }
