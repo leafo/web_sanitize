@@ -42,6 +42,7 @@ local tags = {
   h4 = true,
   h5 = true,
   h6 = true,
+  hr = true,
   i = true,
   img = {
     align = true,
@@ -62,6 +63,7 @@ local tags = {
   s = true,
   samp = true,
   small = true,
+  span = true,
   strike = true,
   strong = true,
   sub = true,
@@ -122,7 +124,8 @@ local add_attributes = {
 }
 local self_closing = {
   br = true,
-  img = true
+  img = true,
+  hr = true
 }
 return {
   tags = tags,

@@ -153,9 +153,6 @@ sanitize_html = function(str)
   end
   return concat(buffer)
 end
-if ... == "test" then
-  print(sanitize_html("&#x27; &#x2F; &#x2f; &#Xabd93; &#65;"))
-end
 return {
   sanitize_html = sanitize_html
 }
