@@ -9,6 +9,7 @@ description = {
   summary = "Lua library for sanitizing untrusted HTML",
   license = "MIT",
   maintainer = "Leaf Corcoran <leafot@gmail.com>",
+  homepage = "https://github.com/leafo/web_sanitize",
 }
 
 dependencies = {
