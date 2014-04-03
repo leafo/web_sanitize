@@ -1,4 +1,8 @@
-local insert, concat = table.insert, table.concat
+local insert, concat
+do
+  local _obj_0 = table
+  insert, concat = _obj_0.insert, _obj_0.concat
+end
 local allowed_tags, add_attributes, self_closing
 do
   local _obj_0 = require("web_sanitize.whitelist")
@@ -106,8 +110,10 @@ inject_attributes = function()
     return true
   end
 end
-local R, S, V, P = lpeg.R, lpeg.S, lpeg.V, lpeg.P
-local C, Cs, Ct, Cmt, Cg, Cb, Cc, Cp = lpeg.C, lpeg.Cs, lpeg.Ct, lpeg.Cmt, lpeg.Cg, lpeg.Cb, lpeg.Cc, lpeg.Cp
+local R, S, V, P
+R, S, V, P = lpeg.R, lpeg.S, lpeg.V, lpeg.P
+local C, Cs, Ct, Cmt, Cg, Cb, Cc, Cp
+C, Cs, Ct, Cmt, Cg, Cb, Cc, Cp = lpeg.C, lpeg.Cs, lpeg.Ct, lpeg.Cmt, lpeg.Cg, lpeg.Cb, lpeg.Cc, lpeg.Cp
 local escaped_char = S("<>'&\"") / {
   [">"] = "&gt;",
   ["<"] = "&lt;",
