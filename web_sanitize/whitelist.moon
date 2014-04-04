@@ -1,6 +1,6 @@
 
-url_value = (value) -> value\match("^https?://") and true
-mailto_value = (value) -> value\match("^mailto:") and true
+url_value = (value) -> value and value\match("^https?://") and true
+mailto_value = (value) -> value and value\match("^mailto:") and true
 
 -- Adapted from https://github.com/rgrove/sanitize/blob/master/lib/sanitize/config/basic.rb
 tags = {
@@ -9,7 +9,7 @@ tags = {
   }
 
   a: {
-    href: (v) -> url_value(v) or mailto_value(v)
+    href: (...) -> url_value(...) or mailto_value(...)
     name: true
   }
 

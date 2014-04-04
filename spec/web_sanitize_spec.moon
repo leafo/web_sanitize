@@ -287,3 +287,22 @@ describe "web_sanitize", ->
   for i, {input, output} in ipairs tests
     it "#{i}: should match", ->
       assert.are.equal output, sanitize_html(input)
+
+  describe "modified whitelist", ->
+    setup ->
+      whitelist = require "web_sanitize.whitelist"
+      whitelist.tags.iframe = {
+        src: true
+        frameborder: true
+        allowfullscreen: true
+      }
+
+    it "should sanitize", ->
+      assert.same unpack {
+        [[<iframe src="//www.youtube.com/embed/Ag1lwrY7d94?rel=0" frameborder="0" allowfullscreen></iframe>]]
+        sanitize_html [[<iframe src="//www.youtube.com/embed/Ag1lwrY7d94?rel=0" frameborder="0" allowfullscreen></iframe>]]
+      }
+
+
+
+

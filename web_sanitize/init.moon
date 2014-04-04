@@ -45,7 +45,7 @@ check_close_tag = (str, pos, punct, tag, rest) ->
 
   true, unpack buffer
 
-pop_tag = (str, pos, ...)->
+pop_tag = (str, pos, ...) ->
   tag_stack[#tag_stack] = nil
   true, ...
 
@@ -62,7 +62,7 @@ check_attribute = (str, pos_end, pos_start, name, value) ->
 
   attr = allowed_attributes[name\lower!]
   if type(attr) == "function"
-    return true unless attr value
+    return true unless attr value, name, tag
   else
     return true unless attr
 
@@ -109,7 +109,7 @@ word = (alphanum + S"._-")^1
 
 value = C(word) + P'"' * C((1 - P'"')^0) * P'"' + P"'" * C((1 - P"'")^0) * P"'"
 
-attribute = C(word) * white * P"=" * white * value
+attribute = C(word) * (white * P"=" * white * value)^-1
 
 open_tag = C(P"<" * white) * Cmt(word, check_tag) * (Cmt(Cp! * white * attribute, check_attribute)^0 * white * Cmt("", inject_attributes) * Cmt("/" * white, pop_tag)^-1 * C">" + Cmt("", fail_tag))
 close_tag = Cmt(C(P"<" * white * P"/" * white) * C(word) * C(white * P">"), check_close_tag)
