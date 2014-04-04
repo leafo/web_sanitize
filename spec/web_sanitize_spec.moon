@@ -63,6 +63,12 @@ tests = {
   }
 
   {
+    '<a href="//leafo.net"></a>'
+    '<a href="//leafo.net" rel="nofollow"></a>'
+  }
+
+
+  {
     'hello <script dad="world"><b>yes</b></b>'
     'hello &lt;script dad=&quot;world&quot;&gt;<b>yes</b>&lt;/b&gt;'
   }

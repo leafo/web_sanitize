@@ -80,7 +80,7 @@ check_attribute = function(str, pos_end, pos_start, name, value)
   end
   local attr = allowed_attributes[name:lower()]
   if type(attr) == "function" then
-    if not (attr(value)) then
+    if not (attr(value, name, tag)) then
       return true
     end
   else
@@ -130,7 +130,7 @@ local white = S(" \t\n") ^ 0
 local text = C((1 - escaped_char) ^ 1)
 local word = (alphanum + S("._-")) ^ 1
 local value = C(word) + P('"') * C((1 - P('"')) ^ 0) * P('"') + P("'") * C((1 - P("'")) ^ 0) * P("'")
-local attribute = C(word) * white * P("=") * white * value
+local attribute = C(word) * (white * P("=") * white * value) ^ -1
 local open_tag = C(P("<") * white) * Cmt(word, check_tag) * (Cmt(Cp() * white * attribute, check_attribute) ^ 0 * white * Cmt("", inject_attributes) * Cmt("/" * white, pop_tag) ^ -1 * C(">") + Cmt("", fail_tag))
 local close_tag = Cmt(C(P("<") * white * P("/") * white) * C(word) * C(white * P(">")), check_close_tag)
 local html = Ct((open_tag + close_tag + valid_char + escaped_char + text) ^ 0 * -1)

@@ -1,5 +1,7 @@
 
-url_value = (value) -> value and value\match("^https?://") and true
+url_value = (value) ->
+  value and (value\match("^https?://") or value\match("^//")) and true
+
 mailto_value = (value) -> value and value\match("^mailto:") and true
 
 -- Adapted from https://github.com/rgrove/sanitize/blob/master/lib/sanitize/config/basic.rb

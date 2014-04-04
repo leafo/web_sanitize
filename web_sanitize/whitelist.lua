@@ -1,10 +1,10 @@
 local url_value
 url_value = function(value)
-  return value:match("^https?://") and true
+  return value and (value:match("^https?://") or value:match("^//")) and true
 end
 local mailto_value
 mailto_value = function(value)
-  return value:match("^mailto:") and true
+  return value and value:match("^mailto:") and true
 end
 local tags = {
   {
@@ -13,8 +13,8 @@ local tags = {
     lang = true
   },
   a = {
-    href = function(v)
-      return url_value(v) or mailto_value(v)
+    href = function(...)
+      return url_value(...) or mailto_value(...)
     end,
     name = true
   },
