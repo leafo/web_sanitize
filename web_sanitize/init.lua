@@ -133,11 +133,16 @@ local value = C(word) + P('"') * C((1 - P('"')) ^ 0) * P('"') + P("'") * C((1 - 
 local attribute = C(word) * (white * P("=") * white * value) ^ -1
 local open_tag = C(P("<") * white) * Cmt(word, check_tag) * (Cmt(Cp() * white * attribute, check_attribute) ^ 0 * white * Cmt("", inject_attributes) * Cmt("/" * white, pop_tag) ^ -1 * C(">") + Cmt("", fail_tag))
 local close_tag = Cmt(C(P("<") * white * P("/") * white) * C(word) * C(white * P(">")), check_close_tag)
+local value_ignored = word + P('"') * (1 - P('"')) ^ 0 * P('"') + P("'") * (1 - P("'")) ^ 0 * P("'")
+local attribute_ignored = word * (white * P("=") * white * value_ignored) ^ -1
+local open_tag_ignored = P("<") * white * word * (white * attribute_ignored) ^ 0 * white * (P("/") * white) ^ -1 * P(">")
+local close_tag_ignored = P("<") * white * P("/") * white * word * white * P(">")
 local html = Ct((open_tag + close_tag + valid_char + escaped_char + text) ^ 0 * -1)
+local html_text = Ct((open_tag_ignored + close_tag_ignored + valid_char + escaped_char + text) ^ 0 * -1)
 local sanitize_html
 sanitize_html = function(str)
   tag_stack = { }
-  local buffer = html:match(str)
+  local buffer = assert(html:match(str), "failed to parse html")
   local k = #buffer + 1
   for i = #tag_stack, 1, -1 do
     local _continue_0 = false
@@ -159,6 +164,12 @@ sanitize_html = function(str)
   end
   return concat(buffer)
 end
+local extract_text
+extract_text = function(str)
+  local buffer = assert(html_text:match(str), "failed to parse html")
+  return concat(buffer)
+end
 return {
-  sanitize_html = sanitize_html
+  sanitize_html = sanitize_html,
+  extract_text = extract_text
 }
