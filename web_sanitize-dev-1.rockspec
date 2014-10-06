@@ -21,6 +21,7 @@ build = {
   type = "builtin",
   modules = {
     ["web_sanitize"] = "web_sanitize/init.lua",
+    ["web_sanitize.css"] = "web_sanitize/css.lua",
     ["web_sanitize.whitelist"] = "web_sanitize/whitelist.lua",
   }
 }
