@@ -18,31 +18,35 @@ $ luarocks install http://rocks.moonscript.org/web_sanitize-dev-1.rockspec
 
 ## How
 
-Anything that is not recognized as safe HTML is escaped using HTML escape
-sequences. Invalid tags aren't stripped. Invalid attributes inside of safe
-tags are stripped. It's possible to inject attributes into certain tags, for
-example all `a` tags have `rel="nofollow"` inserted.
+`web_sanitize` tries to preserve the structure of the input as best as possible
+while sanitizing bad content. Tags that don't match a whitelist are replaced
+with their escaped equivalent. Attributes of tags that don't match the
+whitelist are stripped from the output. You can excplicitly add your own
+attributes to tags as well, for example, all `a` tags will have a
+`rel="nofollow"` attribute inserted by default
 
 Any unclosed tags will be closed at the end of the string. This means it's safe
 to put sanitized HTML anywhere in an existing document without worrying about
 breaking the structure.
 
-Also, if an outer tag is prematurely closed before the inner tags, the inner
+If an outer tag is prematurely closed before the inner tags, the inner
 tags will automatically be closed.
 
-* `<li><b>Hello World` -> `<li><b>Hello World</b></li>`
-* `<li><b>Hello World</li>` -> `<li><b>Hello World</b></li>`
-
-The original whitespace and text of the document is preserved as much as
-possible, only the bad parts are sliced out or escaped.
+* `<li><b>Hello World` → `<li><b>Hello World</b></li>`
+* `<li><b>Hello World</li>` → `<li><b>Hello World</b></li>`
 
 ## Functions
-
-There's just one function:
 
 #### `sanitize_html(unsafe_html)`
 
 Sanitizes HTML using the whitelist located in `require "web_sanitize.whitelist"`
+
+#### `extract_text(unsafe_html)`
+
+Extracts just the textual content of unsafe HTML. No HTML tags will be present
+in the the output. There may be HTML escape sequences present if the text
+contains any characters that might be interpreted as part of an HTML tag (eg. a
+`<`).
 
 ## Configuring The Whitelist
 
@@ -77,6 +81,18 @@ Requires [Busted][4] and [MoonScript][5].
 make test
 ```
 
+## Changelog
+
+**Oct 6 2014** - 0.2.0
+
+* Add `extract_text` function
+* Correctly parse protocol relative URLS in href/src attributes
+* Correctly parse attributes that have no value
+
+**April 16 2014** - 0.0.1
+
+* Initial release
+
 ## TODO
 
 * Automatic link conversion
@@ -88,6 +104,7 @@ make test
 Author: Leaf Corcoran (leafo) ([@moonscript](http://twitter.com/moonscript))  
 Email: leafot@gmail.com  
 Homepage: <http://leafo.net>  
+
 
  [1]: https://github.com/leafo/web_sanitize/blob/master/test.moon
  [2]: https://github.com/leafo/web_sanitize/blob/master/web_sanitize/whitelist.moon
