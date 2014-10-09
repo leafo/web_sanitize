@@ -117,8 +117,8 @@ close_tag = Cmt(C(P"<" * white * P"/" * white) * C(word) * C(white * P">"), chec
 -- parses through tags without capturing anything
 value_ignored = word + P'"' * (1 - P'"')^0 * P'"' + P"'" * (1 - P"'")^0 * P"'"
 attribute_ignored = word * (white * P"=" * white * value_ignored)^-1
-open_tag_ignored = P"<" * white * word * (white * attribute_ignored)^0 * white * (P"/" * white)^-1 * P">"
-close_tag_ignored = P"<" * white * P"/" * white * word * white * P">"
+open_tag_ignored = P"<" * white * word * (white * attribute_ignored)^0 * white * (P"/" * white)^-1 * P">" / " "
+close_tag_ignored = P"<" * white * P"/" * white * word * white * P">" / " "
 
 html = Ct (open_tag + close_tag + valid_char + escaped_char + text)^0 * -1
 
@@ -141,7 +141,9 @@ sanitize_html = (str) ->
 -- parse the html, extract text between non tag items
 extract_text = (str) ->
   buffer = assert html_text\match(str), "failed to parse html"
-  concat buffer
+  out = concat buffer
+  out = out\gsub "%s+", " "
+  (out\match "^%s*(.-)%s*$")
 
 { :sanitize_html, :extract_text }
 

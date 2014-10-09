@@ -300,7 +300,7 @@ text_tests = {
 
   {
     "<p> what the heck </p> <br /> is going on"
-    ' what the heck   is going on'
+    'what the heck is going on'
   }
 
   {
