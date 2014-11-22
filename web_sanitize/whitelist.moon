@@ -58,6 +58,9 @@ tags = {
   sub: true
   sup: true
   table: { summary: true, width: true}
+  thead: true
+  tbody: true
+  tfoot: true
   tr: true
   td: { colspan: true, rowspan: true, width: true }
   th: { colspan: true, rowspan: true, width: true }

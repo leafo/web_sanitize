@@ -72,6 +72,9 @@ local tags = {
     summary = true,
     width = true
   },
+  thead = true,
+  tbody = true,
+  tfoot = true,
   tr = true,
   td = {
     colspan = true,
