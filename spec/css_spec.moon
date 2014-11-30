@@ -12,3 +12,32 @@ describe "css_types", ->
     assert.truthy check_type "sn", (String * Number)^1
     assert.truthy check_type "snsn", (String * Number)^1
     assert.falsy check_type "snsns", (String * Number)^1
+
+
+describe "sanitize_style", ->
+  import sanitize_style from require "web_sanitize.css"
+  it "should pass through empty string", ->
+    assert.same "", (sanitize_style "")
+    assert.same "", (sanitize_style "  ")
+
+  check = (expected, given) ->
+    if expected
+      it "should sanitize `#{given}`", ->
+        assert.same expected, (sanitize_style given)
+    else
+      it "should reject `#{given}`", ->
+        assert.same nil, (sanitize_style given)
+
+  check "margin-left: 50px", "margin-left: 50px;"
+  check "margin-left: 50px", "margin-left: 50px"
+  check "", "margin-left: hello"
+
+  check "margin: 10em 10em 10em 10em","margin: 10em 10em 10em 10em;"
+  check "margin: 10em 10em", "margin: 10em 10em;"
+  check "margin: 10em 10em 12em", "margin: 10em 10em 12em;"
+  check "", "margin: 10em 10em 10em 10em 23px;"
+
+  check "", "fake-property: 100"
+  check "margin: 10px; margin: 10px", "margin: 10px; fake-property: 100; margin: 10px"
+
+
