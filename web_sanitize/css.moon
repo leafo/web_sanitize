@@ -31,8 +31,8 @@ hash = P("#") * ident
 decimal = P(".") * num^1
 
 number = decimal + num^1 * (decimal)^-1
-dimension = num * ident
-percentage = num * P("%")
+dimension = num^1 * ident
+percentage = num^1 * P("%")
 
 numeric = dimension + percentage + number
 
