@@ -40,4 +40,12 @@ describe "sanitize_style", ->
   check "", "fake-property: 100"
   check "margin: 10px; margin: 10px", "margin: 10px; fake-property: 100; margin: 10px"
 
+  check "text-align: left", "text-align: left;"
+  check "font-size: 150%", "font-size: 150%"
+
+  check "color: red", "color: red"
+  check "color: #fff", "color: #fff"
+  check "color: rgba(0.2,0.3,232)", "color: rgba(0.2,0.3,232)"
+
+  check "opacity: 0.3", "opacity: 0.3"
 

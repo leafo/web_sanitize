@@ -27,9 +27,12 @@ check_type = (type_string, pattern) ->
 Number = P short_names.number
 String = P short_names.string
 Url = P short_names.url
+Ident = P short_names.ident
+Hash = P short_names.hash
+Function = P short_names.function
 
 {
   :to_type_string
   :check_type
-  :Number, :String, :Url
+  :Number, :String, :Url, :Ident, :Hash, :Function
 }

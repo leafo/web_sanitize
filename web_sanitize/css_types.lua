@@ -42,10 +42,16 @@ end
 local Number = P(short_names.number)
 local String = P(short_names.string)
 local Url = P(short_names.url)
+local Ident = P(short_names.ident)
+local Hash = P(short_names.hash)
+local Function = P(short_names["function"])
 return {
   to_type_string = to_type_string,
   check_type = check_type,
   Number = Number,
   String = String,
-  Url = Url
+  Url = Url,
+  Ident = Ident,
+  Hash = Hash,
+  Function = Function
 }
