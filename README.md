@@ -139,8 +139,8 @@ Similar to above, see [`css_whitelist.moon`][6]
 
 It should be pretty fast. It's powered by the wonderful library [LPEG][3].
 There is only one string concatenation on each call to `sanitize_html`. 200kb
-of HTML can be sanitized in 0.01 seconds on my computer. This makes in
-unnecessary is most circumstances to sanitize ahead of time when rendering
+of HTML can be sanitized in 0.01 seconds on my computer. This makes it
+unnecessary in most circumstances to sanitize ahead of time when rendering
 untrusted HTML.
 
 ## Tests
