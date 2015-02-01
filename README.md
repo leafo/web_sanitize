@@ -2,7 +2,7 @@
 
 A Lua library for doing HTML and CSS sanitization using a whitelist.
 
-Example:
+Examples:
 
 ```lua
 local web_sanitize = require "web_sanitize"
@@ -16,7 +16,6 @@ print(web_sanitize.sanitize_html(
 print(web_sanitize.sanitize_style([[border: 12px; behavior:url(script.htc);]]))
 --  border: 12px
 
-
 -- Extract text from HTML
 print(web_sanitize.extract_text([[<div class="cool">Hello <b>world</b>!</div>]]))
 -- Hello world!
@@ -26,7 +25,7 @@ print(web_sanitize.extract_text([[<div class="cool">Hello <b>world</b>!</div>]])
 ## Install
 
 ```bash
-$ luarocks install http://rocks.moonscript.org/web_sanitize-dev-1.rockspec
+$ luarocks install web_sanitize
 ```
 
 ## How
@@ -54,7 +53,7 @@ with a type specification for what kinds of parameters they can take. If a CSS
 property is not in the whitelist, or does not match the type specification then
 it is stripped from the output. Any valid CSS properties are preserved though.
 
-## Function reference
+## Function Reference
 
 ```lua
 local web_sanitize = require("web_sanitize")
@@ -134,7 +133,7 @@ end
 
 ### CSS
 
-Similar to above, see [`css_whitelist.moon`][2]
+Similar to above, see [`css_whitelist.moon`][6]
 
 ## Fast?
 
@@ -158,6 +157,7 @@ make test
 
 * Add `sanitize_css`
 * Let attribute values be overwritten from whitelist
+* `extract_text` collapses extra whitespace
 
 **Oct 6 2014** - 0.2.0
 
