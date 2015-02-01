@@ -8,7 +8,8 @@ Example:
 local web_sanitize = require "web_sanitize"
 
 -- Fix bad HTML
-print(web_sanitize.sanitize_html([[<h1 onload="alert('XSS')"> This HTML Stinks <ScRiPt>alert('hacked!')]]))
+print(web_sanitize.sanitize_html(
+  [[<h1 onload="alert('XSS')"> This HTML Stinks <ScRiPt>alert('hacked!')]]))
 --  <h1> This HTML Stinks &lt;ScRiPt&gt;alert(&#x27;hacked!&#x27;)</h1>
 
 -- Sanitize CSS properties
