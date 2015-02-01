@@ -172,12 +172,11 @@ make test
 ## TODO
 
 * Automatic link conversion
-* Option to strip all tags
-* Add CSS sanitization
 
 # Contact
 
 Author: Leaf Corcoran (leafo) ([@moonscript](http://twitter.com/moonscript))  
+License: MIT Copyright (c) 2015 Leaf Corcoran
 Email: leafot@gmail.com  
 Homepage: <http://leafo.net>  
 
