@@ -63,12 +63,17 @@ check_attribute = (str, pos_end, pos_start, name, value) ->
     return true
 
   attr = allowed_attributes[name\lower!]
+  local new_val
   if type(attr) == "function"
-    return true unless attr value, name, tag
+    new_val = attr value, name, tag
+    return true unless new_val
   else
     return true unless attr
 
-  true, str\sub pos_start, pos_end - 1
+  if type(new_val) == "string"
+    true, " #{name}=\"#{assert escape_text\match new_val}\""
+  else
+    true, str\sub pos_start, pos_end - 1
 
 inject_attributes = ->
   top_tag = tag_stack[#tag_stack]

@@ -358,6 +358,7 @@ describe "web_sanitize", ->
         src: true
         frameborder: true
         allowfullscreen: true
+        style: (str) -> "*''#{str}''*"
       }
 
     it "should sanitize", ->
@@ -366,6 +367,10 @@ describe "web_sanitize", ->
         sanitize_html [[<iframe src="//www.youtube.com/embed/Ag1lwrY7d94?rel=0" frameborder="0" allowfullscreen></iframe>]]
       }
 
+      assert.same unpack {
+        [[<iframe style="*&#x27;&#x27;hello world&#x27;&#x27;*"></iframe>]]
+        sanitize_html [[<iframe style="hello world">]]
+      }
 
 
 

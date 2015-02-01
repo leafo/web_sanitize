@@ -80,8 +80,10 @@ check_attribute = function(str, pos_end, pos_start, name, value)
     return true
   end
   local attr = allowed_attributes[name:lower()]
+  local new_val
   if type(attr) == "function" then
-    if not (attr(value, name, tag)) then
+    new_val = attr(value, name, tag)
+    if not (new_val) then
       return true
     end
   else
@@ -89,7 +91,11 @@ check_attribute = function(str, pos_end, pos_start, name, value)
       return true
     end
   end
-  return true, str:sub(pos_start, pos_end - 1)
+  if type(new_val) == "string" then
+    return true, " " .. tostring(name) .. "=\"" .. tostring(assert(escape_text:match(new_val))) .. "\""
+  else
+    return true, str:sub(pos_start, pos_end - 1)
+  end
 end
 local inject_attributes
 inject_attributes = function()
