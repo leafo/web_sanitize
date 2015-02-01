@@ -9,6 +9,7 @@ do
   allowed_tags, add_attributes, self_closing = _obj_0.tags, _obj_0.add_attributes, _obj_0.self_closing
 end
 local lpeg = require("lpeg")
+local escape_text
 local tag_stack = { }
 local check_tag
 check_tag = function(str, pos, tag)
@@ -122,6 +123,7 @@ local escaped_char = S("<>'&\"") / {
   ["/"] = "&#x2F;",
   ['"'] = "&quot;"
 }
+escape_text = Cs((escaped_char + 1) ^ 0 * -1)
 local alphanum = R("az", "AZ", "09")
 local num = R("09")
 local hex = R("09", "af", "AF")

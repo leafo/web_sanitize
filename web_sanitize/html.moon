@@ -4,6 +4,8 @@ import insert, concat from table
 
 lpeg = require "lpeg"
 
+local escape_text
+
 tag_stack = {}
 
 check_tag = (str, pos, tag) ->
@@ -96,6 +98,8 @@ escaped_char = S"<>'&\"" / {
   "/": "&#x2F;"
   '"': "&quot;"
 }
+
+escape_text = Cs (escaped_char + 1)^0 * -1
 
 alphanum = R "az", "AZ", "09"
 num = R "09"
