@@ -28,6 +28,10 @@ properties = {
   "color": Color
   "background-color": Color
   "opacity": Number
+  "border": Number
+
+  "width": Number
+  "height": Number
 }
 
 { :properties }

@@ -19,7 +19,10 @@ local properties = {
   ["text-align"] = Ident,
   ["color"] = Color,
   ["background-color"] = Color,
-  ["opacity"] = Number
+  ["opacity"] = Number,
+  ["border"] = Number,
+  ["width"] = Number,
+  ["height"] = Number
 }
 return {
   properties = properties

@@ -49,3 +49,5 @@ describe "sanitize_style", ->
 
   check "opacity: 0.3", "opacity: 0.3"
 
+  check "border: 0; width: 400px; height: 208px", "border: 0; width: 400px; height: 208px;"
+
