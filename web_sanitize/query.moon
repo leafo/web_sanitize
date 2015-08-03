@@ -3,24 +3,31 @@
 import R, S, V, P from require "lpeg"
 import C, Cs, Ct, Cmt, Cg, Cb, Cc, Cp from require "lpeg"
 
-fail_tag = ->
-  print "tag failed!"
+local unescape_text
 
-check_tag = (str, pos, ...) ->
-  print "Check tag", ...
+tag_stack = {}
+
+fail_tag = ->
+  error "tag failed!"
+
+check_tag = (str, _, pos, tag) ->
+  table.insert tag_stack, {:tag, :pos}
   true
 
-check_close_tag = (str, pos, ...) ->
-  print "Check close tag", ...
+check_close_tag = (str, pos, tag, end_pos) ->
+  top = tag_stack[#tag_stack]
+  top.end_pos = end_pos
+  require("moon").p tag_stack
+  table.remove tag_stack
   true
 
 pop_tag = (str, pos, ...) ->
-  print "pop tag..."
+  table.remove tag_stack
 
-inject_attributes = ->
-
-check_attribute = (str, pos, ...) ->
-  print "check attr", ...
+check_attribute = (str, pos, name, val) ->
+  top = tag_stack[#tag_stack]
+  top.attr or= {}
+  top.attr[name] = unescape_text\match(val) or val
   true
 
 --
@@ -51,14 +58,12 @@ value = C(word) +
 
 attribute = C(word) * (white * P"=" * white * value)^-1
 
-open_tag = Cmt(Cp! * P"<" * white * word, check_tag) *
-  (Cmt(Cp! * white * attribute, check_attribute)^0 *
+open_tag = Cmt(Cp! * P"<" * white * C(word), check_tag) *
+  (Cmt(white * attribute, check_attribute)^0 *
     white * Cmt("/" * white, pop_tag)^-1 * P">" + Cmt("", fail_tag))
 
-close_tag = Cmt(P"<" * white * P"/" * white * C(word) * white * P">", check_close_tag)
+close_tag = Cmt(P"<" * white * P"/" * white * C(word) * white * P">" * Cp!, check_close_tag)
 
 html = (open_tag + close_tag + valid_char + P"<" + P(1 - P"<")^1)^0 * -1
 
-require("moon").p {
-  html\match "<div class='wanker &quot;'>hello</div>"
-}
+html\match "<div class='wanker &quot;'>hello<pre>hello</pre></div>"
