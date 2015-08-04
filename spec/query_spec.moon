@@ -21,4 +21,11 @@ describe "query", ->
         { {"id", "world"} }
       }, parse_query "#hello #world"
 
+    it "parses combo", ->
+      assert.same {
+        {{"tag", "div"}, {"class", "yea"}}
+        {{"id", "what"}}
+        {{"class", "colorful"}}
+      }, parse_query "div.yea #what .colorful"
+
 
