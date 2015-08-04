@@ -58,7 +58,7 @@ scan_html = (html_text, callback) ->
     error "tag failed!"
 
   check_tag = (str, _, pos, tag) ->
-    node = {:tag, :pos}
+    node = {tag: tag\lower!, :pos}
     setmetatable node, BufferHTMLNode.__base
     table.insert tag_stack, node
     true
@@ -79,7 +79,7 @@ scan_html = (html_text, callback) ->
   check_attribute = (str, pos, name, val) ->
     top = tag_stack[#tag_stack]
     top.attr or= {}
-    top.attr[name] = unescape_text\match(val) or val
+    top.attr[name\lower!] = unescape_text\match(val) or val
     true
 
   save_pos = (field) ->

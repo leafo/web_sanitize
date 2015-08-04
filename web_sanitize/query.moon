@@ -2,8 +2,6 @@
 import scan_html from require "web_sanitize.query.scan_html"
 import parse_query from require "web_sanitize.query.parse_query"
 
--- TODO: lowercase attribute keys
-
 test_el = (el, q) ->
   local el_classes
   for {t, expected} in *q
@@ -18,7 +16,7 @@ test_el = (el, q) ->
         id = el.attr and el.attr.id
         return false unless id == expected
       when "tag"
-        return false unless expected\lower! == el.tag\lower!
+        return false unless expected\lower! == el.tag
       else
         error "unknown selector type: #{t}"
 
