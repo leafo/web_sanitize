@@ -31,20 +31,32 @@ match_query = (stack, query) ->
     return false unless test_el stack_el, query_el
   true
 
-q = parse_query ".dogworld"
-scan_html [[
-  <div>
-    <pre class='dogworld'>hello</pre>
-  </div>
-  <span>
-    <div class='dogubt'>yeah yeah <span class='dogworld'>more <span>dogs</span> &quot;</span></div>
-  </span>
-]], (stack) ->
-  if match_query stack, q
-    print "MATCH"
-    node = stack[#stack]
-    print node\outer_html!
-    print node\inner_html!
-    print node\inner_text!
 
+query_all = (html, q) ->
+  q = parse_query q
+  res = {}
+  scan_html html, (stack) ->
+    if match_query stack, q
+      table.insert res, stack[#stack]
+  res
+
+
+{:query_all}
+
+-- q = parse_query ".dogworld"
+-- scan_html [[
+--   <div>
+--     <pre class='dogworld'>hello</pre>
+--   </div>
+--   <span>
+--     <div class='dogubt'>yeah yeah <span class='dogworld'>more <span>dogs</span> &quot;</span></div>
+--   </span>
+-- ]], (stack) ->
+--   if match_query stack, q
+--     print "MATCH"
+--     node = stack[#stack]
+--     print node\outer_html!
+--     print node\inner_html!
+--     print node\inner_text!
+-- 
 
