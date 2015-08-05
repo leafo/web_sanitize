@@ -17,6 +17,8 @@ test_el = (el, q) ->
         return false unless id == expected
       when "tag"
         return false unless expected\lower! == el.tag
+      when "any"
+        return true
       else
         error "unknown selector type: #{t}"
 

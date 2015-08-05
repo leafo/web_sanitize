@@ -56,6 +56,14 @@ describe "query", ->
         inner_html: {}
       }
 
+      {
+        -- *
+        html: "a  <div class='ok'></div><span class='yeah'>ok</span> b"
+        query: "*"
+        outer_html: {"<div class='ok'></div>", "<span class='yeah'>ok</span>"}
+        inner_html: {"", "ok"}
+      }
+
     }
 
     for {:html, :query,  :outer_html, :inner_html} in *tests
