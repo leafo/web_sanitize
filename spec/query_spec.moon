@@ -64,6 +64,16 @@ describe "query", ->
         inner_html: {"", "ok"}
       }
 
+
+      {
+        -- matches when there is an element inbetween
+        html: [[<div class="hello"></div><div class="hello world"><pre></pre></div>
+          <div class="world"></div><div class="helloworld"></div>]]
+        query: ".hello.world"
+        outer_html: {[[<div class="hello world"><pre></pre></div>]]}
+        inner_html: {"<pre></pre>"}
+      }
+
     }
 
     for {:html, :query,  :outer_html, :inner_html} in *tests
