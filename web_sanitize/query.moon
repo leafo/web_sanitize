@@ -26,9 +26,12 @@ match_query = (stack, query) ->
   return false if #query > #stack
   stack_idx = #stack
 
-  for i, query_el in ipairs query
-    stack_el = stack[stack_idx - i + 1]
+  for query_idx=#query,1
+    query_el = query[query_idx]
+    stack_el = stack[stack_idx]
+    stack_idx -= 1
     return false unless test_el stack_el, query_el
+
   true
 
 
