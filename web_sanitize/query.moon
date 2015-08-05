@@ -28,6 +28,7 @@ match_query = (stack, query) ->
   return false if #query > #stack
   stack_idx = #stack
 
+  first = true
   for query_idx=#query,1,-1
     query_el = query[query_idx]
 
@@ -38,7 +39,10 @@ match_query = (stack, query) ->
       if test_el stack_el, query_el
         matched = true
         break
+      else
+        return false if first
 
+    first = false
     return false unless matched
 
   true
