@@ -59,6 +59,7 @@ query_all = (html, q) ->
 
 {:query_all}
 
+
 -- q = parse_query ".ok .yeah"
 -- -- require("moon").p q
 -- scan_html "a  <div class='ok'><pre><span class='yeah'>ok</span></pre></div> b", (stack) ->

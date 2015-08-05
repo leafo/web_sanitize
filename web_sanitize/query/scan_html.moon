@@ -52,13 +52,22 @@ scan_html = (html_text, callback) ->
   class BufferHTMLNode extends HTMLNode
     buffer: html_text
 
+  root_node = {}
   tag_stack = {}
 
   fail_tag = ->
     error "tag failed!"
 
   check_tag = (str, _, pos, tag) ->
-    node = {tag: tag\lower!, :pos}
+    top = tag_stack[#tag_stack] or root_node
+    top.num_children = (top.num_children or 0) + 1
+
+    node = {
+      tag: tag\lower!
+      :pos
+      num: top.num_children
+    }
+
     setmetatable node, BufferHTMLNode.__base
     table.insert tag_stack, node
     true
