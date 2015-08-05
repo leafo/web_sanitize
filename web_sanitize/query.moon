@@ -26,11 +26,18 @@ match_query = (stack, query) ->
   return false if #query > #stack
   stack_idx = #stack
 
-  for query_idx=#query,1
+  for query_idx=#query,1,-1
     query_el = query[query_idx]
-    stack_el = stack[stack_idx]
-    stack_idx -= 1
-    return false unless test_el stack_el, query_el
+
+    matched = false
+    while stack_idx >= 1
+      stack_el = stack[stack_idx]
+      stack_idx -= 1
+      if test_el stack_el, query_el
+        matched = true
+        break
+
+    return false unless matched
 
   true
 
@@ -46,20 +53,13 @@ query_all = (html, q) ->
 
 {:query_all}
 
--- q = parse_query ".dogworld"
--- scan_html [[
---   <div>
---     <pre class='dogworld'>hello</pre>
---   </div>
---   <span>
---     <div class='dogubt'>yeah yeah <span class='dogworld'>more <span>dogs</span> &quot;</span></div>
---   </span>
--- ]], (stack) ->
+-- q = parse_query ".ok .yeah"
+-- -- require("moon").p q
+-- scan_html "a  <div class='ok'><pre><span class='yeah'>ok</span></pre></div> b", (stack) ->
+--   print ""
+--   print "TESTING::"
 --   if match_query stack, q
---     print "MATCH"
---     node = stack[#stack]
---     print node\outer_html!
---     print node\inner_html!
---     print node\inner_text!
--- 
+--     print "WINNER!"
+--     require("moon").p stack
+
 

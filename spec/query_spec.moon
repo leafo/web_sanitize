@@ -40,6 +40,21 @@ describe "query", ->
         inner_html: {"ok"}
       }
 
+      {
+        -- matches when there is an element inbetween
+        html: "a  <div class='ok'><pre><span class='yeah'>ok</span></pre></div> b"
+        query: ".ok .yeah"
+        outer_html: {"<span class='yeah'>ok</span>"}
+        inner_html: {"ok"}
+      }
+
+      {
+        -- fails with adjacent
+        html: "a  <div class='ok'></div><span class='yeah'>ok</span> b"
+        query: ".ok .yeah"
+        outer_html: {}
+        inner_html: {}
+      }
 
     }
 
