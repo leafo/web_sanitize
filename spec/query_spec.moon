@@ -74,6 +74,13 @@ describe "query", ->
         inner_html: {"<pre></pre>"}
       }
 
+
+      {
+        html: [[<div class="hello">first</div><div class="hello">second</div>]]
+        query: ".hello:nth-child(2)"
+        outer_html: {'<div class="hello">second</div>'}
+        inner_html: {"second"}
+      }
     }
 
     for {:html, :query,  :outer_html, :inner_html} in *tests

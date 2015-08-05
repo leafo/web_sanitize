@@ -18,7 +18,9 @@ test_el = (el, q) ->
       when "tag"
         return false unless expected\lower! == el.tag
       when "any"
-        return true
+        nil
+      when "nth-child"
+        return false unless tonumber(expected) == el.num
       else
         error "unknown selector type: #{t}"
 
