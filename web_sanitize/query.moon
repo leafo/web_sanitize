@@ -58,8 +58,10 @@ query_all = (html, q) ->
       table.insert res, stack[#stack]
   res
 
+query = (...) ->
+  unpack query_all ...
 
-{:query_all}
+{ :query_all, :query }
 
 
 -- q = parse_query ".ok .yeah"
