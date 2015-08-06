@@ -97,6 +97,18 @@ describe "query", ->
         table.sort inner_html
         assert.same inner_html, got
 
+    it "queries for void tag", ->
+      res = query_all [[
+        <div class="butt">
+          <img data-dad="yeah" src="http://leafo.net/hi.png" />
+        </div>
+      ]], ".butt img"
+
+      assert.same 1, #res
+      res = unpack res
+      assert.same [[<img data-dad="yeah" src="http://leafo.net/hi.png" />]],
+        res\outer_html!
+
   describe "parse_query", ->
     import parse_query from require "web_sanitize.query.parse_query"
 

@@ -1,3 +1,5 @@
+local void_tags
+void_tags = require("web_sanitize.data").void_tags
 local unescape_text
 local HTMLNode
 do
@@ -46,6 +48,15 @@ local C, Cs, Ct, Cmt, Cg, Cb, Cc, Cp
 do
   local _obj_0 = require("lpeg")
   C, Cs, Ct, Cmt, Cg, Cb, Cc, Cp = _obj_0.C, _obj_0.Cs, _obj_0.Ct, _obj_0.Cmt, _obj_0.Cg, _obj_0.Cb, _obj_0.Cc, _obj_0.Cp
+end
+local void_tags_set
+do
+  local _tbl_0 = { }
+  for _index_0 = 1, #void_tags do
+    local t = void_tags[_index_0]
+    _tbl_0[t] = true
+  end
+  void_tags_set = _tbl_0
 end
 local unescape_char = P("&gt;") / ">" + P("&lt;") / "<" + P("&amp;") / "&" + P("&#x27;") / "'" + P("&#x2F;") / "/" + P("&quot;") / '"'
 unescape_text = Cs((unescape_char + 1) ^ 1)
@@ -118,16 +129,20 @@ scan_html = function(html_text, callback)
   local check_close_tag
   check_close_tag = function(str, end_pos, end_inner_pos, tag)
     local top = tag_stack[#tag_stack]
-    assert(tag == top.tag, "tag close mismatch")
+    assert(tag == top.tag, "tag close mismatch (" .. tostring(tag) .. " != " .. tostring(top.tag) .. ")")
     top.end_inner_pos = end_inner_pos
     top.end_pos = end_pos
     callback(tag_stack)
     table.remove(tag_stack)
     return true
   end
-  local pop_tag
-  pop_tag = function(str, pos, ...)
-    return table.remove(tag_stack)
+  local pop_void_tag
+  pop_void_tag = function(str, pos, ...)
+    local top = tag_stack[#tag_stack]
+    top.end_pos = pos
+    callback(tag_stack)
+    table.remove(tag_stack)
+    return true
   end
   local check_attribute
   check_attribute = function(str, pos, name, val)
@@ -144,7 +159,7 @@ scan_html = function(html_text, callback)
       return true
     end
   end
-  local open_tag = Cmt(Cp() * P("<") * white * C(word), check_tag) * (Cmt(white * attribute, check_attribute) ^ 0 * white * Cmt("/" * white, pop_tag) ^ -1 * P(">") * Cmt("", save_pos("inner_pos")) + Cmt("", fail_tag))
+  local open_tag = Cmt(Cp() * P("<") * white * C(word), check_tag) * (Cmt(white * attribute, check_attribute) ^ 0 * white * (Cmt("/" * white * P(">"), pop_void_tag) + P(">") * Cmt("", save_pos("inner_pos"))) + Cmt("", fail_tag))
   local close_tag = Cmt(Cp() * P("<") * white * P("/") * white * C(word) * white * P(">"), check_close_tag)
   local html = (open_tag + close_tag + valid_char + P("<") + P(1 - P("<")) ^ 1) ^ 0 * -1
   return html:match(html_text)

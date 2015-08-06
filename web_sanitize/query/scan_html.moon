@@ -1,4 +1,6 @@
 
+import void_tags from require "web_sanitize.data"
+
 local unescape_text
 
 class HTMLNode
@@ -21,6 +23,8 @@ class HTMLNode
 
 import R, S, V, P from require "lpeg"
 import C, Cs, Ct, Cmt, Cg, Cb, Cc, Cp from require "lpeg"
+
+void_tags_set = {t, true for t in *void_tags}
 
 unescape_char = P"&gt;" / ">" +
   P"&lt;" / "<" +
@@ -74,7 +78,7 @@ scan_html = (html_text, callback) ->
 
   check_close_tag = (str, end_pos, end_inner_pos, tag) ->
     top = tag_stack[#tag_stack]
-    assert tag ==  top.tag, "tag close mismatch"
+    assert tag == top.tag, "tag close mismatch (#{tag} != #{top.tag})"
 
     top.end_inner_pos = end_inner_pos
     top.end_pos = end_pos
@@ -82,8 +86,14 @@ scan_html = (html_text, callback) ->
     table.remove tag_stack
     true
 
-  pop_tag = (str, pos, ...) ->
+  pop_void_tag = (str, pos, ...) ->
+    top = tag_stack[#tag_stack]
+    top.end_pos = pos
+
+    callback tag_stack
+
     table.remove tag_stack
+    true
 
   check_attribute = (str, pos, name, val) ->
     top = tag_stack[#tag_stack]
@@ -99,7 +109,10 @@ scan_html = (html_text, callback) ->
 
   open_tag = Cmt(Cp! * P"<" * white * C(word), check_tag) *
     (
-      Cmt(white * attribute, check_attribute)^0 * white * Cmt("/" * white, pop_tag)^-1 * P">" * Cmt("", save_pos "inner_pos") +
+      Cmt(white * attribute, check_attribute)^0 * white *
+        (Cmt("/" * white * P">", pop_void_tag) +
+          P">" * Cmt("", save_pos "inner_pos")) +
+
       Cmt("", fail_tag)
     )
 
