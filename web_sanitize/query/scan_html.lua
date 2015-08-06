@@ -136,6 +136,18 @@ scan_html = function(html_text, callback)
     table.remove(tag_stack)
     return true
   end
+  local check_void_tag
+  check_void_tag = function(str, pos)
+    local top = tag_stack[#tag_stack]
+    if void_tags_set[top.tag] then
+      top.end_pos = pos
+      callback(tag_stack)
+      table.remove(tag_stack)
+      return true
+    else
+      return false
+    end
+  end
   local pop_void_tag
   pop_void_tag = function(str, pos, ...)
     local top = tag_stack[#tag_stack]
@@ -159,7 +171,7 @@ scan_html = function(html_text, callback)
       return true
     end
   end
-  local open_tag = Cmt(Cp() * P("<") * white * C(word), check_tag) * (Cmt(white * attribute, check_attribute) ^ 0 * white * (Cmt("/" * white * P(">"), pop_void_tag) + P(">") * Cmt("", save_pos("inner_pos"))) + Cmt("", fail_tag))
+  local open_tag = Cmt(Cp() * P("<") * white * C(word), check_tag) * (Cmt(white * attribute, check_attribute) ^ 0 * white * (Cmt("/" * white * P(">"), pop_void_tag) + P(">") * (Cmt("", check_void_tag) + Cmt("", save_pos("inner_pos")))) + Cmt("", fail_tag))
   local close_tag = Cmt(Cp() * P("<") * white * P("/") * white * C(word) * white * P(">"), check_close_tag)
   local html = (open_tag + close_tag + valid_char + P("<") + P(1 - P("<")) ^ 1) ^ 0 * -1
   return html:match(html_text)
