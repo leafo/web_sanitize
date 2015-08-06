@@ -86,6 +86,18 @@ scan_html = (html_text, callback) ->
     table.remove tag_stack
     true
 
+  -- check for non-self-closing void tags
+  check_void_tag = (str, pos) ->
+    top = tag_stack[#tag_stack]
+
+    if void_tags_set[top.tag]
+      top.end_pos = pos
+      callback tag_stack
+      table.remove tag_stack
+      true
+    else
+      false
+
   pop_void_tag = (str, pos, ...) ->
     top = tag_stack[#tag_stack]
     top.end_pos = pos
@@ -109,14 +121,15 @@ scan_html = (html_text, callback) ->
 
   open_tag = Cmt(Cp! * P"<" * white * C(word), check_tag) *
     (
-      Cmt(white * attribute, check_attribute)^0 * white *
-        (Cmt("/" * white * P">", pop_void_tag) +
-          P">" * Cmt("", save_pos "inner_pos")) +
-
+      Cmt(white * attribute, check_attribute)^0 * white * (
+        Cmt("/" * white * P">", pop_void_tag) +
+        P">" * (Cmt("", check_void_tag) + Cmt("", save_pos "inner_pos"))
+      ) +
       Cmt("", fail_tag)
     )
 
   close_tag = Cmt(Cp! * P"<" * white * P"/" * white * C(word) * white * P">", check_close_tag)
+
   html = (open_tag + close_tag + valid_char + P"<" + P(1 - P"<")^1)^0 * -1
   html\match html_text
 

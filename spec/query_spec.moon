@@ -109,6 +109,17 @@ describe "query", ->
       assert.same [[<img data-dad="yeah" src="http://leafo.net/hi.png" />]],
         res\outer_html!
 
+    it "queries for unclosed void tag", ->
+      res = query_all [[
+        <meta data-cool="stuff">
+        <div class="butt">hello world</div>
+      ]], "meta"
+
+      assert.same 1, #res
+      res = unpack res
+      assert.same [[<meta data-cool="stuff">]],
+        res\outer_html!
+
   describe "parse_query", ->
     import parse_query from require "web_sanitize.query.parse_query"
 
