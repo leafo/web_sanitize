@@ -182,7 +182,11 @@ scan_html = function(html_text, callback)
   check_attribute = function(str, pos, name, val)
     local top = tag_stack[#tag_stack]
     top.attr = top.attr or { }
-    top.attr[name:lower()] = unescape_text:match(val) or val
+    if val then
+      top.attr[name:lower()] = unescape_text:match(val) or val
+    else
+      top.attr[name:lower()] = true
+    end
     return true
   end
   local save_pos

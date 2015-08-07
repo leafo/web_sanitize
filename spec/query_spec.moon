@@ -106,6 +106,14 @@ describe "query", ->
         inner_html: {[[hello world</pre>]]}
       }
 
+      {
+        -- valueless attribute
+        html: [[<script async src="http://leafo.net/hi.js"></script>]]
+        query: "script"
+        outer_html: {[[<script async src="http://leafo.net/hi.js"></script>]]}
+        inner_html: {[[]]}
+      }
+
     }
 
     for {:html, :query,  :outer_html, :inner_html} in *tests

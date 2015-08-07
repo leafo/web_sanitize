@@ -133,7 +133,12 @@ scan_html = (html_text, callback) ->
   check_attribute = (str, pos, name, val) ->
     top = tag_stack[#tag_stack]
     top.attr or= {}
-    top.attr[name\lower!] = unescape_text\match(val) or val
+
+    top.attr[name\lower!] = if val
+      unescape_text\match(val) or val
+    else
+      true
+
     true
 
   save_pos = (field) ->
