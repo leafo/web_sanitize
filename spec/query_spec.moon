@@ -81,6 +81,31 @@ describe "query", ->
         outer_html: {'<div class="hello">second</div>'}
         inner_html: {"second"}
       }
+
+      {
+        -- handles tag mismatch when there should be match, matches inner
+        html: [[<pre class="hello"><div class="ok">hello world</pre>]]
+        query: ".ok"
+        outer_html: {[[<div class="ok">hello world]]}
+        inner_html: {[[hello world]]}
+      }
+
+      {
+        -- handles tag mismatch when there should be match, matches outer
+        html: [[<code><pre class="hello"><div class="ok">hello world</pre></code>]]
+        query: ".hello"
+        outer_html: {[[<pre class="hello"><div class="ok">hello world</pre>]]}
+        inner_html: {[[<div class="ok">hello world]]}
+      }
+
+      {
+        -- handles tag mismatch when there is unknown closing tag
+        html: [[<code><div class="ok">hello world</pre></code>]]
+        query: ".ok"
+        outer_html: {[[<div class="ok">hello world</pre>]]}
+        inner_html: {[[hello world</pre>]]}
+      }
+
     }
 
     for {:html, :query,  :outer_html, :inner_html} in *tests

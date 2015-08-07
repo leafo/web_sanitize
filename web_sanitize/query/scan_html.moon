@@ -77,13 +77,36 @@ scan_html = (html_text, callback) ->
     true
 
   check_close_tag = (str, end_pos, end_inner_pos, tag) ->
-    top = tag_stack[#tag_stack]
-    assert tag == top.tag, "tag close mismatch (#{tag} != #{top.tag})"
+    stack_size = #tag_stack
 
-    top.end_inner_pos = end_inner_pos
-    top.end_pos = end_pos
-    callback tag_stack
-    table.remove tag_stack
+    tag = tag\lower!
+
+    if tag != tag_stack[stack_size].tag
+      -- tag mismatch, attempt to fix
+      found_tag = false
+      for k=#tag_stack - 1,1,-1
+        if tag_stack[k].tag == tag
+          found_tag = true
+
+        break
+
+      return true unless found_tag -- just skip it
+
+    -- pop until we've consumed the tag
+    for k=stack_size,1,-1
+      popping = tag_stack[k]
+
+      popping.end_inner_pos = end_inner_pos
+
+      popping.end_pos = if popping.tag == tag
+        end_pos
+      else
+        end_inner_pos
+
+      callback tag_stack
+      tag_stack[k] = nil
+      break if popping.tag == tag
+
     true
 
   -- check for non-self-closing void tags
@@ -130,7 +153,7 @@ scan_html = (html_text, callback) ->
 
   close_tag = Cmt(Cp! * P"<" * white * P"/" * white * C(word) * white * P">", check_close_tag)
 
-  html = (open_tag + close_tag + valid_char + P"<" + P(1 - P"<")^1)^0 * -1
+  html = (open_tag + close_tag + P"<" + P(1 - P"<")^1)^0 * -1
   html\match html_text
 
 { :scan_html }

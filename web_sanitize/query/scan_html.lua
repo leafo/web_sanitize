@@ -128,12 +128,34 @@ scan_html = function(html_text, callback)
   end
   local check_close_tag
   check_close_tag = function(str, end_pos, end_inner_pos, tag)
-    local top = tag_stack[#tag_stack]
-    assert(tag == top.tag, "tag close mismatch (" .. tostring(tag) .. " != " .. tostring(top.tag) .. ")")
-    top.end_inner_pos = end_inner_pos
-    top.end_pos = end_pos
-    callback(tag_stack)
-    table.remove(tag_stack)
+    local stack_size = #tag_stack
+    tag = tag:lower()
+    if tag ~= tag_stack[stack_size].tag then
+      local found_tag = false
+      for k = #tag_stack - 1, 1, -1 do
+        if tag_stack[k].tag == tag then
+          found_tag = true
+        end
+        break
+      end
+      if not (found_tag) then
+        return true
+      end
+    end
+    for k = stack_size, 1, -1 do
+      local popping = tag_stack[k]
+      popping.end_inner_pos = end_inner_pos
+      if popping.tag == tag then
+        popping.end_pos = end_pos
+      else
+        popping.end_pos = end_inner_pos
+      end
+      callback(tag_stack)
+      tag_stack[k] = nil
+      if popping.tag == tag then
+        break
+      end
+    end
     return true
   end
   local check_void_tag
@@ -173,7 +195,7 @@ scan_html = function(html_text, callback)
   end
   local open_tag = Cmt(Cp() * P("<") * white * C(word), check_tag) * (Cmt(white * attribute, check_attribute) ^ 0 * white * (Cmt("/" * white * P(">"), pop_void_tag) + P(">") * (Cmt("", check_void_tag) + Cmt("", save_pos("inner_pos")))) + Cmt("", fail_tag))
   local close_tag = Cmt(Cp() * P("<") * white * P("/") * white * C(word) * white * P(">"), check_close_tag)
-  local html = (open_tag + close_tag + valid_char + P("<") + P(1 - P("<")) ^ 1) ^ 0 * -1
+  local html = (open_tag + close_tag + P("<") + P(1 - P("<")) ^ 1) ^ 0 * -1
   return html:match(html_text)
 end
 return {
