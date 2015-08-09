@@ -111,7 +111,7 @@ scan_html = function(html_text, callback)
   local tag_stack = { }
   local fail_tag
   fail_tag = function()
-    return error("tag failed!")
+    return table.insert(tag_stack, node)
   end
   local check_tag
   check_tag = function(str, _, pos, tag)

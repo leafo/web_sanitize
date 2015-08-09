@@ -114,6 +114,14 @@ describe "query", ->
         inner_html: {[[]]}
       }
 
+
+      {
+        -- ignore fail tag
+        html: [[<leafot hello="world"<div@leafo.net><div class="fun"></div>]]
+        query: ".fun"
+        outer_html: {[[<div class="fun"></div>]]}
+        inner_html: {[[]]}
+      }
     }
 
     for {:html, :query,  :outer_html, :inner_html} in *tests

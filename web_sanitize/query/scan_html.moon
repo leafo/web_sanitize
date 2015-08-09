@@ -26,6 +26,7 @@ import C, Cs, Ct, Cmt, Cg, Cb, Cc, Cp from require "lpeg"
 
 void_tags_set = {t, true for t in *void_tags}
 
+-- this is far from comprehensive
 unescape_char = P"&gt;" / ">" +
   P"&lt;" / "<" +
   P"&amp;" / "&" +
@@ -60,7 +61,8 @@ scan_html = (html_text, callback) ->
   tag_stack = {}
 
   fail_tag = ->
-    error "tag failed!"
+    -- ignore it
+    table.insert tag_stack, node
 
   check_tag = (str, _, pos, tag) ->
     top = tag_stack[#tag_stack] or root_node
@@ -151,7 +153,10 @@ scan_html = (html_text, callback) ->
     (
       Cmt(white * attribute, check_attribute)^0 * white * (
         Cmt("/" * white * P">", pop_void_tag) +
-        P">" * (Cmt("", check_void_tag) + Cmt("", save_pos "inner_pos"))
+        P">" * (
+         Cmt("", check_void_tag) +
+         Cmt("", save_pos "inner_pos")
+       )
       ) +
       Cmt("", fail_tag)
     )
