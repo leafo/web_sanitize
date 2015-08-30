@@ -72,6 +72,9 @@ local grammar = P({
 local style_pattern = declaration_list * P(-1)
 local sanitize_style
 sanitize_style = function(style)
+  if not (style) then
+    return nil, "missing style"
+  end
   if style:match("^%s*$") then
     return ""
   end

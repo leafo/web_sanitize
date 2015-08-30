@@ -75,6 +75,8 @@ grammar = P {
 style_pattern = declaration_list * P(-1)
 
 sanitize_style = (style) ->
+  return nil, "missing style" unless style
+
   return "" if style\match "^%s*$"
   chunks = style_pattern\match style
 
