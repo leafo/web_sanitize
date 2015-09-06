@@ -11,3 +11,6 @@ local: build
 watch: build
 	moonc -w web_sanitize.moon web_sanitize/
 
+lint:
+	moonc -l $$(find web_sanitize | grep moon$$)
+
