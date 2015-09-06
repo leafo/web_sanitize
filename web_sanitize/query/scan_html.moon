@@ -30,6 +30,7 @@ void_tags_set = {t, true for t in *void_tags}
 unescape_char = P"&gt;" / ">" +
   P"&lt;" / "<" +
   P"&amp;" / "&" +
+  P"&nbsp;" / " " +
   P"&#x27;" / "'" +
   P"&#x2F;" / "/" +
   P"&quot;" / '"'

@@ -58,7 +58,7 @@ do
   end
   void_tags_set = _tbl_0
 end
-local unescape_char = P("&gt;") / ">" + P("&lt;") / "<" + P("&amp;") / "&" + P("&#x27;") / "'" + P("&#x2F;") / "/" + P("&quot;") / '"'
+local unescape_char = P("&gt;") / ">" + P("&lt;") / "<" + P("&amp;") / "&" + P("&nbsp;") / " " + P("&#x27;") / "'" + P("&#x2F;") / "/" + P("&quot;") / '"'
 unescape_text = Cs((unescape_char + 1) ^ 1)
 local alphanum = R("az", "AZ", "09")
 local num = R("09")
