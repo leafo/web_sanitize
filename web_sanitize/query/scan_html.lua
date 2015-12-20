@@ -17,6 +17,16 @@ do
       assert(self.end_inner_pos, "missing end_inner_pos")
       return self.buffer:sub(self.inner_pos, self.end_inner_pos - 1)
     end,
+    replace_inner_html = function(self, replacement)
+      if not (self.changes) then
+        error("attempting to change buffer with no changes array")
+      end
+      return table.insert(self.changes, {
+        self.inner_pos,
+        self.end_inner_pos - 1,
+        replacement
+      })
+    end,
     inner_text = function(self)
       local extract_text
       extract_text = require("web_sanitize.html").extract_text
@@ -72,11 +82,13 @@ local attribute = C(word) * (white * P("=") * white * value) ^ -1
 local scan_html
 scan_html = function(html_text, callback)
   assert(callback, "missing callback to scan_html")
+  local changes = { }
   local BufferHTMLNode
   do
     local _class_0
     local _parent_0 = HTMLNode
     local _base_0 = {
+      changes = changes,
       buffer = html_text
     }
     _base_0.__index = _base_0
@@ -205,8 +217,28 @@ scan_html = function(html_text, callback)
   local open_tag = Cmt(Cp() * P("<") * white * C(word), check_tag) * (Cmt(white * attribute, check_attribute) ^ 0 * white * (Cmt("/" * white * P(">"), pop_void_tag) + P(">") * (Cmt("", check_void_tag) + Cmt("", save_pos("inner_pos")))) + Cmt("", fail_tag))
   local close_tag = Cmt(Cp() * P("<") * white * P("/") * white * C(word) * white * P(">"), check_close_tag)
   local html = (open_tag + close_tag + P("<") + P(1 - P("<")) ^ 1) ^ 0 * -1
-  return html:match(html_text)
+  local res, err = html:match(html_text)
+  return res
+end
+local replace_html
+replace_html = function(html_text, _callback)
+  local changes = { }
+  local callback
+  callback = function(tags, ...)
+    local current = tags[#tags]
+    current.__class.__base.changes = changes
+    return _callback(tags, ...)
+  end
+  scan_html(html_text, callback)
+  local buffer = html_text
+  for i, _des_0 in ipairs(changes) do
+    local min, max, sub
+    min, max, sub = _des_0[1], _des_0[2], _des_0[3]
+    buffer = buffer:sub(1, min - 1) .. sub .. buffer:sub(max + 1)
+  end
+  return buffer
 end
 return {
-  scan_html = scan_html
+  scan_html = scan_html,
+  replace_html = replace_html
 }

@@ -16,6 +16,12 @@ class HTMLNode
     assert @end_inner_pos, "missing end_inner_pos"
     @buffer\sub @inner_pos, @end_inner_pos - 1
 
+  replace_inner_html: (replacement) =>
+    unless @changes
+      error "attempting to change buffer with no changes array"
+
+    table.insert @changes, {@inner_pos, @end_inner_pos - 1, replacement}
+
   inner_text: =>
     import extract_text from require "web_sanitize.html"
     text = extract_text @inner_html!
@@ -54,8 +60,10 @@ attribute = C(word) * (white * P"=" * white * value)^-1
 
 scan_html = (html_text, callback) ->
   assert callback, "missing callback to scan_html"
+  changes = {}
 
   class BufferHTMLNode extends HTMLNode
+    changes: changes
     buffer: html_text
 
   root_node = {}
@@ -165,6 +173,24 @@ scan_html = (html_text, callback) ->
   close_tag = Cmt(Cp! * P"<" * white * P"/" * white * C(word) * white * P">", check_close_tag)
 
   html = (open_tag + close_tag + P"<" + P(1 - P"<")^1)^0 * -1
-  html\match html_text
+  res, err = html\match html_text
 
-{ :scan_html }
+  res
+
+replace_html = (html_text, _callback) ->
+  changes = {}
+
+  callback = (tags, ...) ->
+    current = tags[#tags]
+    current.__class.__base.changes = changes
+    _callback tags, ...
+
+  scan_html html_text, callback
+
+  buffer = html_text
+  for i, {min, max, sub} in ipairs changes
+    buffer = buffer\sub(1, min - 1) .. sub .. buffer\sub(max + 1)
+
+  buffer
+
+{ :scan_html, :replace_html }
