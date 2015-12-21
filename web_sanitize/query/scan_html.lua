@@ -23,7 +23,7 @@ do
       end
       return table.insert(self.changes, {
         self.inner_pos,
-        self.end_inner_pos - 1,
+        self.end_inner_pos,
         replacement
       })
     end,
@@ -232,9 +232,34 @@ replace_html = function(html_text, _callback)
   scan_html(html_text, callback)
   local buffer = html_text
   for i, _des_0 in ipairs(changes) do
-    local min, max, sub
-    min, max, sub = _des_0[1], _des_0[2], _des_0[3]
-    buffer = buffer:sub(1, min - 1) .. sub .. buffer:sub(max + 1)
+    local _continue_0 = false
+    repeat
+      local min, max, sub
+      min, max, sub = _des_0[1], _des_0[2], _des_0[3]
+      if min >= max then
+        _continue_0 = true
+        break
+      end
+      buffer = buffer:sub(1, min - 1) .. sub .. buffer:sub(max)
+      if #sub == max - min then
+        _continue_0 = true
+        break
+      end
+      for k = i + 1, #changes do
+        local other_change = changes[k]
+        local delta = #sub - (max - min)
+        if min < other_change[2] then
+          other_change[1] = other_change[1] + delta
+        end
+        if min < other_change[1] then
+          other_change[2] = other_change[2] + delta
+        end
+      end
+      _continue_0 = true
+    until true
+    if not _continue_0 then
+      break
+    end
   end
   return buffer
 end

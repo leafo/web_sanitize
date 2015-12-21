@@ -26,12 +26,14 @@ describe "web_sanitize.query.scan", ->
   it "replaces consecutive tags #ddd" , ->
     out = replace_html "<div>1</div> <pre>2</pre> <span>3</span>", (tag_stack) ->
       t = tag_stack[#tag_stack]
-      print "doing tag", require("moon").dump t
       t\replace_inner_html "%%#{t\inner_html!}%%"
 
-    print out
-
+    assert.same "<div>%%1%%</div> <pre>%%2%%</pre> <span>%%3%%</span>", out
 
   it "replaces empty tag" , ->
-    replace_html "<code></code>", (tag_stack) ->
+    out = replace_html "<code></code>", (tag_stack) ->
+      t = tag_stack[#tag_stack]
+      t\replace_inner_html "%%hi%%"
+
+    assert.same "<code></code>", out
 

@@ -20,7 +20,7 @@ class HTMLNode
     unless @changes
       error "attempting to change buffer with no changes array"
 
-    table.insert @changes, {@inner_pos, @end_inner_pos - 1, replacement}
+    table.insert @changes, {@inner_pos, @end_inner_pos, replacement}
 
   inner_text: =>
     import extract_text from require "web_sanitize.html"
@@ -190,21 +190,21 @@ replace_html = (html_text, _callback) ->
   buffer = html_text
   for i, {min, max, sub} in ipairs changes
     continue if min >= max
-    buffer = buffer\sub(1, min - 1) .. sub .. buffer\sub(max + 1)
-    if #sub - 1 == max - min
+    buffer = buffer\sub(1, min - 1) .. sub .. buffer\sub(max)
+
+    if #sub == max - min
       continue
 
     -- update all the other changes
     for k=i+1,#changes
       other_change = changes[k]
+      delta = #sub - (max - min)
 
-      if other_change[1] > max
-        continue
+      if min < other_change[1]
+        other_change[1] += delta
 
-      if other_change[2] < min
-        continue
-
-      other_change[2] += (#sub - 1) - (max - min)
+      if min < other_change[2]
+        other_change[2] += delta
 
   buffer
 
