@@ -26,7 +26,7 @@ test_el = (el, q) ->
 
   true
 
-match_query = (stack, query) ->
+match_query_single = (stack, query) ->
   return false if #query > #stack
   stack_idx = #stack
 
@@ -49,6 +49,12 @@ match_query = (stack, query) ->
 
   true
 
+match_query = (stack, query) ->
+  for q in *query
+    if match_query_single stack, q
+      return true
+
+  false
 
 query_all = (html, q) ->
   q = parse_query q
@@ -62,15 +68,3 @@ query = (...) ->
   unpack query_all ...
 
 { :query_all, :query }
-
-
--- q = parse_query ".ok .yeah"
--- -- require("moon").p q
--- scan_html "a  <div class='ok'><pre><span class='yeah'>ok</span></pre></div> b", (stack) ->
---   print ""
---   print "TESTING::"
---   if match_query stack, q
---     print "WINNER!"
---     require("moon").p stack
-
-

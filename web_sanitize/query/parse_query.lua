@@ -30,7 +30,9 @@ parse_query = function(query)
   local nth = P(":nth-child(") * C(num ^ 1) * ")" / mark("nth-child")
   local selector = Ct((any + nth + tag + cls + id) ^ 1)
   local pq = Ct(selector * (white * selector) ^ 0)
-  return pq:match(query)
+  local pqs = Ct(pq * (white * P(",") * white * pq) ^ 0)
+  pqs = pqs * (white * -1)
+  return pqs:match(query)
 end
 return {
   parse_query = parse_query

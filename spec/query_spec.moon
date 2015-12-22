@@ -165,27 +165,61 @@ describe "query", ->
 
     it "parses tags", ->
       assert.same {
-        { {"tag", "hello"} }
-        { {"tag", "world"} }
+        {
+          { {"tag", "hello"} }
+          { {"tag", "world"} }
+        }
       }, parse_query "hello world"
 
     it "parses classes", ->
       assert.same {
-        { {"class", "hello"} }
-        { {"class", "world"} }
+        {
+          { {"class", "hello"} }
+          { {"class", "world"} }
+        }
       }, parse_query ".hello .world"
 
     it "parses ids", ->
       assert.same {
-        { {"id", "hello"} }
-        { {"id", "world"} }
+        {
+          { {"id", "hello"} }
+          { {"id", "world"} }
+        }
       }, parse_query "#hello #world"
 
     it "parses combo", ->
       assert.same {
-        {{"tag", "div"}, {"class", "yea"}}
-        {{"id", "what"}}
-        {{"class", "colorful"}}
+        {
+          {{"tag", "div"}, {"class", "yea"}}
+          {{"id", "what"}}
+          {{"class", "colorful"}}
+        }
       }, parse_query "div.yea #what .colorful"
+
+    it "parses alternatives", ->
+      assert.same {
+        {
+          {{"tag", "pre"}}
+        }
+        {
+          {{"tag", "code"}}
+        }
+      }, parse_query "pre, code"
+
+    it "parses complex alternatives", ->
+      assert.same {
+        {
+          {{"any", "*"}, {"nth-child", "2"}}
+          {{"class", "cool"}}
+        }
+        {
+          {{"tag", "span"}}
+          {{"tag", "div"}, {"id", "okay"}}
+        }
+      }, parse_query "*:nth-child(2) .cool, span div#okay"
+
+    it "failes when part of query doesn't match", ->
+      -- TODO: error message
+      assert.nil parse_query "div.hellok, 838r290@#$$##"
 
 

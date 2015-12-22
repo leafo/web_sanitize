@@ -20,7 +20,10 @@ parse_query = (query) ->
   selector = Ct (any + nth + tag + cls + id)^1
 
   pq = Ct selector * (white * selector)^0
-  pq\match query
+  pqs = Ct pq * (white * P"," * white * pq)^0
+  pqs *= white * -1 -- match to end
+
+  pqs\match query
 
 { :parse_query }
 

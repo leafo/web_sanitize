@@ -47,8 +47,8 @@ test_el = function(el, q)
   end
   return true
 end
-local match_query
-match_query = function(stack, query)
+local match_query_single
+match_query_single = function(stack, query)
   if #query > #stack then
     return false
   end
@@ -75,6 +75,16 @@ match_query = function(stack, query)
     end
   end
   return true
+end
+local match_query
+match_query = function(stack, query)
+  for _index_0 = 1, #query do
+    local q = query[_index_0]
+    if match_query_single(stack, q) then
+      return true
+    end
+  end
+  return false
 end
 local query_all
 query_all = function(html, q)
