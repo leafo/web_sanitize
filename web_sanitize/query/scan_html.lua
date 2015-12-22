@@ -77,6 +77,12 @@ do
       assert(self.end_inner_pos, "missing end_inner_pos")
       return self.buffer:sub(self.inner_pos, self.end_inner_pos - 1)
     end,
+    inner_text = function(self)
+      local extract_text
+      extract_text = require("web_sanitize.html").extract_text
+      local text = extract_text(self:inner_html())
+      return unescape_text:match(text) or text
+    end,
     replace_inner_html = function(self, replacement)
       if not (self.changes) then
         error("attempting to change buffer with no changes array")
@@ -87,11 +93,15 @@ do
         replacement
       })
     end,
-    inner_text = function(self)
-      local extract_text
-      extract_text = require("web_sanitize.html").extract_text
-      local text = extract_text(self:inner_html())
-      return unescape_text:match(text) or text
+    replace_outer_html = function(self, replacement)
+      if not (self.changes) then
+        error("attempting to change buffer with no changes array")
+      end
+      return table.insert(self.changes, {
+        self.pos,
+        self.end_pos,
+        replacement
+      })
     end
   }
   _base_0.__index = _base_0

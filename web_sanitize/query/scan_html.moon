@@ -36,16 +36,22 @@ class HTMLNode
     assert @end_inner_pos, "missing end_inner_pos"
     @buffer\sub @inner_pos, @end_inner_pos - 1
 
+  inner_text: =>
+    import extract_text from require "web_sanitize.html"
+    text = extract_text @inner_html!
+    unescape_text\match(text) or text
+
   replace_inner_html: (replacement) =>
     unless @changes
       error "attempting to change buffer with no changes array"
 
     table.insert @changes, {@inner_pos, @end_inner_pos, replacement}
 
-  inner_text: =>
-    import extract_text from require "web_sanitize.html"
-    text = extract_text @inner_html!
-    unescape_text\match(text) or text
+  replace_outer_html: (replacement) =>
+    unless @changes
+      error "attempting to change buffer with no changes array"
+
+    table.insert @changes, {@pos, @end_pos, replacement}
 
 import R, S, V, P from require "lpeg"
 import C, Cs, Ct, Cmt, Cg, Cb, Cc, Cp from require "lpeg"
