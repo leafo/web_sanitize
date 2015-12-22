@@ -35,5 +35,5 @@ describe "web_sanitize.query.scan", ->
       t = tag_stack[#tag_stack]
       t\replace_inner_html "%%hi%%"
 
-    assert.same "<code></code>", out
+    assert.same "<code>%%hi%%</code>", out
 

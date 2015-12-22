@@ -189,7 +189,7 @@ replace_html = (html_text, _callback) ->
 
   buffer = html_text
   for i, {min, max, sub} in ipairs changes
-    continue if min >= max
+    continue if min > max
     buffer = buffer\sub(1, min - 1) .. sub .. buffer\sub(max)
 
     if #sub == max - min

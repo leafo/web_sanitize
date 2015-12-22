@@ -236,7 +236,7 @@ replace_html = function(html_text, _callback)
     repeat
       local min, max, sub
       min, max, sub = _des_0[1], _des_0[2], _des_0[3]
-      if min >= max then
+      if min > max then
         _continue_0 = true
         break
       end
@@ -248,10 +248,10 @@ replace_html = function(html_text, _callback)
       for k = i + 1, #changes do
         local other_change = changes[k]
         local delta = #sub - (max - min)
-        if min < other_change[2] then
+        if min < other_change[1] then
           other_change[1] = other_change[1] + delta
         end
-        if min < other_change[1] then
+        if min < other_change[2] then
           other_change[2] = other_change[2] + delta
         end
       end
