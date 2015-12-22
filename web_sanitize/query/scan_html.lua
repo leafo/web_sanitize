@@ -5,6 +5,9 @@ local NodeStack
 do
   local _class_0
   local _base_0 = {
+    current = function(self)
+      return self[#self]
+    end,
     is = function(self, query)
       local parse_query
       parse_query = require("web_sanitize.query.parse_query").parse_query
@@ -82,6 +85,29 @@ do
       extract_text = require("web_sanitize.html").extract_text
       local text = extract_text(self:inner_html())
       return unescape_text:match(text) or text
+    end,
+    replace_atributes = function(self, attrs)
+      local escape_text
+      escape_text = require("web_sanitize.html").escape_text
+      local buff = {
+        "<",
+        self.tag
+      }
+      local i = #buff + 1
+      for k, v in pairs(attrs) do
+        buff[i] = " "
+        buff[i + 1] = k
+        buff[i + 2] = '="'
+        buff[i + 3] = escape_text:match(v)
+        buff[i + 4] = '"'
+        i = i + 5
+      end
+      buff[i] = ">"
+      buff[i + 1] = self:inner_html()
+      buff[i + 2] = "</"
+      buff[i + 3] = self.tag
+      buff[i + 4] = ">"
+      return self:replace_outer_html(table.concat(buff))
     end,
     replace_inner_html = function(self, replacement)
       if not (self.changes) then

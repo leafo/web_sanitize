@@ -154,5 +154,5 @@ extract_text = (str) ->
   out = out\gsub "%s+", " "
   (out\match "^%s*(.-)%s*$")
 
-{ :sanitize_html, :extract_text }
+{ :sanitize_html, :extract_text, :escape_text }
 

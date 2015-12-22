@@ -4,6 +4,9 @@ import void_tags from require "web_sanitize.data"
 local unescape_text
 
 class NodeStack
+  current: =>
+    @[#@]
+
   is: (query) =>
     import parse_query from require "web_sanitize.query.parse_query"
     import match_query from require "web_sanitize.query"
@@ -40,6 +43,28 @@ class HTMLNode
     import extract_text from require "web_sanitize.html"
     text = extract_text @inner_html!
     unescape_text\match(text) or text
+
+  replace_atributes: (attrs) =>
+    import escape_text from require "web_sanitize.html"
+
+    buff = {"<", @tag}
+    i = #buff + 1
+
+    for k,v in pairs attrs
+      buff[i] = " "
+      buff[i + 1] = k
+      buff[i + 2] = '="'
+      buff[i + 3] = escape_text\match v
+      buff[i + 4] = '"'
+      i += 5
+
+    buff[i] = ">"
+    buff[i+1] = @inner_html!
+    buff[i+2] = "</"
+    buff[i+3] = @tag
+    buff[i+4] = ">"
+
+    @replace_outer_html table.concat buff
 
   replace_inner_html: (replacement) =>
     unless @changes

@@ -181,5 +181,6 @@ extract_text = function(str)
 end
 return {
   sanitize_html = sanitize_html,
-  extract_text = extract_text
+  extract_text = extract_text,
+  escape_text = escape_text
 }
