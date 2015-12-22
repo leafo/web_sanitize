@@ -1,6 +1,66 @@
 local void_tags
 void_tags = require("web_sanitize.data").void_tags
 local unescape_text
+local NodeStack
+do
+  local _class_0
+  local _base_0 = {
+    is = function(self, query)
+      local parse_query
+      parse_query = require("web_sanitize.query.parse_query").parse_query
+      local match_query
+      match_query = require("web_sanitize.query").match_query
+      local q = assert(parse_query(query))
+      return match_query(self, q)
+    end,
+    select = function(self, query)
+      local parse_query
+      parse_query = require("web_sanitize.query.parse_query").parse_query
+      local match_query
+      match_query = require("web_sanitize.query").match_query
+      local q = assert(parse_query(query))
+      local stack = { }
+      return (function()
+        local _accum_0 = { }
+        local _len_0 = 1
+        for _index_0 = 1, #self do
+          local _continue_0 = false
+          repeat
+            local n = self[_index_0]
+            table.insert(stack, n)
+            if not (match_query(stack, q)) then
+              _continue_0 = true
+              break
+            end
+            local _value_0 = n
+            _accum_0[_len_0] = _value_0
+            _len_0 = _len_0 + 1
+            _continue_0 = true
+          until true
+          if not _continue_0 then
+            break
+          end
+        end
+        return _accum_0
+      end)()
+    end
+  }
+  _base_0.__index = _base_0
+  _class_0 = setmetatable({
+    __init = function() end,
+    __base = _base_0,
+    __name = "NodeStack"
+  }, {
+    __index = _base_0,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  NodeStack = _class_0
+end
 local HTMLNode
 do
   local _class_0
@@ -125,7 +185,7 @@ scan_html = function(html_text, callback)
     BufferHTMLNode = _class_0
   end
   local root_node = { }
-  local tag_stack = { }
+  local tag_stack = NodeStack()
   local fail_tag
   fail_tag = function()
     return table.insert(tag_stack, node)

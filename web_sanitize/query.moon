@@ -67,4 +67,4 @@ query_all = (html, q) ->
 query = (...) ->
   unpack query_all ...
 
-{ :query_all, :query }
+{ :query_all, :query, :match_query }

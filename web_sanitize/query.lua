@@ -103,5 +103,6 @@ query = function(...)
 end
 return {
   query_all = query_all,
-  query = query
+  query = query,
+  match_query = match_query
 }

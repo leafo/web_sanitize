@@ -3,6 +3,26 @@ import void_tags from require "web_sanitize.data"
 
 local unescape_text
 
+class NodeStack
+  is: (query) =>
+    import parse_query from require "web_sanitize.query.parse_query"
+    import match_query from require "web_sanitize.query"
+    q = assert parse_query query
+    match_query @, q
+
+  select: (query) =>
+    import parse_query from require "web_sanitize.query.parse_query"
+    import match_query from require "web_sanitize.query"
+
+    q = assert parse_query query
+
+    stack = {}
+    return for n in *@
+      table.insert stack, n
+      unless match_query stack, q
+        continue
+      n
+
 class HTMLNode
   outer_html: =>
     assert @buffer, "missing buffer"
@@ -67,7 +87,7 @@ scan_html = (html_text, callback) ->
     buffer: html_text
 
   root_node = {}
-  tag_stack = {}
+  tag_stack = NodeStack!
 
   fail_tag = ->
     -- ignore it
