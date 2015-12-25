@@ -143,6 +143,10 @@ scan_html = (html_text, callback) ->
 
     tag = tag\lower!
 
+    if stack_size == 0
+      -- too many closes, ignore
+      return true
+
     if tag != tag_stack[stack_size].tag
       -- tag mismatch, attempt to fix
       found_tag = false

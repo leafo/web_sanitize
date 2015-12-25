@@ -243,6 +243,9 @@ scan_html = function(html_text, callback)
   check_close_tag = function(str, end_pos, end_inner_pos, tag)
     local stack_size = #tag_stack
     tag = tag:lower()
+    if stack_size == 0 then
+      return true
+    end
     if tag ~= tag_stack[stack_size].tag then
       local found_tag = false
       for k = #tag_stack - 1, 1, -1 do

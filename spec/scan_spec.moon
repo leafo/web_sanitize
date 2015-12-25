@@ -1,6 +1,23 @@
 describe "web_sanitize.query.scan", ->
   import replace_html, scan_html from require "web_sanitize.query.scan_html"
 
+  describe "scan_html", ->
+    it "scans html with unclosed tag", ->
+      visited = {}
+
+      scan_html [[
+        <div class="hello">
+          </p>
+        </div>
+        </code>
+        <pre>
+        hello world
+      ]], (stack) ->
+        table.insert visited, stack\current!.tag
+
+      -- it should also get the pre
+      assert.same {"div"}, visited
+
   describe "replace_html", ->
     it "replaces tag content", ->
       out = replace_html "<div>hello world</div>", (tag_stack) ->
