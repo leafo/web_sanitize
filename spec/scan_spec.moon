@@ -58,8 +58,18 @@ describe "web_sanitize.query.scan", ->
     it "replaces attributes", ->
       out = replace_html "<div>1</div> <pre height=59>2</pre> <span>3</span>", (stack) ->
         stack\current!\replace_atributes { color: "blue", x: [["]] }
- 
-      assert.same [[<div x="&quot;" color="blue">1</div> <pre x="&quot;" color="blue">2</pre> <span x="&quot;" color="blue">3</span>]], out
+
+      one_of = {
+        [[<div x="&quot;" color="blue">1</div> <pre x="&quot;" color="blue">2</pre> <span x="&quot;" color="blue">3</span>]]
+        [[<div color="blue" x="&quot;">1</div> <pre color="blue" x="&quot;">2</pre> <span color="blue" x="&quot;">3</span>]]
+      }
+
+      for thing in *one_of
+        if thing == out
+          assert.same thing, out
+          return
+
+      assert.same one_of[1], out
 
   describe "NodeStack", ->
     it "adds slugs ids to headers", ->
