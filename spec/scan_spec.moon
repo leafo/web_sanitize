@@ -1,3 +1,7 @@
+
+flatten_html = (html) ->
+  ((html\gsub "%s+%<", "><")\match("^%s*(.-)%s*$"))
+
 describe "web_sanitize.query.scan", ->
   import replace_html, scan_html from require "web_sanitize.query.scan_html"
 
@@ -10,13 +14,31 @@ describe "web_sanitize.query.scan", ->
           </p>
         </div>
         </code>
+        <span>
+        <ul>hello
+        </span>
         <pre>
         hello world
       ]], (stack) ->
         table.insert visited, stack\current!.tag
 
       -- it should also get the pre
-      assert.same {"div"}, visited
+      assert.same {"div", "ul", "span", "pre"}, visited
+
+    it "gets content of dangling tags", ->
+      visited = {}
+
+      scan_html [[
+        <div>one
+        <span>two
+      ]], (stack) ->
+        table.insert visited,
+          flatten_html stack\current!\outer_html!
+
+      assert.same {
+        "<span>two",
+        "<div>one><span>two"
+      }, visited
 
   describe "replace_html", ->
     it "replaces tag content", ->

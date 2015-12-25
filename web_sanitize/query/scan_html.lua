@@ -274,6 +274,19 @@ scan_html = function(html_text, callback)
     end
     return true
   end
+  local check_dangling_tags
+  check_dangling_tags = function(str, pos)
+    local k = #tag_stack
+    while k > 0 do
+      local popping = tag_stack[k]
+      popping.end_pos = pos
+      popping.end_inner_pos = pos
+      callback(tag_stack)
+      tag_stack[k] = nil
+      k = k - 1
+    end
+    return true
+  end
   local check_void_tag
   check_void_tag = function(str, pos)
     local top = tag_stack[#tag_stack]
@@ -315,7 +328,7 @@ scan_html = function(html_text, callback)
   end
   local open_tag = Cmt(Cp() * P("<") * white * C(word), check_tag) * (Cmt(white * attribute, check_attribute) ^ 0 * white * (Cmt("/" * white * P(">"), pop_void_tag) + P(">") * (Cmt("", check_void_tag) + Cmt("", save_pos("inner_pos")))) + Cmt("", fail_tag))
   local close_tag = Cmt(Cp() * P("<") * white * P("/") * white * C(word) * white * P(">"), check_close_tag)
-  local html = (open_tag + close_tag + P("<") + P(1 - P("<")) ^ 1) ^ 0 * -1
+  local html = (open_tag + close_tag + P("<") + P(1 - P("<")) ^ 1) ^ 0 * -1 * Cmt(Cp(), check_dangling_tags)
   local res, err = html:match(html_text)
   return res
 end
