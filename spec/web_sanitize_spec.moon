@@ -1,6 +1,8 @@
 -- tests pulled from:
 -- * https://www.owasp.org/index.php/XSS_Filter_Evasion_Cheat_Sheet
 
+unpack = unpack or table.unpack
+
 tests = {
   {
     "this string has no html"

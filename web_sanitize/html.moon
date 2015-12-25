@@ -2,6 +2,8 @@ import insert, concat from table
 
 { tags: allowed_tags, :add_attributes, :self_closing } = require "web_sanitize.whitelist"
 
+unpack = unpack or table.unpack
+
 lpeg = require "lpeg"
 
 local escape_text

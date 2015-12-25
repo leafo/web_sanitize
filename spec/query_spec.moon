@@ -1,4 +1,6 @@
 
+unpack = unpack or table.unpack
+
 describe "query", ->
   describe "query_all", ->
     import query_all from require "web_sanitize.query"

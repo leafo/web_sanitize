@@ -2,6 +2,8 @@
 import scan_html from require "web_sanitize.query.scan_html"
 import parse_query from require "web_sanitize.query.parse_query"
 
+unpack = unpack or table.unpack
+
 test_el = (el, q) ->
   local el_classes
   for {t, expected} in *q

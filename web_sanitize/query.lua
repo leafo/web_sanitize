@@ -2,6 +2,7 @@ local scan_html
 scan_html = require("web_sanitize.query.scan_html").scan_html
 local parse_query
 parse_query = require("web_sanitize.query.parse_query").parse_query
+local unpack = unpack or table.unpack
 local test_el
 test_el = function(el, q)
   local el_classes
