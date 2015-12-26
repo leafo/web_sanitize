@@ -221,7 +221,7 @@ describe "query", ->
       }, parse_query "*:nth-child(2) .cool, span div#okay"
 
     it "failes when part of query doesn't match", ->
-      -- TODO: error message
+      -- TODO: give error messagess and error locations
       assert.nil parse_query "div.hellok, 838r290@#$$##"
 
 
