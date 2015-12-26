@@ -86,7 +86,7 @@ do
       local text = extract_text(self:inner_html())
       return unescape_text:match(text) or text
     end,
-    replace_atributes = function(self, attrs)
+    replace_attributes = function(self, attrs)
       local escape_text
       escape_text = require("web_sanitize.html").escape_text
       local buff = {

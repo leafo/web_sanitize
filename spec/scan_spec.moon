@@ -79,7 +79,7 @@ describe "web_sanitize.query.scan", ->
 
     it "replaces attributes", ->
       out = replace_html "<div>1</div> <pre height=59>2</pre> <span>3</span>", (stack) ->
-        stack\current!\replace_atributes { color: "blue", x: [["]] }
+        stack\current!\replace_attributes { color: "blue", x: [["]] }
 
       one_of = {
         [[<div x="&quot;" color="blue">1</div> <pre x="&quot;" color="blue">2</pre> <span x="&quot;" color="blue">3</span>]]
@@ -113,7 +113,7 @@ describe "web_sanitize.query.scan", ->
       out = replace_html document, (stack) ->
         return unless stack\is "h1, h2"
         el = stack\current!
-        el\replace_atributes {
+        el\replace_attributes {
           id: slugify el\inner_text!
         }
 

@@ -44,7 +44,7 @@ class HTMLNode
     text = extract_text @inner_html!
     unescape_text\match(text) or text
 
-  replace_atributes: (attrs) =>
+  replace_attributes: (attrs) =>
     import escape_text from require "web_sanitize.html"
 
     buff = {"<", @tag}
