@@ -6,7 +6,7 @@ source = {
 }
 
 description = {
-  summary = "Lua library for sanitizing untrusted HTML",
+  summary = "Lua library for sanitizing and manipulating HTML & CSS",
   license = "MIT",
   maintainer = "Leaf Corcoran <leafot@gmail.com>",
   homepage = "https://github.com/leafo/web_sanitize",
