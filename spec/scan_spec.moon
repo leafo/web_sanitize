@@ -48,17 +48,17 @@ describe "web_sanitize.query.scan", ->
           style: "height: 20px"
           readonly: true
 
-          {"data-dad", '"&'}
-          {"CLASS", "blue"}
-          {"style", "height: 20px"}
-          {"readonly", true}
+          "data-dad"
+          "CLASS"
+          "style"
+          "readonly"
         }
         hr: {
           allowfullscreen: true
           id: "divider"
 
-          {"id", "divider"}
-          {"allowfullscreen", true}
+          "id"
+          "allowfullscreen"
         }
       }
 
@@ -130,6 +130,15 @@ describe "web_sanitize.query.scan", ->
         }
 
       assert.same "<iframe allowfullscreen></iframe>", out
+
+    it "mutates existing attributes", ->
+      -- also strips the duplicates
+      out = replace_html '<div a="b" b="c" a="whw" b="&amp;&quot;"></div>', (stack) ->
+        node = stack\current!
+        node.attr.color = "green"
+        node\replace_attributes node.attr
+
+      assert.same [[<div a="whw" b="&amp;&quot;" color="green"></div>]], out
 
   describe "NodeStack", ->
     it "adds slugs ids to headers", ->
