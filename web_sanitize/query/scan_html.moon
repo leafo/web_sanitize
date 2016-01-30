@@ -50,21 +50,35 @@ class HTMLNode
     buff = {"<", @tag}
     i = #buff + 1
 
-    for k,v in pairs attrs
-      bool_attr = if type(v) == "boolean"
-        continue unless v
-        true
-
+    push_attr = (name, value) ->
       buff[i] = " "
-      buff[i + 1] = k
+      buff[i + 1] = name
 
-      if bool_attr
+      if value == true
         i += 2
       else
         buff[i + 2] = '="'
-        buff[i + 3] = escape_text\match v
+        buff[i + 3] = escape_text\match value
         buff[i + 4] = '"'
         i += 5
+
+    seen_attrs = {}
+
+    -- add ordered attributes first
+    for name in *attrs
+      lower = name\lower!
+      continue if seen_attrs[lower]
+      value = attrs[lower]
+      continue unless value
+      push_attr name, value
+      seen_attrs[lower] = true
+
+    -- add the rest
+    for k,v in pairs attrs
+      continue unless type(k) == "string"
+      continue unless v
+      continue if seen_attrs[k]
+      push_attr k,v
 
     buff[i] = ">"
     buff[i+1] = @inner_html!

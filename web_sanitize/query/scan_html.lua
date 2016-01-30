@@ -94,27 +94,58 @@ do
         self.tag
       }
       local i = #buff + 1
+      local push_attr
+      push_attr = function(name, value)
+        buff[i] = " "
+        buff[i + 1] = name
+        if value == true then
+          i = i + 2
+        else
+          buff[i + 2] = '="'
+          buff[i + 3] = escape_text:match(value)
+          buff[i + 4] = '"'
+          i = i + 5
+        end
+      end
+      local seen_attrs = { }
+      for _index_0 = 1, #attrs do
+        local _continue_0 = false
+        repeat
+          local name = attrs[_index_0]
+          local lower = name:lower()
+          if seen_attrs[lower] then
+            _continue_0 = true
+            break
+          end
+          local value = attrs[lower]
+          if not (value) then
+            _continue_0 = true
+            break
+          end
+          push_attr(name, value)
+          seen_attrs[lower] = true
+          _continue_0 = true
+        until true
+        if not _continue_0 then
+          break
+        end
+      end
       for k, v in pairs(attrs) do
         local _continue_0 = false
         repeat
-          local bool_attr
-          if type(v) == "boolean" then
-            if not (v) then
-              _continue_0 = true
-              break
-            end
-            bool_attr = true
+          if not (type(k) == "string") then
+            _continue_0 = true
+            break
           end
-          buff[i] = " "
-          buff[i + 1] = k
-          if bool_attr then
-            i = i + 2
-          else
-            buff[i + 2] = '="'
-            buff[i + 3] = escape_text:match(v)
-            buff[i + 4] = '"'
-            i = i + 5
+          if not (v) then
+            _continue_0 = true
+            break
           end
+          if seen_attrs[k] then
+            _continue_0 = true
+            break
+          end
+          push_attr(k, v)
           _continue_0 = true
         until true
         if not _continue_0 then
