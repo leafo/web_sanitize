@@ -330,11 +330,17 @@ scan_html = function(html_text, callback)
   check_attribute = function(str, pos, name, val)
     local top = tag_stack[#tag_stack]
     top.attr = top.attr or { }
+    local attr_val
     if val then
-      top.attr[name:lower()] = unescape_text:match(val) or val
+      attr_val = unescape_text:match(val) or val
     else
-      top.attr[name:lower()] = true
+      attr_val = true
     end
+    top.attr[name:lower()] = attr_val
+    table.insert(top.attr, {
+      name,
+      attr_val
+    })
     return true
   end
   local save_pos

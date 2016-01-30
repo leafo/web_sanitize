@@ -47,15 +47,23 @@ describe "web_sanitize.query.scan", ->
           class: "blue"
           style: "height: 20px"
           readonly: true
+
+          {"data-dad", '"&'}
+          {"CLASS", "blue"}
+          {"style", "height: 20px"}
+          {"readonly", true}
         }
         hr: {
           allowfullscreen: true
           id: "divider"
+
+          {"id", "divider"}
+          {"allowfullscreen", true}
         }
       }
 
       scan_html [[
-        <div data-dad="&quot;&amp;" class="blue" style="height: 20px" readonly>
+        <div data-dad="&quot;&amp;" CLASS="blue" style="height: 20px" readonly>
           <hr id="divider" allowfullscreen />
         </div>
       ]], (stack) ->

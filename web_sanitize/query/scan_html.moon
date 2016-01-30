@@ -220,10 +220,13 @@ scan_html = (html_text, callback) ->
     top = tag_stack[#tag_stack]
     top.attr or= {}
 
-    top.attr[name\lower!] = if val
+    attr_val = if val
       unescape_text\match(val) or val
     else
       true
+
+    top.attr[name\lower!] = attr_val
+    table.insert top.attr, {name, attr_val}
 
     true
 
