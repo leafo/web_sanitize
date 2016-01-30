@@ -95,12 +95,31 @@ do
       }
       local i = #buff + 1
       for k, v in pairs(attrs) do
-        buff[i] = " "
-        buff[i + 1] = k
-        buff[i + 2] = '="'
-        buff[i + 3] = escape_text:match(v)
-        buff[i + 4] = '"'
-        i = i + 5
+        local _continue_0 = false
+        repeat
+          local bool_attr
+          if type(v) == "boolean" then
+            if not (v) then
+              _continue_0 = true
+              break
+            end
+            bool_attr = true
+          end
+          buff[i] = " "
+          buff[i + 1] = k
+          if bool_attr then
+            i = i + 2
+          else
+            buff[i + 2] = '="'
+            buff[i + 3] = escape_text:match(v)
+            buff[i + 4] = '"'
+            i = i + 5
+          end
+          _continue_0 = true
+        until true
+        if not _continue_0 then
+          break
+        end
       end
       buff[i] = ">"
       buff[i + 1] = self:inner_html()

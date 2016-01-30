@@ -51,12 +51,20 @@ class HTMLNode
     i = #buff + 1
 
     for k,v in pairs attrs
+      bool_attr = if type(v) == "boolean"
+        continue unless v
+        true
+
       buff[i] = " "
       buff[i + 1] = k
-      buff[i + 2] = '="'
-      buff[i + 3] = escape_text\match v
-      buff[i + 4] = '"'
-      i += 5
+
+      if bool_attr
+        i += 2
+      else
+        buff[i + 2] = '="'
+        buff[i + 3] = escape_text\match v
+        buff[i + 4] = '"'
+        i += 5
 
     buff[i] = ">"
     buff[i+1] = @inner_html!

@@ -115,6 +115,14 @@ describe "web_sanitize.query.scan", ->
 
       assert.same one_of[1], out
 
+    it "replaces attributes with boolean attribute", ->
+      out = replace_html "<iframe></iframe>", (stack) ->
+        stack\current!\replace_attributes {
+          allowfullscreen: true
+        }
+
+      assert.same "<iframe allowfullscreen></iframe>", out
+
   describe "NodeStack", ->
     it "adds slugs ids to headers", ->
       slugify = (str) ->
