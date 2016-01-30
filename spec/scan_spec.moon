@@ -40,6 +40,28 @@ describe "web_sanitize.query.scan", ->
         "<div>one><span>two"
       }, visited
 
+    it "scans attributes", ->
+      expected = {
+        div: {
+          "data-dad": '"&'
+          class: "blue"
+          style: "height: 20px"
+          readonly: true
+        }
+        hr: {
+          allowfullscreen: true
+          id: "divider"
+        }
+      }
+
+      scan_html [[
+        <div data-dad="&quot;&amp;" class="blue" style="height: 20px" readonly>
+          <hr id="divider" allowfullscreen />
+        </div>
+      ]], (stack) ->
+        node = stack\current!
+        assert.same expected[node.tag], node.attr
+
   describe "replace_html", ->
     it "replaces tag content", ->
       out = replace_html "<div>hello world</div>", (tag_stack) ->
@@ -63,7 +85,7 @@ describe "web_sanitize.query.scan", ->
 
       assert.same "<div>X</div>", out
 
-    it "replaces consecutive tags #ddd" , ->
+    it "replaces consecutive tags" , ->
       out = replace_html "<div>1</div> <pre>2</pre> <span>3</span>", (tag_stack) ->
         t = tag_stack[#tag_stack]
         t\replace_inner_html "%%#{t\inner_html!}%%"
