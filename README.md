@@ -156,6 +156,12 @@ make test
 
 ## Changelog
 
+**Master**
+
+* `replace_attributes` works correctly with boolean attributes, eg. `{allowfullscreen = true}`
+* attribute order is preserved when mutating attributes with `replace_attributes`
+* the `attr` object has array positional items with the names of the attributes in the order they were encountered
+
 **Dec 27  2015** - 0.4.0
 
 * Add query and scan implementations
