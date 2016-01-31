@@ -131,6 +131,15 @@ describe "web_sanitize.query.scan", ->
 
       assert.same "<iframe allowfullscreen></iframe>", out
 
+    it "replaces attributes on void tag", ->
+      out = replace_html "<div><hr /></div>", (stack) ->
+        return unless stack\is "hr"
+        stack\current!\replace_attributes {
+          cool: "zone"
+        }
+
+      assert.same '<div><hr cool="zone" /></div>', out
+
     it "mutates existing attributes", ->
       -- also strips the duplicates
       out = replace_html '<div a="b" b="c" a="whw" b="&amp;&quot;"></div>', (stack) ->
