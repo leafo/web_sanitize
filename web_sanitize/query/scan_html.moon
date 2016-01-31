@@ -80,11 +80,7 @@ class HTMLNode
       continue if seen_attrs[k]
       push_attr k,v
 
-    buff[i] = if @inner_pos
-      ">"
-    else
-      " />"
-
+    buff[i] = ">"
     table.insert @changes, {@pos, @inner_pos or @end_pos, table.concat buff}
 
   replace_inner_html: (replacement) =>
