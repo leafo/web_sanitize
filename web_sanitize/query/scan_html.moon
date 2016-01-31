@@ -81,12 +81,8 @@ class HTMLNode
       push_attr k,v
 
     buff[i] = ">"
-    buff[i+1] = @inner_html!
-    buff[i+2] = "</"
-    buff[i+3] = @tag
-    buff[i+4] = ">"
 
-    @replace_outer_html table.concat buff
+    table.insert @changes, {@pos, @inner_pos, table.concat buff}
 
   replace_inner_html: (replacement) =>
     unless @changes
