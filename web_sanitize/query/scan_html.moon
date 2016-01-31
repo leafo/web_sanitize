@@ -1,7 +1,7 @@
 
 import void_tags from require "web_sanitize.data"
 
-local unescape_text
+local unescape_text, void_tags_set
 
 class NodeStack
   current: =>
@@ -80,9 +80,12 @@ class HTMLNode
       continue if seen_attrs[k]
       push_attr k,v
 
-    buff[i] = ">"
+    buff[i] = if @inner_pos
+      ">"
+    else
+      " />"
 
-    table.insert @changes, {@pos, @inner_pos, table.concat buff}
+    table.insert @changes, {@pos, @inner_pos or @end_pos, table.concat buff}
 
   replace_inner_html: (replacement) =>
     unless @changes

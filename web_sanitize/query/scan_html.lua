@@ -1,6 +1,6 @@
 local void_tags
 void_tags = require("web_sanitize.data").void_tags
-local unescape_text
+local unescape_text, void_tags_set
 local NodeStack
 do
   local _class_0
@@ -152,12 +152,16 @@ do
           break
         end
       end
-      buff[i] = ">"
-      buff[i + 1] = self:inner_html()
-      buff[i + 2] = "</"
-      buff[i + 3] = self.tag
-      buff[i + 4] = ">"
-      return self:replace_outer_html(table.concat(buff))
+      if self.inner_pos then
+        buff[i] = ">"
+      else
+        buff[i] = " />"
+      end
+      return table.insert(self.changes, {
+        self.pos,
+        self.inner_pos or self.end_pos,
+        table.concat(buff)
+      })
     end,
     replace_inner_html = function(self, replacement)
       if not (self.changes) then
@@ -206,7 +210,6 @@ do
   local _obj_0 = require("lpeg")
   C, Cs, Ct, Cmt, Cg, Cb, Cc, Cp = _obj_0.C, _obj_0.Cs, _obj_0.Ct, _obj_0.Cmt, _obj_0.Cg, _obj_0.Cb, _obj_0.Cc, _obj_0.Cp
 end
-local void_tags_set
 do
   local _tbl_0 = { }
   for _index_0 = 1, #void_tags do
