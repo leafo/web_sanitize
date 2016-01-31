@@ -152,11 +152,7 @@ do
           break
         end
       end
-      if self.inner_pos then
-        buff[i] = ">"
-      else
-        buff[i] = " />"
-      end
+      buff[i] = ">"
       return table.insert(self.changes, {
         self.pos,
         self.inner_pos or self.end_pos,
