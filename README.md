@@ -159,6 +159,8 @@ make test
 **Master**
 
 * `replace_attributes` works correctly with boolean attributes, eg. `{allowfullscreen = true}`
+* `replace_attributes` works correctly with void tags
+* `replace_attributes` only manipulates text of opening tag, not entire tag, preventing any double edit bugs
 * attribute order is preserved when mutating attributes with `replace_attributes`
 * the `attr` object has array positional items with the names of the attributes in the order they were encountered
 
