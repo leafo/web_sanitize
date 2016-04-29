@@ -273,7 +273,7 @@ scan_html = function(html_text, callback)
   local tag_stack = NodeStack()
   local fail_tag
   fail_tag = function()
-    return table.insert(tag_stack, node)
+    tag_stack[#tag_stack] = nil
   end
   local check_tag
   check_tag = function(str, _, pos, tag)

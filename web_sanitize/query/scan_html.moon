@@ -138,8 +138,7 @@ scan_html = (html_text, callback) ->
   tag_stack = NodeStack!
 
   fail_tag = ->
-    -- ignore it
-    table.insert tag_stack, node
+    tag_stack[#tag_stack] = nil
 
   check_tag = (str, _, pos, tag) ->
     top = tag_stack[#tag_stack] or root_node
