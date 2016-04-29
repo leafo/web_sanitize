@@ -26,6 +26,10 @@ local text = C((1 - escaped_char) ^ 1)
 local word = (alphanum + S("._-")) ^ 1
 local value = C(word) + P('"') * C((1 - P('"')) ^ 0) * P('"') + P("'") * C((1 - P("'")) ^ 0) * P("'")
 local attribute = C(word) * (white * P("=") * white * value) ^ -1
+local value_ignored = word + P('"') * (1 - P('"')) ^ 0 * P('"') + P("'") * (1 - P("'")) ^ 0 * P("'")
+local attribute_ignored = word * (white * P("=") * white * value_ignored) ^ -1
+local open_tag_ignored = P("<") * white * word * (white * attribute_ignored) ^ 0 * white * (P("/") * white) ^ -1 * P(">")
+local close_tag_ignored = P("<") * white * P("/") * white * word * white * P(">")
 local escape_text = Cs((escaped_char + 1) ^ 0 * -1)
 local Sanitizer
 Sanitizer = function(opts)
@@ -144,6 +148,10 @@ Sanitizer = function(opts)
   local tag_attributes = Cmt(Cp() * white * attribute, check_attribute) ^ 0
   local open_tag = C(P("<") * white) * Cmt(word, check_tag) * (tag_attributes * white * Cmt("", inject_attributes) * Cmt("/" * white, pop_tag) ^ -1 * C(">") + Cmt("", fail_tag))
   local close_tag = Cmt(C(P("<") * white * P("/") * white) * C(word) * C(white * P(">")), check_close_tag)
+  if opts and opts.strip_tags then
+    open_tag = open_tag + open_tag_ignored
+    close_tag = close_tag + close_tag_ignored
+  end
   local html = Ct((open_tag + close_tag + valid_char + escaped_char + text) ^ 0 * -1)
   return function(str)
     tag_stack = { }
@@ -172,11 +180,7 @@ Sanitizer = function(opts)
 end
 local Extractor
 Extractor = function(opts)
-  local value_ignored = word + P('"') * (1 - P('"')) ^ 0 * P('"') + P("'") * (1 - P("'")) ^ 0 * P("'")
-  local attribute_ignored = word * (white * P("=") * white * value_ignored) ^ -1
-  local open_tag_ignored = P("<") * white * word * (white * attribute_ignored) ^ 0 * white * (P("/") * white) ^ -1 * P(">") / " "
-  local close_tag_ignored = P("<") * white * P("/") * white * word * white * P(">") / " "
-  local html_text = Ct((open_tag_ignored + close_tag_ignored + valid_char + escaped_char + text) ^ 0 * -1)
+  local html_text = Ct((open_tag_ignored / " " + close_tag_ignored / " " + valid_char + escaped_char + text) ^ 0 * -1)
   return function(str)
     local buffer = assert(html_text:match(str), "failed to parse html")
     local out = concat(buffer)

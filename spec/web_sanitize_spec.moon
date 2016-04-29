@@ -341,6 +341,43 @@ text_tests = {
   }
 }
 
+sanitize_tests_strip = {
+  {
+    [[<body><b>hello world</b></body>]]
+    "<b>hello world</b>"
+  }
+
+  {
+    "this string has no html"
+    "this string has no html"
+  }
+
+  {
+    [[<TABLE BACKGROUND="javascript:alert('XSS')">]]
+    "<TABLE></table>"
+  }
+
+  {
+    '<li><i>Hello world</li>'
+    '<li><i>Hello world</i></li>'
+  }
+
+  {
+    '<!-- comment -->Hello'
+    '&lt;!-- comment --&gt;Hello'
+  }
+
+  {
+    'hello <script dad="world"><b>yes</b></b>'
+    'hello <b>yes</b>'
+  }
+
+  {
+    [[<iframe src=http://ha.ckers.org/scriptlet.html <]]
+    '&lt;iframe src=http://ha.ckers.org/scriptlet.html &lt;'
+  }
+}
+
 
 describe "web_sanitize", ->
   describe "sanitize_html", ->
@@ -354,6 +391,18 @@ describe "web_sanitize", ->
     for i, {input, output} in ipairs text_tests
       it "#{i}: extract text and match", ->
         assert.are.equal output, extract_text(input)
+
+
+  describe "sanitize_html strip tags", ->
+    local sanitize_html
+
+    setup ->
+      import Sanitizer from require "web_sanitize.html"
+      sanitize_html = Sanitizer strip_tags: true
+
+    for i, {input, output} in ipairs sanitize_tests_strip
+      it "#{i}: should sanitize and match", ->
+        assert.are.equal output, sanitize_html input
 
   describe "whitelist", ->
     whitelist = require "web_sanitize.whitelist"

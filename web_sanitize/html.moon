@@ -29,6 +29,12 @@ word = (alphanum + S"._-")^1
 value = C(word) + P'"' * C((1 - P'"')^0) * P'"' + P"'" * C((1 - P"'")^0) * P"'"
 attribute = C(word) * (white * P"=" * white * value)^-1
 
+-- ignored matchers don't capture anything
+value_ignored = word + P'"' * (1 - P'"')^0 * P'"' + P"'" * (1 - P"'")^0 * P"'"
+attribute_ignored = word * (white * P"=" * white * value_ignored)^-1
+open_tag_ignored = P"<" * white * word * (white * attribute_ignored)^0 * white * (P"/" * white)^-1 * P">"
+close_tag_ignored = P"<" * white * P"/" * white * word * white * P">"
+
 escape_text = Cs (escaped_char + 1)^0 * -1
 
 Sanitizer = (opts) ->
@@ -130,6 +136,10 @@ Sanitizer = (opts) ->
 
   close_tag = Cmt(C(P"<" * white * P"/" * white) * C(word) * C(white * P">"), check_close_tag)
 
+  if opts and opts.strip_tags
+    open_tag += open_tag_ignored
+    close_tag += close_tag_ignored
+
   html = Ct (open_tag + close_tag + valid_char + escaped_char + text)^0 * -1
 
   (str) ->
@@ -148,15 +158,7 @@ Sanitizer = (opts) ->
 
 -- parse the html, extract text between non tag items
 Extractor = (opts) ->
-  -- parses through tags without capturing anything
-  value_ignored = word + P'"' * (1 - P'"')^0 * P'"' + P"'" * (1 - P"'")^0 * P"'"
-
-  attribute_ignored = word * (white * P"=" * white * value_ignored)^-1
-
-  open_tag_ignored = P"<" * white * word * (white * attribute_ignored)^0 * white * (P"/" * white)^-1 * P">" / " "
-  close_tag_ignored = P"<" * white * P"/" * white * word * white * P">" / " "
-
-  html_text = Ct (open_tag_ignored + close_tag_ignored + valid_char + escaped_char + text)^0 * -1
+  html_text = Ct (open_tag_ignored / " " + close_tag_ignored / " " + valid_char + escaped_char + text)^0 * -1
 
   (str) ->
     buffer = assert html_text\match(str), "failed to parse html"
