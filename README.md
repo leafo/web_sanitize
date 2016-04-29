@@ -169,6 +169,7 @@ Similar to above, see [`css_whitelist.moon`][6]
 In addition to the `whitelist` option shown above, the sanitizer has the following options:
 
 * `strip_tags` - *boolean* Remove unknown tags from output entirely, default: `false`
+* `strip_comments` - *boolean* Remove comments from output instead of escaping them, default: `false`
 
 ```lua
 local Sanitizer = require("web_sanitize.html").Sanitizer
