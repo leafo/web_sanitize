@@ -341,27 +341,44 @@ text_tests = {
   }
 }
 
-import sanitize_html, extract_text from require "web_sanitize"
 
 describe "web_sanitize", ->
-  for i, {input, output} in ipairs tests
-    it "#{i}: should sanitize and match", ->
-      assert.are.equal output, sanitize_html(input)
+  describe "sanitize_html", ->
+    import sanitize_html from require "web_sanitize"
+    for i, {input, output} in ipairs tests
+      it "#{i}: should sanitize and match", ->
+        assert.are.equal output, sanitize_html(input)
 
+  describe "extract_text", ->
+    import extract_text from require "web_sanitize"
+    for i, {input, output} in ipairs text_tests
+      it "#{i}: extract text and match", ->
+        assert.are.equal output, extract_text(input)
 
-  for i, {input, output} in ipairs text_tests
-    it "#{i}: extract text and match", ->
-      assert.are.equal output, extract_text(input)
+  describe "whitelist", ->
+    whitelist = require "web_sanitize.whitelist"
+
+    it "clones whitelist", ->
+      wl = whitelist\clone!
+      assert.same whitelist, wl
+
+      wl.tags.b = nil
+      assert.not.same whitelist, wl
 
   describe "modified whitelist", ->
+    local sanitize_html
+
     setup ->
-      whitelist = require "web_sanitize.whitelist"
+      whitelist = require("web_sanitize.whitelist")\clone!
       whitelist.tags.iframe = {
         src: true
         frameborder: true
         allowfullscreen: true
         style: (str) -> "*''#{str}''*"
       }
+
+      import Sanitizer from require "web_sanitize.html"
+      sanitize_html = Sanitizer { :whitelist }
 
     it "should sanitize", ->
       assert.same unpack {
@@ -373,6 +390,4 @@ describe "web_sanitize", ->
         [[<iframe style="*&#x27;&#x27;hello world&#x27;&#x27;*"></iframe>]]
         sanitize_html [[<iframe style="hello world">]]
       }
-
-
 
