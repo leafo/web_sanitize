@@ -24,7 +24,7 @@ valid_char = C P"&" * (alphanum^1 + P"#" * (num^1 + S"xX" * hex^1)) + P";"
 
 white = S" \t\n"^0
 text = C (1 - escaped_char)^1
-word = (alphanum + S"._-")^1
+word = (alphanum + S"._-:")^1
 
 value = C(word) + P'"' * C((1 - P'"')^0) * P'"' + P"'" * C((1 - P"'")^0) * P"'"
 attribute = C(word) * (white * P"=" * white * value)^-1
