@@ -82,7 +82,7 @@ do
     end,
     inner_text = function(self)
       local extract_text
-      extract_text = require("web_sanitize.html").extract_text
+      extract_text = require("web_sanitize").extract_text
       local text = extract_text(self:inner_html())
       return unescape_text:match(text) or text
     end,

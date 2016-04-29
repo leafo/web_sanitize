@@ -40,7 +40,7 @@ class HTMLNode
     @buffer\sub @inner_pos, @end_inner_pos - 1
 
   inner_text: =>
-    import extract_text from require "web_sanitize.html"
+    import extract_text from require "web_sanitize"
     text = extract_text @inner_html!
     unescape_text\match(text) or text
 
