@@ -28,6 +28,7 @@ word = (alphanum + S"._-:")^1
 
 value = C(word) + P'"' * C((1 - P'"')^0) * P'"' + P"'" * C((1 - P"'")^0) * P"'"
 attribute = C(word) * (white * P"=" * white * value)^-1
+comment = P"<!--" * (1 - P"-->")^0 * P"-->"
 
 -- ignored matchers don't capture anything
 value_ignored = word + P'"' * (1 - P'"')^0 * P'"' + P"'" * (1 - P"'")^0 * P"'"
@@ -139,6 +140,9 @@ Sanitizer = (opts) ->
   if opts and opts.strip_tags
     open_tag += open_tag_ignored
     close_tag += close_tag_ignored
+
+  if opts and opts.strip_comments
+    open_tag = comment + open_tag
 
   html = Ct (open_tag + close_tag + valid_char + escaped_char + text)^0 * -1
 

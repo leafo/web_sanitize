@@ -26,6 +26,7 @@ local text = C((1 - escaped_char) ^ 1)
 local word = (alphanum + S("._-:")) ^ 1
 local value = C(word) + P('"') * C((1 - P('"')) ^ 0) * P('"') + P("'") * C((1 - P("'")) ^ 0) * P("'")
 local attribute = C(word) * (white * P("=") * white * value) ^ -1
+local comment = P("<!--") * (1 - P("-->")) ^ 0 * P("-->")
 local value_ignored = word + P('"') * (1 - P('"')) ^ 0 * P('"') + P("'") * (1 - P("'")) ^ 0 * P("'")
 local attribute_ignored = word * (white * P("=") * white * value_ignored) ^ -1
 local open_tag_ignored = P("<") * white * word * (white * attribute_ignored) ^ 0 * white * (P("/") * white) ^ -1 * P(">")
@@ -151,6 +152,9 @@ Sanitizer = function(opts)
   if opts and opts.strip_tags then
     open_tag = open_tag + open_tag_ignored
     close_tag = close_tag + close_tag_ignored
+  end
+  if opts and opts.strip_comments then
+    open_tag = comment + open_tag
   end
   local html = Ct((open_tag + close_tag + valid_char + escaped_char + text) ^ 0 * -1)
   return function(str)
