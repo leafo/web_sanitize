@@ -138,7 +138,7 @@ describe "web_sanitize.query.scan", ->
           cool: "zone"
         }
 
-      assert.same '<div><hr cool="zone" /></div>', out
+      assert.same '<div><hr cool="zone"></div>', out
 
     it "mutates existing attributes", ->
       -- also strips the duplicates
