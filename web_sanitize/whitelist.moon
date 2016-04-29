@@ -91,5 +91,9 @@ self_closing = {
   br: true, img: true, hr: true
 }
 
-{ :tags, :add_attributes, :self_closing }
+clone = (t) ->
+  return t unless type(t) == "table"
+  {k, clone v for k, v in pairs t}
+
+{ :tags, :add_attributes, :self_closing, :clone }
 

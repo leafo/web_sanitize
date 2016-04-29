@@ -130,8 +130,20 @@ local self_closing = {
   img = true,
   hr = true
 }
+local clone
+clone = function(t)
+  if not (type(t) == "table") then
+    return t
+  end
+  local _tbl_0 = { }
+  for k, v in pairs(t) do
+    _tbl_0[k] = clone(v)
+  end
+  return _tbl_0
+end
 return {
   tags = tags,
   add_attributes = add_attributes,
-  self_closing = self_closing
+  self_closing = self_closing,
+  clone = clone
 }
