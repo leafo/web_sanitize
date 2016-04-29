@@ -365,6 +365,13 @@ describe "web_sanitize", ->
       wl.tags.b = nil
       assert.not.same whitelist, wl
 
+    it "clones nested", ->
+      wl = whitelist\clone!
+      assert.same whitelist, wl
+
+      wl.tags.abbr.cool = true
+      assert.not.same whitelist, wl
+
   describe "modified whitelist", ->
     local sanitize_html
 
