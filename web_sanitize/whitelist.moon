@@ -78,7 +78,7 @@ if default = tags[1]
     if type(v) == "table"
       setmetatable v, mt
     else
-      tags[k] = default
+      tags[k] = setmetatable {}, mt
 
 add_attributes = {
   a: {

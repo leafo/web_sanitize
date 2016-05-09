@@ -110,7 +110,7 @@ do
         if type(v) == "table" then
           setmetatable(v, mt)
         else
-          tags[k] = default
+          tags[k] = setmetatable({ }, mt)
         end
         _continue_0 = true
       until true
