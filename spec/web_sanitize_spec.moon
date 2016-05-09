@@ -421,6 +421,13 @@ describe "web_sanitize", ->
       wl.tags.abbr.cool = true
       assert.not.same whitelist, wl
 
+    it "updates the metatable for tags when cloning", ->
+      wl = whitelist\clone!
+      wl.tags[1].cool = true
+
+      assert.same true, wl.tags.abbr.cool
+      assert.falsy whitelist.tags.abbr.cool
+
   describe "modified whitelist", ->
     local sanitize_html
 
