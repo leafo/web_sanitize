@@ -196,7 +196,7 @@ make test
 
 ## Changelog
 
-**Master**
+**May 09  2016** - 0.5.0
 
 Sanitizer
 
