@@ -180,6 +180,73 @@ local sanitize_html = Sanitizer({strip_tags = true})
 sanitize_html([[<body>Hello world</body>]]) --> Hello world
 ```
 
+
+## HTML Parser
+
+The HTML parser lets you extract data from, and manipulate HTML using [query
+selector
+syntax](https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelector).
+
+
+The scanner interface is a lower level interface that lets you iterate through
+each node in the HTML document. It's located in the
+`web_sanitize.query.scan_html` module.
+
+
+```lua
+local scanner = require("web_sanitize.query.scan_html")
+```
+
+#### `scan_html(html_text, callback)`
+
+Scans over all nodes in the `html_text`, calling the `callback` function for
+each node found. The callback recieves one argument, an instance of a
+`NodeStack`. A node stack is a Lua table holding an array of all the nodes in
+the stack, with the top most node being the current one.
+
+Each node in the node stack is an instance of `HTMLNode`. In `scan_html` the
+node is read-only, and can be used to get the properties and content of the
+node.
+
+Here's how you might get the `href` and text of every `a` tag in the html:
+
+```lua
+local urls = {}
+
+scanner.scan_html(my_html, function(stack)
+  if stack:is("a") then
+    local node = stack:current()
+
+    table.insert(urls, {
+      url = node.attr.href,
+      text = node:inner_text()
+    })
+  end
+end)
+```
+
+#### `replace_html(html_text, callback)`
+
+Works the same as `scan_html`, except each node in the stack is capable of
+being mutated using the `replace_attributes`, `replace_inner_html`,
+`replace_outer_html` methods.
+
+Here's how you might remove all `a` tags that don't match a certain URL
+pattern:
+
+```lua
+scanner.replace_html(my_html, function(stack)
+  if stack:is("a") then
+    local node = stack:current()
+    let url = node.attr.href or ""
+
+    if not url:match("^https?://leafo%.net") then
+      node:replace_outer_html(node:inner_html())
+    end
+  end
+end)
+```
+
 ## Fast?
 
 It should be pretty fast. It's powered by the wonderful library [LPeg][3].
@@ -244,10 +311,10 @@ Scanner
 
 # Contact
 
-Author: Leaf Corcoran (leafo) ([@moonscript](http://twitter.com/moonscript))  
+Author: Leaf Corcoran (leafo) ([@moonscript](http://twitter.com/moonscript))
 License: MIT Copyright (c) 2015 Leaf Corcoran
-Email: leafot@gmail.com  
-Homepage: <http://leafo.net>  
+Email: leafot@gmail.com
+Homepage: <http://leafo.net>
 
 
  [1]: https://github.com/leafo/web_sanitize/blob/master/test.moon
