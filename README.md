@@ -1,5 +1,7 @@
 # web\_sanitize
 
+[![Build Status](https://travis-ci.org/leafo/web_sanitize.svg?branch=master)](https://travis-ci.org/leafo/web_sanitize)
+
 A Lua library for working with HTML and CSS. It can do HTML and CSS
 sanitization using a whitelist, along with general HTML parsing and
 transformation. It also includes a query-selector syntax (similar to jquery)
