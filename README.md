@@ -143,6 +143,9 @@ The whitelist table has three important fields:
 * `add_attributes`: a table of attributes that should be inserted into a tag
 * `self_closing`: a set of tags that don't need a closing tag
 
+The `tags` field specifies tags that are possible to be used, and the
+attributes that can be on them.
+
 A attribute whitelist can be either a boolean, or a function. If it's a
 function then it takes as arguments `value`, `attribute_name`, and `tag_name`.
 If this function returns a string, then that value is used to replace the value
@@ -160,6 +163,25 @@ local whitelist = require("web_sanitize.whitelist"):clone()
 whitelist[1].style = function(value)
   return web_sanitize.sanitize_style(value)
 end
+```
+
+The `add_attributes` can be used to inject additional attributes onto a tag.
+The default whitelist contians a rule to make all links `nofollow`:
+
+```lua
+whitelist.add_attributes = {
+  a =  {
+    rel = "nofollow"
+  }
+}
+```
+
+As an example, you could change this to make it also add a `rel=noopener` as well:
+
+```lua
+whitelist.add_attributes.a = {
+  rel = "nofollow noopener"
+}
 ```
 
 ### CSS
