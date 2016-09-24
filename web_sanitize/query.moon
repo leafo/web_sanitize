@@ -23,6 +23,8 @@ test_el = (el, q) ->
         nil
       when "nth-child"
         return false unless tonumber(expected) == el.num
+      when "attr"
+        return false unless el.attr and el.attr[expected] != nil
       else
         error "unknown selector type: #{t}"
 

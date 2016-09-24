@@ -123,6 +123,16 @@ describe "query", ->
         outer_html: {[[<div class="fun"></div>]]}
         inner_html: {[[]]}
       }
+
+      {
+        html: [[one <a href="y">a</a> o <a href="x" data-cool="one">b</a> two<div data-cool></div>]]
+        query: "[data-cool]"
+        outer_html: {
+          [[<a href="x" data-cool="one">b</a>]]
+          [[<div data-cool></div>]]
+        }
+        inner_html: {"b", ""}
+      }
     }
 
     for {:html, :query,  :outer_html, :inner_html} in *tests
