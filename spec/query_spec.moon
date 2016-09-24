@@ -220,6 +220,13 @@ describe "query", ->
         }
       }, parse_query "*:nth-child(2) .cool, span div#okay"
 
+    it "parses attribute existance", ->
+      assert.same {
+        {
+          {{"class", "hello"}, {"attr", "world"}}
+        }
+      }, parse_query ".hello[world]"
+
     it "failes when part of query doesn't match", ->
       -- TODO: give error messagess and error locations
       assert.nil parse_query "div.hellok, 838r290@#$$##"

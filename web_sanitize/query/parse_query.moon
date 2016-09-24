@@ -16,8 +16,9 @@ parse_query = (query) ->
   id = P"#" * (word / mark "id")
   any = P"*"/ mark "any"
   nth = P":nth-child(" * C(num^1) * ")" / mark "nth-child"
+  attr = P"[" * C(word) * P"]" / mark "attr"
 
-  selector = Ct (any + nth + tag + cls + id)^1
+  selector = Ct (any + nth + tag + cls + id + attr)^1
 
   pq = Ct selector * (white * selector)^0
   pqs = Ct pq * (white * P"," * white * pq)^0
