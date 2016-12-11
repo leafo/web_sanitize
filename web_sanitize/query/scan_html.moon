@@ -287,7 +287,7 @@ scan_html = (html_text, callback, opts) ->
 
   res
 
-replace_html = (html_text, _callback) ->
+replace_html = (html_text, _callback, opts) ->
   changes = {}
 
   callback = (tags, ...) ->
@@ -295,7 +295,7 @@ replace_html = (html_text, _callback) ->
     current.__class.__base.changes = changes
     _callback tags, ...
 
-  scan_html html_text, callback
+  scan_html html_text, callback, opts
 
   buffer = html_text
   for i, {min, max, sub} in ipairs changes

@@ -404,7 +404,7 @@ scan_html = function(html_text, callback, opts)
   return res
 end
 local replace_html
-replace_html = function(html_text, _callback)
+replace_html = function(html_text, _callback, opts)
   local changes = { }
   local callback
   callback = function(tags, ...)
@@ -412,7 +412,7 @@ replace_html = function(html_text, _callback)
     current.__class.__base.changes = changes
     return _callback(tags, ...)
   end
-  scan_html(html_text, callback)
+  scan_html(html_text, callback, opts)
   local buffer = html_text
   for i, _des_0 in ipairs(changes) do
     local _continue_0 = false

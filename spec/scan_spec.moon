@@ -168,6 +168,35 @@ describe "web_sanitize.query.scan", ->
 
       assert.same [[<div a="whw" b="&amp;&quot;" color="green"></div>]], out
 
+    it "replaces content in text nodes", ->
+      out = replace_html(
+        "hello XX <span>worXXld</span>"
+
+        (stack) ->
+          node = stack\current!
+          if node.type == "text_node"
+            node\replace_outer_html node\outer_html!\gsub "XX", "leafo"
+
+        text_nodes: true
+      )
+
+      assert.same "hello leafo <span>worleafold</span>", out
+
+    it "converts links", ->
+      out = replace_html(
+        "one http://leafo and <a href='http://doop'>http://woop <span>http://oop</span></a>"
+
+        (stack) ->
+          node = stack\current!
+          if node.type == "text_node" and not stack\is("a *, a")
+            node\replace_outer_html node\outer_html!\gsub "(http://[^ <\"']+)", "<a href=\"%1\">%1</a>"
+
+        text_nodes: true
+      )
+
+      assert.same [[one <a href="http://leafo">http://leafo</a> and <a href='http://doop'>http://woop <span>http://oop</span></a>]], out
+
+
   describe "NodeStack", ->
     it "adds slugs ids to headers", ->
       slugify = (str) ->
