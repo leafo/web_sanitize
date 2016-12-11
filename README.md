@@ -263,8 +263,8 @@ Works the same as `scan_html`, except each node in the stack is capable of
 being mutated using the `replace_attributes`, `replace_inner_html`,
 `replace_outer_html` methods.
 
-Here's how you might remove all `a` tags that don't match a certain URL
-pattern:
+Here's how you might conver all `a` tags that don't match a certain URL
+pattern to plain text:
 
 ```lua
 scanner.replace_html(my_html, function(stack)
@@ -297,7 +297,7 @@ local my_html = [[
 local formatted_html = replace_html(my_html, function(stack)
   local node = stack:current()
   if node.tag == "" and not stack:is("a *, a") then
-    node:replace_outer_html(node:outer_html():gsub("(http://[^ <\"']+)", "<a href=\"%1\">%1</a>"))
+    node:replace_outer_html(node:outer_html():gsub("(https?://[^ <\"']+)", "<a href=\"%1\">%1</a>"))
   end
 end, { text_nodes = true })
 
