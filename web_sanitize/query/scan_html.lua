@@ -225,7 +225,7 @@ local word = (alphanum + S("._-")) ^ 1
 local value = C(word) + P('"') * C((1 - P('"')) ^ 0) * P('"') + P("'") * C((1 - P("'")) ^ 0) * P("'")
 local attribute = C(word) * (white * P("=") * white * value) ^ -1
 local scan_html
-scan_html = function(html_text, callback)
+scan_html = function(html_text, callback, opts)
   assert(callback, "missing callback to scan_html")
   local changes = { }
   local BufferHTMLNode
@@ -378,7 +378,28 @@ scan_html = function(html_text, callback)
   end
   local open_tag = Cmt(Cp() * P("<") * white * C(word), check_tag) * (Cmt(white * attribute, check_attribute) ^ 0 * white * (Cmt("/" * white * P(">"), pop_void_tag) + P(">") * (Cmt("", check_void_tag) + Cmt("", save_pos("inner_pos")))) + Cmt("", fail_tag))
   local close_tag = Cmt(Cp() * P("<") * white * P("/") * white * C(word) * white * P(">"), check_close_tag)
-  local html = (open_tag + close_tag + P("<") + P(1 - P("<")) ^ 1) ^ 0 * -1 * Cmt(Cp(), check_dangling_tags)
+  local text = P("<") + P(1 - P("<")) ^ 1
+  if opts and opts.text_nodes == true then
+    text = Cmt(Cp() * C(text), function(str, end_pos, start_pos, text_content)
+      local top = tag_stack[#tag_stack] or root_node
+      top.num_children = (top.num_children or 0) + 1
+      local text_node = {
+        type = "text_node",
+        tag = "",
+        pos = start_pos,
+        inner_pos = start_pos,
+        end_pos = end_pos,
+        end_inner_pos = end_pos,
+        num = top.num_children
+      }
+      setmetatable(text_node, BufferHTMLNode.__base)
+      table.insert(tag_stack, text_node)
+      callback(tag_stack)
+      table.remove(tag_stack)
+      return true
+    end)
+  end
+  local html = (open_tag + close_tag + text) ^ 0 * -1 * Cmt(Cp(), check_dangling_tags)
   local res, err = html:match(html_text)
   return res
 end

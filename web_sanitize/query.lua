@@ -42,6 +42,10 @@ test_el = function(el, q)
       if not (tonumber(expected) == el.num) then
         return false
       end
+    elseif "attr" == _exp_0 then
+      if not (el.attr and el.attr[expected] ~= nil) then
+        return false
+      end
     else
       error("unknown selector type: " .. tostring(t))
     end

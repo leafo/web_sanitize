@@ -70,6 +70,25 @@ describe "web_sanitize.query.scan", ->
         node = stack\current!
         assert.same expected[node.tag], node.attr
 
+    it "scans text nodes", ->
+      text_nodes = {}
+
+      scan_html(
+        "hello <span>world</span>"
+
+        (stack) ->
+          node = stack\current!
+          if node.type == "text_node"
+            table.insert text_nodes, node\inner_html!
+
+        text_nodes: true
+      )
+
+      assert.same {
+        "hello "
+        "world"
+      }, text_nodes
+
   describe "replace_html", ->
     it "replaces tag content", ->
       out = replace_html "<div>hello world</div>", (tag_stack) ->

@@ -126,7 +126,7 @@ value = C(word) +
 
 attribute = C(word) * (white * P"=" * white * value)^-1
 
-scan_html = (html_text, callback) ->
+scan_html = (html_text, callback, opts) ->
   assert callback, "missing callback to scan_html"
   changes = {}
 
@@ -256,7 +256,33 @@ scan_html = (html_text, callback) ->
 
   close_tag = Cmt(Cp! * P"<" * white * P"/" * white * C(word) * white * P">", check_close_tag)
 
-  html = (open_tag + close_tag + P"<" + P(1 - P"<")^1)^0 * -1 * Cmt(Cp!, check_dangling_tags)
+  text = P"<" + P(1 - P"<")^1
+
+  if opts and opts.text_nodes == true
+    text = Cmt Cp! * C(text), (str, end_pos, start_pos, text_content) ->
+      top = tag_stack[#tag_stack] or root_node
+      top.num_children = (top.num_children or 0) + 1
+
+      text_node = {
+        type: "text_node"
+        tag: ""
+
+        pos: start_pos
+        inner_pos: start_pos
+
+        end_pos: end_pos
+        end_inner_pos: end_pos
+
+        num: top.num_children
+      }
+
+      setmetatable text_node, BufferHTMLNode.__base
+      table.insert tag_stack, text_node
+      callback tag_stack
+      table.remove tag_stack
+      true
+
+  html = (open_tag + close_tag + text)^0 * -1 * Cmt(Cp!, check_dangling_tags)
   res, err = html\match html_text
 
   res
