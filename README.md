@@ -7,6 +7,9 @@ sanitization using a whitelist, along with general HTML parsing and
 transformation. It also includes a query-selector syntax (similar to jquery)
 for scanning HTML.
 
+* [HTML Sanitizer](#html-sanitizer)
+* [HTML Parser/Scanner](#html-parser)
+
 Examples:
 
 ```lua
@@ -219,7 +222,7 @@ each node in the HTML document. It's located in the
 local scanner = require("web_sanitize.query.scan_html")
 ```
 
-#### `scan_html(html_text, callback)`
+#### `scan_html(html_text, callback, opts)`
 
 Scans over all nodes in the `html_text`, calling the `callback` function for
 each node found. The callback recieves one argument, an instance of a
@@ -247,7 +250,14 @@ scanner.scan_html(my_html, function(stack)
 end)
 ```
 
-#### `replace_html(html_text, callback)`
+You can optionally enable *text nodes* to have the parser emit a node for each
+chunk of text. This includes text that is nested within a tag. Set `text_nodes`
+to `true` in an options table passed as the last argument.
+
+Text nodes have the `tag` attribute set to `""` (empty string). You can get the
+content of the node by calling either `inner_html` or `outer_html`.
+
+#### `replace_html(html_text, callback, opts)`
 
 Works the same as `scan_html`, except each node in the stack is capable of
 being mutated using the `replace_attributes`, `replace_inner_html`,
@@ -267,6 +277,31 @@ scanner.replace_html(my_html, function(stack)
     end
   end
 end)
+```
+
+Text nodes can also be manipulated by `replace_html`. You can enable text nodes
+by setting `text_nodes` to `true` in a options table passed as the last
+argument. The text node can be updated by either calling `replace_outer_html`
+or `replace_inner_html`.
+
+For example, you might want to write a script that converts links to `a` tags,
+but not when they're already inside an `a` tag:
+
+
+```lua
+local my_html = [[
+  text that should be a link: http://leafo.net
+  and a link that should be unchanged: <a href="https://itch.io">https://itch.io</a>
+]]
+
+local formatted_html = replace_html(my_html, function(stack)
+  local node = stack:current()
+  if node.tag == "" and not stack:is("a *, a") then
+    node:replace_outer_html(node:outer_html():gsub("(http://[^ <\"']+)", "<a href=\"%1\">%1</a>"))
+  end
+end, { text_nodes = true })
+
+print(formatted_html)
 ```
 
 ## Fast?
