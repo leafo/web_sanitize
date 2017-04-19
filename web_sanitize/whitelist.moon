@@ -86,7 +86,7 @@ set_default tags
 
 add_attributes = {
   a: {
-    rel: "nofollow"
+    rel: "nofollow noopener"
   }
 }
 

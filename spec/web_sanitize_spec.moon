@@ -51,22 +51,22 @@ tests = {
 
   {
     '<a href="http://leafo.net"></a>'
-    '<a href="http://leafo.net" rel="nofollow"></a>'
+    '<a href="http://leafo.net" rel="nofollow noopener"></a>'
   }
 
   {
     '<a href="https://leafo.net"></a>'
-    '<a href="https://leafo.net" rel="nofollow"></a>'
+    '<a href="https://leafo.net" rel="nofollow noopener"></a>'
   }
 
   {
     '<a href="mailto:someone@example.com">Send email</a>'
-    '<a href="mailto:someone@example.com" rel="nofollow">Send email</a>'
+    '<a href="mailto:someone@example.com" rel="nofollow noopener">Send email</a>'
   }
 
   {
     '<a href="//leafo.net"></a>'
-    '<a href="//leafo.net" rel="nofollow"></a>'
+    '<a href="//leafo.net" rel="nofollow noopener"></a>'
   }
 
 
