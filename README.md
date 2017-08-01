@@ -270,7 +270,7 @@ pattern to plain text:
 scanner.replace_html(my_html, function(stack)
   if stack:is("a") then
     local node = stack:current()
-    let url = node.attr.href or ""
+    local url = node.attr.href or ""
 
     if not url:match("^https?://leafo%.net") then
       node:replace_outer_html(node:inner_html())
