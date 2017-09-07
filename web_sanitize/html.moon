@@ -44,6 +44,15 @@ Sanitizer = (opts) ->
   } = opts and opts.whitelist or require "web_sanitize.whitelist"
 
   tag_stack = {}
+  attribute_stack = {} -- captured attributes for tags when needed
+
+  tag_has_dynamic_add_attribute = (tag) ->
+    inject = add_attributes[tag]
+    return false unless inject
+    for _, v in pairs inject
+      return true if type(v) == "function"
+
+    false
 
   check_tag = (str, pos, tag) ->
     lower_tag = tag\lower!
@@ -85,19 +94,36 @@ Sanitizer = (opts) ->
     true, unpack buffer
 
   pop_tag = (str, pos, ...) ->
-    tag_stack[#tag_stack] = nil
+    idx = #tag_stack
+    tag_stack[idx] = nil
+    if attribute_stack[idx]
+      attribute_stack[idx] = nil
     true, ...
 
   fail_tag = ->
-    tag_stack[#tag_stack] = nil
+    idx = #tag_stack
+    tag_stack[idx] = nil
+    tag_stack[idx] = nil
+    if attribute_stack[idx]
+      attribute_stack[idx] = nil
     false
 
   check_attribute = (str, pos_end, pos_start, name, value) ->
-    tag = tag_stack[#tag_stack]
+    tag_idx = #tag_stack
+    tag = tag_stack[tag_idx]
     allowed_attributes = allowed_tags[tag]
 
     if type(allowed_attributes) != "table"
       return true
+
+    if tag_has_dynamic_add_attribute tag
+      -- record the attributes for the inject function to inspect
+      attributes = attribute_stack[tag_idx]
+      unless attributes
+        attributes = {}
+        attribute_stack[tag_idx] = attributes
+
+      attributes[name] = value
 
     attr = allowed_attributes[name\lower!]
     local new_val
@@ -113,12 +139,19 @@ Sanitizer = (opts) ->
       true, str\sub pos_start, pos_end - 1
 
   inject_attributes = ->
-    top_tag = tag_stack[#tag_stack]
+    tag_idx = #tag_stack
+    top_tag = tag_stack[tag_idx]
     inject = add_attributes[top_tag]
+
     if inject
       buff = {}
       i = 1
       for k,v in pairs inject
+        v = if type(v) == "function"
+          v attribute_stack[tag_idx] or {}
+
+        continue unless v
+
         buff[i] = " "
         buff[i + 1] = k
         buff[i + 2] = '="'
