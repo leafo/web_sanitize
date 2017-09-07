@@ -40,6 +40,20 @@ Sanitizer = function(opts)
     allowed_tags, add_attributes, self_closing = _obj_0.tags, _obj_0.add_attributes, _obj_0.self_closing
   end
   local tag_stack = { }
+  local attribute_stack = { }
+  local tag_has_dynamic_add_attribute
+  tag_has_dynamic_add_attribute = function(tag)
+    local inject = add_attributes[tag]
+    if not (inject) then
+      return false
+    end
+    for _, v in pairs(inject) do
+      if type(v) == "function" then
+        return true
+      end
+    end
+    return false
+  end
   local check_tag
   check_tag = function(str, pos, tag)
     local lower_tag = tag:lower()
@@ -93,20 +107,38 @@ Sanitizer = function(opts)
   end
   local pop_tag
   pop_tag = function(str, pos, ...)
-    tag_stack[#tag_stack] = nil
+    local idx = #tag_stack
+    tag_stack[idx] = nil
+    if attribute_stack[idx] then
+      attribute_stack[idx] = nil
+    end
     return true, ...
   end
   local fail_tag
   fail_tag = function()
-    tag_stack[#tag_stack] = nil
+    local idx = #tag_stack
+    tag_stack[idx] = nil
+    tag_stack[idx] = nil
+    if attribute_stack[idx] then
+      attribute_stack[idx] = nil
+    end
     return false
   end
   local check_attribute
   check_attribute = function(str, pos_end, pos_start, name, value)
-    local tag = tag_stack[#tag_stack]
+    local tag_idx = #tag_stack
+    local tag = tag_stack[tag_idx]
     local allowed_attributes = allowed_tags[tag]
     if type(allowed_attributes) ~= "table" then
       return true
+    end
+    if tag_has_dynamic_add_attribute(tag) then
+      local attributes = attribute_stack[tag_idx]
+      if not (attributes) then
+        attributes = { }
+        attribute_stack[tag_idx] = attributes
+      end
+      attributes[name] = value
     end
     local attr = allowed_attributes[name:lower()]
     local new_val
@@ -128,18 +160,33 @@ Sanitizer = function(opts)
   end
   local inject_attributes
   inject_attributes = function()
-    local top_tag = tag_stack[#tag_stack]
+    local tag_idx = #tag_stack
+    local top_tag = tag_stack[tag_idx]
     local inject = add_attributes[top_tag]
     if inject then
       local buff = { }
       local i = 1
       for k, v in pairs(inject) do
-        buff[i] = " "
-        buff[i + 1] = k
-        buff[i + 2] = '="'
-        buff[i + 3] = v
-        buff[i + 4] = '"'
-        i = i + 5
+        local _continue_0 = false
+        repeat
+          if type(v) == "function" then
+            v = v(attribute_stack[tag_idx] or { })
+          end
+          if not (v) then
+            _continue_0 = true
+            break
+          end
+          buff[i] = " "
+          buff[i + 1] = k
+          buff[i + 2] = '="'
+          buff[i + 3] = v
+          buff[i + 4] = '"'
+          i = i + 5
+          _continue_0 = true
+        until true
+        if not _continue_0 then
+          break
+        end
       end
       return true, unpack(buff)
     else
