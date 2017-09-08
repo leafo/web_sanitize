@@ -187,6 +187,29 @@ whitelist.add_attributes.a = {
 }
 ```
 
+Add attributes can also also take a function to dynamically insert attribute
+values based on the other attributes in the tag. The function will receive one
+argument, a table of the parsed attributes. These are the attributes as written
+in the original HTML, it does not reflect any changes the sanitizer will make
+to the element. The function can return `nil` or `false` to make no changes, or
+return a string to add an attribute containing that value.
+
+Here's how you might add `nofollow noopener` to every link except those from a
+certain domain:
+
+
+```lua
+whitelist.add_attributes.a = {
+  rel = function(attr)
+    for tuple in ipairs(attr) do
+      if tuple[1]:lower() == "href" and not tuple[2]:match("^https?://leafo%.net/") then
+        return "nofollow noopener"
+      end
+    end
+  end
+}
+```
+
 ### CSS
 
 Similar to above, see [`css_whitelist.moon`][6]
