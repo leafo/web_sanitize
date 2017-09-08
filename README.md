@@ -409,10 +409,6 @@ Scanner
 
 * Initial release
 
-## TODO
-
-* Automatic link conversion
-
 # Contact
 
 Author: Leaf Corcoran (leafo) ([@moonscript](http://twitter.com/moonscript))
