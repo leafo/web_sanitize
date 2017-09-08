@@ -493,3 +493,14 @@ describe "web_sanitize", ->
         [[<a title="yeah" hello="world">one</a><b title="it's here" zone="one more" world="two things">two</b>]]
       }, sanitize_html [[<a title="yeah" color="blue">one</a><b height="10px" title="it's here">two</b>]]
 
+    it "injects attributes on tags by function", =>
+      whitelist.add_attributes.a = {
+        rel: (attrs) ->
+          unless (attrs.href or "")\match "itch.io"
+            "nofollow noopener"
+      }
+
+      expect {
+        [[<a title="good link" href="http://leafo.net" rel="nofollow noopener">heres a link</a><a href="http://itch.io">another link</a>]]
+      }, sanitize_html [[<a onclick="" title="good link" href="http://leafo.net">heres a link</a><a href="http://itch.io">another link</a>]]
+
