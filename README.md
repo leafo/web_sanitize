@@ -365,7 +365,7 @@ make test
 
 ## Changelog
 
-**Sep 08  2017** - 0.6.0
+**Sep 08  2017** - 0.6.1
 
 * Add support for callback to `add_attributes` for dynamically injecting an attribute into a tag
 
