@@ -139,6 +139,10 @@ Sanitizer = function(opts)
         attribute_stack[tag_idx] = attributes
       end
       attributes[name] = value
+      table.insert(attributes, {
+        name,
+        value
+      })
     end
     local attr = allowed_attributes[name:lower()]
     local new_val
