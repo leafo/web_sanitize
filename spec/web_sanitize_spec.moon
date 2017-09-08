@@ -513,14 +513,14 @@ describe "web_sanitize", ->
       }
 
       out = sanitize_html [[
-        <a onclick="alert('hello')" title="good link" href="ftp://example.com" href="http://leafo.net">heres a link</a>
+        <a onclick="alert('hello')" title="good link" href="ftp://example.com" HREF="http://leafo.net">heres a link</a>
       ]]
 
       assert.same {
         {"onclick", "alert('hello')"}
         {"title", "good link"}
         {"href", "ftp://example.com"}
-        {"href", "http://leafo.net"}
+        {"HREF", "http://leafo.net"}
 
         onclick: "alert('hello')"
         title: "good link"
