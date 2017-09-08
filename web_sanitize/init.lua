@@ -8,7 +8,7 @@ sanitize_style = require("web_sanitize.css").sanitize_style
 local sanitize_html = Sanitizer()
 local extract_text = Extractor()
 return {
-  VERSION = "0.5.0",
+  VERSION = "0.6.0",
   sanitize_html = sanitize_html,
   extract_text = extract_text,
   sanitize_style = sanitize_style
