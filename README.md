@@ -365,6 +365,10 @@ make test
 
 ## Changelog
 
+**Sep 08  2017** - 0.6.0
+
+* Add support for callback to `add_attributes` for dynamically injecting an attribute into a tag
+
 **May 09  2016** - 0.5.0
 
 Sanitizer
@@ -385,7 +389,7 @@ Scanner
 
 * Add query and scan implementations
 * Add html rewrite interface, attribute rewriter
-* Support Lua 5.2 and above by remove direct references to unpack
+* Support Lua 5.2 and above (removed references to global `unpack`)
 
 *Note: all of these things are undocumented at the moment, sorry. Check the specs for examples*
 
