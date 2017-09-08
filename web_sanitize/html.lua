@@ -128,6 +128,7 @@ Sanitizer = function(opts)
   check_attribute = function(str, pos_end, pos_start, name, value)
     local tag_idx = #tag_stack
     local tag = tag_stack[tag_idx]
+    local lower_name = name:lower()
     local allowed_attributes = allowed_tags[tag]
     if type(allowed_attributes) ~= "table" then
       return true
@@ -138,13 +139,13 @@ Sanitizer = function(opts)
         attributes = { }
         attribute_stack[tag_idx] = attributes
       end
-      attributes[name] = value
+      attributes[lower_name] = value
       table.insert(attributes, {
         name,
         value
       })
     end
-    local attr = allowed_attributes[name:lower()]
+    local attr = allowed_attributes[lower_name]
     local new_val
     if type(attr) == "function" then
       new_val = attr(value, name, tag)
