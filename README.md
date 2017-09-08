@@ -210,6 +210,26 @@ whitelist.add_attributes.a = {
 }
 ```
 
+The format of the attributes argument has all attributes stored as `{name,
+value}` tuples in the numeric indices, and the normalized (lowercase) attribute
+name and value stored in the hash table component. The hash table component is
+added for convenience. For security critical testing you should iterate over
+the numerical components to make sure that no attributes are being shadowed.
+
+This HTML will create the following object as the argument:
+
+    <a href="http://leafo.net" HREF="http://itch.io" onclick="alert('hi')"></a>
+
+```lua
+{
+  {"href", "http://leafo.net"},
+  {"HREF", "http://itch.io"},
+  {"onclick", "alert('hi')"},
+  href = "http://itch.io",
+  onclick = "alert('hi')",
+}
+```
+
 ### CSS
 
 Similar to above, see [`css_whitelist.moon`][6]
