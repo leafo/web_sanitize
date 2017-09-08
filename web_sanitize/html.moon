@@ -79,6 +79,9 @@ Sanitizer = (opts) ->
     for i=top, pos + 1, -1
       next_tag = tag_stack[i]
       tag_stack[i] = nil
+      if attribute_stack[i]
+        attribute_stack[i] = nil
+
       continue if self_closing[next_tag]
       buffer[k] = "</"
       buffer[k + 1] = next_tag
@@ -86,6 +89,8 @@ Sanitizer = (opts) ->
       k += 3
 
     tag_stack[pos] = nil
+    if attribute_stack[pos]
+      attribute_stack[pos] = nil
 
     buffer[k] = punct
     buffer[k + 1] = tag

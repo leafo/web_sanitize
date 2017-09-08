@@ -85,6 +85,9 @@ Sanitizer = function(opts)
       repeat
         local next_tag = tag_stack[i]
         tag_stack[i] = nil
+        if attribute_stack[i] then
+          attribute_stack[i] = nil
+        end
         if self_closing[next_tag] then
           _continue_0 = true
           break
@@ -100,6 +103,9 @@ Sanitizer = function(opts)
       end
     end
     tag_stack[pos] = nil
+    if attribute_stack[pos] then
+      attribute_stack[pos] = nil
+    end
     buffer[k] = punct
     buffer[k + 1] = tag
     buffer[k + 2] = rest

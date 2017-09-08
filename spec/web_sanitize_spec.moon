@@ -526,3 +526,27 @@ describe "web_sanitize", ->
         title: "good link"
         href: "http://leafo.net"
       }, attributes
+
+    it "it extracts attributes for multiple tags", =>
+      attributes = {}
+      whitelist.add_attributes.a = {
+        rel: (attrs) ->
+          table.insert attributes, attrs
+      }
+
+      out = sanitize_html [[
+        <a href="http://leafo.net">test</a>
+        <a href="http://itch.io">test</a>
+      ]]
+
+      assert.same {
+        {
+          {"href", "http://leafo.net"}
+          href: "http://leafo.net"
+        }
+        {
+          {"href", "http://itch.io"}
+          href: "http://itch.io"
+        }
+      }, attributes
+
