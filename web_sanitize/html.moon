@@ -124,6 +124,7 @@ Sanitizer = (opts) ->
         attribute_stack[tag_idx] = attributes
 
       attributes[name] = value
+      table.insert attributes, {name, value}
 
     attr = allowed_attributes[name\lower!]
     local new_val

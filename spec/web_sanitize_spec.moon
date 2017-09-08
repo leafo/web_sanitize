@@ -504,3 +504,25 @@ describe "web_sanitize", ->
         [[<a title="good link" href="http://leafo.net" rel="nofollow noopener">heres a link</a><a href="http://itch.io">another link</a>]]
       }, sanitize_html [[<a onclick="" title="good link" href="http://leafo.net">heres a link</a><a href="http://itch.io">another link</a>]]
 
+
+    it "it extracts attributes from tag for injection", =>
+      local attributes
+      whitelist.add_attributes.a = {
+        rel: (attrs) ->
+          attributes = attrs
+      }
+
+      out = sanitize_html [[
+        <a onclick="alert('hello')" title="good link" href="ftp://example.com" href="http://leafo.net">heres a link</a>
+      ]]
+
+      assert.same {
+        {"onclick", "alert('hello')"}
+        {"title", "good link"}
+        {"href", "ftp://example.com"}
+        {"href", "http://leafo.net"}
+
+        onclick: "alert('hello')"
+        title: "good link"
+        href: "http://leafo.net"
+      }, attributes
