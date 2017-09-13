@@ -32,6 +32,12 @@ properties = {
 
   "width": Number
   "height": Number
+
+  "max-width": Number
+  "min-width": Number
+
+  "max-height": Number
+  "min-height": Number
 }
 
 { :properties }
