@@ -11,11 +11,11 @@ import
 Color = Ident + Hash + Function
 
 properties = {
-  "margin-top": Number
-  "margin-right": Number
-  "margin-bottom": Number
-  "margin-left": Number
-  "margin": Number^-4
+  "margin-top": Number + Ident
+  "margin-right": Number + Ident
+  "margin-bottom": Number + Ident
+  "margin-left": Number + Ident
+  "margin": (Number + Ident)^-4
 
   "padding-top": Number
   "padding-right": Number
