@@ -22,7 +22,7 @@ mark = function(name)
   end
 end
 local parse_query
-parse_query = function(query)
+do
   local tag = word / mark("tag")
   local cls = P(".") * (word / mark("class"))
   local id = P("#") * (word / mark("id"))
@@ -33,7 +33,9 @@ parse_query = function(query)
   local pq = Ct(selector * (white * selector) ^ 0)
   local pqs = Ct(pq * (white * P(",") * white * pq) ^ 0)
   pqs = pqs * (white * -1)
-  return pqs:match(query)
+  parse_query = function(query)
+    return pqs:match(query)
+  end
 end
 return {
   parse_query = parse_query

@@ -10,7 +10,7 @@ word = (alphanum + S"_-")^1
 
 mark = (name) -> (...) -> {name, ...}
 
-parse_query = (query) ->
+parse_query = do
   tag = word / mark "tag"
   cls = P"." * (word / mark "class")
   id = P"#" * (word / mark "id")
@@ -24,7 +24,8 @@ parse_query = (query) ->
   pqs = Ct pq * (white * P"," * white * pq)^0
   pqs *= white * -1 -- match to end
 
-  pqs\match query
+  (query) ->
+    pqs\match query
 
 { :parse_query }
 
