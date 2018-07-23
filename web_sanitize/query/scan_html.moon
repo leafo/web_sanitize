@@ -7,17 +7,27 @@ class NodeStack
   current: =>
     @[#@]
 
-  is: (query) =>
+  _parse_query: (query) =>
+    if @_query_cache
+      if q = @_query_cache[query]
+        return q
+    else
+      @_query_cache = {}
+
     import parse_query from require "web_sanitize.query.parse_query"
-    import match_query from require "web_sanitize.query"
     q = assert parse_query query
-    match_query @, q
+    @_query_cache[query] = q
+    q
+
+  is: (query) =>
+    import match_query from require "web_sanitize.query"
+    match_query @, @_parse_query query
 
   select: (query) =>
     import parse_query from require "web_sanitize.query.parse_query"
     import match_query from require "web_sanitize.query"
 
-    q = assert parse_query query
+    q = @_parse_query query
 
     stack = {}
     return for n in *@

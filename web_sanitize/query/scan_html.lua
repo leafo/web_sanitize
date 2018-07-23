@@ -8,20 +8,34 @@ do
     current = function(self)
       return self[#self]
     end,
-    is = function(self, query)
+    _parse_query = function(self, query)
+      if self._query_cache then
+        do
+          local q = self._query_cache[query]
+          if q then
+            return q
+          end
+        end
+      else
+        self._query_cache = { }
+      end
       local parse_query
       parse_query = require("web_sanitize.query.parse_query").parse_query
+      local q = assert(parse_query(query))
+      self._query_cache[query] = q
+      return q
+    end,
+    is = function(self, query)
       local match_query
       match_query = require("web_sanitize.query").match_query
-      local q = assert(parse_query(query))
-      return match_query(self, q)
+      return match_query(self, self:_parse_query(query))
     end,
     select = function(self, query)
       local parse_query
       parse_query = require("web_sanitize.query.parse_query").parse_query
       local match_query
       match_query = require("web_sanitize.query").match_query
-      local q = assert(parse_query(query))
+      local q = self:_parse_query(query)
       local stack = { }
       return (function()
         local _accum_0 = { }
