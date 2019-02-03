@@ -30,7 +30,8 @@ describe "sanitize_style", ->
 
   check "margin-left: 50px", "margin-left: 50px;"
   check "margin-left: 50px", "margin-left: 50px"
-  check "", "margin-left: hello"
+  check "margin-left: hello", "margin-left: hello"
+  check "", "padding-left: hello"
 
   check "margin: 10em 10em 10em 10em","margin: 10em 10em 10em 10em;"
   check "margin: 10em 10em", "margin: 10em 10em;"
