@@ -204,7 +204,7 @@ Sanitizer = function(opts)
     end
   end
   local tag_attributes = Cmt(Cp() * white * attribute, check_attribute) ^ 0
-  local open_tag = C(P("<") * white) * Cmt(word, check_tag) * (tag_attributes * white * Cmt("", inject_attributes) * Cmt("/" * white, pop_tag) ^ -1 * C(">") + Cmt("", fail_tag))
+  local open_tag = C(P("<") * white) * Cmt(word, check_tag) * (tag_attributes * white * Cmt("", inject_attributes) * (Cmt("/" * white * ">", pop_tag) + C(">")) + Cmt("", fail_tag))
   local close_tag = Cmt(C(P("<") * white * P("/") * white) * C(word) * C(white * P(">")), check_close_tag)
   if opts and opts.strip_tags then
     open_tag = open_tag + open_tag_ignored

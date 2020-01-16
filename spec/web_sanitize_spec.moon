@@ -287,6 +287,32 @@ tests = {
     '&lt;b title=&#x27;yeah&#x27;'
   }
 
+  {
+    [[<div><p somethign="world" / </div>]]
+    "<div>&lt;p somethign=&quot;world&quot; / </div>"
+  }
+
+  -- self closing tags
+
+  {
+    "<div />"
+    "<div/>"
+  }
+
+  {
+    "<div/>"
+    "<div/>"
+  }
+
+  {
+    "<div/ >"
+    "<div/ >"
+  }
+
+  {
+    "<div\t/ \t>"
+    "<div/ \t>"
+  }
 }
 
 text_tests = {
