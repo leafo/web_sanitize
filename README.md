@@ -4,15 +4,15 @@
 
 A Lua library for working with HTML and CSS. It can do HTML and CSS
 sanitization using a whitelist, along with general HTML parsing and
-transformation. It also includes a query-selector syntax (similar to jquery)
+transformation. It also includes a query-selector syntax (similar to jQuery)
 for scanning HTML.
 
 **Security**: This library is used to parse and verify a large amount of
 untrusted user generated content on production commercial applications. It is
 actively monitored and updated for security issues. If you uncover any
-vulnerabilities contact `leafot@gmail.com` with subject `web\_sanitize security
-vulnerability`. Do not publicly post security vulnerabilities on the Issue
-Tracker. When in doubt, send private email.
+vulnerabilities contact `leafot@gmail.com` with subject `web_sanitize security
+vulnerability`. Do not publicly post security vulnerabilities on the issue
+tracker. When in doubt, send private email.
 
 
 * [HTML Sanitizer](#html-sanitizer)
@@ -88,7 +88,7 @@ local safe_html = web_sanitize.sanitize_html("hi<script>alert('hi')</script>")
 #### `extract_text(unsafe_html)`
 
 Extracts just the textual content of unsafe HTML. No HTML tags will be present
-in the the output. There may be HTML escape sequences present if the text
+in the output. There may be HTML escape sequences present if the text
 contains any characters that might be interpreted as part of an HTML tag (eg. a
 `<`).
 
@@ -177,7 +177,7 @@ end
 ```
 
 The `add_attributes` can be used to inject additional attributes onto a tag.
-The default whitelist contians a rule to make all links `nofollow`:
+The default whitelist contains a rule to make all links `nofollow`:
 
 ```lua
 whitelist.add_attributes = {
@@ -276,7 +276,7 @@ local scanner = require("web_sanitize.query.scan_html")
 #### `scan_html(html_text, callback, opts)`
 
 Scans over all nodes in the `html_text`, calling the `callback` function for
-each node found. The callback recieves one argument, an instance of a
+each node found. The callback receives one argument, an instance of a
 `NodeStack`. A node stack is a Lua table holding an array of all the nodes in
 the stack, with the top most node being the current one.
 
@@ -314,7 +314,7 @@ Works the same as `scan_html`, except each node in the stack is capable of
 being mutated using the `replace_attributes`, `replace_inner_html`,
 `replace_outer_html` methods.
 
-Here's how you might conver all `a` tags that don't match a certain URL
+Here's how you might convert all `a` tags that don't match a certain URL
 pattern to plain text:
 
 ```lua
@@ -417,7 +417,7 @@ Scanner
 **Oct 6 2014** - 0.2.0
 
 * Add `extract_text` function
-* Correctly parse protocol relative URLS in href/src attributes
+* Correctly parse protocol relative URLS in `href`/`src` attributes
 * Correctly parse attributes that have no value
 
 **April 16 2014** - 0.0.1
