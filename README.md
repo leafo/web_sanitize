@@ -7,6 +7,14 @@ sanitization using a whitelist, along with general HTML parsing and
 transformation. It also includes a query-selector syntax (similar to jquery)
 for scanning HTML.
 
+**Security**: This library is used to parse and verify a large amount of
+untrusted user generated content on production commercial applications. It is
+actively monitored and updated for security issues. If you uncover any
+vulnerabilities contact `leafot@gmail.com` with subject `web\_sanitize security
+vulnerability`. Do not publicly post security vulnerabilities on the Issue
+Tracker. When in doubt, send private email.
+
+
 * [HTML Sanitizer](#html-sanitizer)
 * [HTML Parser/Scanner](#html-parser)
 
@@ -365,6 +373,13 @@ make test
 
 ## Changelog
 
+**Jan 15  2020** - 1.0.0
+
+* **Important** -- Added fix where specially crafted HTML could sanitize to HTML with an unclosed tag
+* Fixed whitespace preservation for text around self closing tags
+* Updated CSS whitelist
+* Added cache to `parse_query` for huge speedups when doing repeat matches
+
 **Sep 08  2017** - 0.6.1
 
 * Add support for callback to `add_attributes` for dynamically injecting an attribute into a tag
@@ -412,7 +427,7 @@ Scanner
 # Contact
 
 Author: Leaf Corcoran (leafo) ([@moonscript](http://twitter.com/moonscript))
-License: MIT Copyright (c) 2015 Leaf Corcoran
+License: MIT Copyright (c) 2020 Leaf Corcoran
 Email: leafot@gmail.com
 Homepage: <http://leafo.net>
 
