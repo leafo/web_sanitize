@@ -172,7 +172,7 @@ Sanitizer = (opts) ->
 
   open_tag = C(P"<" * white) *
     Cmt(word, check_tag) *
-    (tag_attributes * white * Cmt("", inject_attributes) * (Cmt("/" * white * ">", pop_tag) + C">") + Cmt("", fail_tag))
+    (tag_attributes * C(white) * Cmt("", inject_attributes) * (Cmt("/" * white * ">", pop_tag) + C">") + Cmt("", fail_tag))
 
   close_tag = Cmt(C(P"<" * white * P"/" * white) * C(word) * C(white * P">"), check_close_tag)
 
