@@ -50,6 +50,16 @@ tests = {
   }
 
   {
+    [[<div title="hello world"></div>]]
+    [[<div title="hello world"></div>]]
+  }
+
+  {
+    [[<div title="hello world" ></div>]]
+    [[<div title="hello world" ></div>]]
+  }
+
+  {
     '<a href="http://leafo.net"></a>'
     '<a href="http://leafo.net" rel="nofollow"></a>'
   }
@@ -312,6 +322,38 @@ tests = {
   {
     "<div\t/ \t>"
     "<div\t/ \t>"
+  }
+
+  -- closing tags whitespace
+  {
+    [[<div>< /div>]]
+    [[<div>< /div>]]
+  }
+
+  {
+    [[<div></ div>]]
+    [[<div></ div>]]
+  }
+
+  {
+    [[<div>< / div>]]
+    [[<div>< / div>]]
+  }
+
+  -- opening tag whitespace
+  {
+    [[< div></div>]]
+    [[< div></div>]]
+  }
+
+  {
+    [[<div ></div>]]
+    [[<div ></div>]]
+  }
+
+  {
+    [[<div   dir = "ltr" height=429  ></div>]]
+    [[<div   dir = "ltr"  ></div>]]
   }
 }
 
