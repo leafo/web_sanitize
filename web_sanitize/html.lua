@@ -124,7 +124,6 @@ Sanitizer = function(opts)
   fail_tag = function()
     local idx = #tag_stack
     tag_stack[idx] = nil
-    tag_stack[idx] = nil
     if attribute_stack[idx] then
       attribute_stack[idx] = nil
     end

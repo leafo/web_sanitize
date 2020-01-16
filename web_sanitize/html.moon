@@ -108,7 +108,6 @@ Sanitizer = (opts) ->
   fail_tag = ->
     idx = #tag_stack
     tag_stack[idx] = nil
-    tag_stack[idx] = nil
     if attribute_stack[idx]
       attribute_stack[idx] = nil
     false
@@ -189,6 +188,8 @@ Sanitizer = (opts) ->
   (str) ->
     tag_stack = {}
     buffer = assert html\match(str), "failed to parse html"
+
+    -- close any tags that were left unclosed at the end of the input
     k = #buffer + 1
     for i=#tag_stack,1,-1
       tag = tag_stack[i]
