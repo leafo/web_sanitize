@@ -27,8 +27,12 @@ properties = {
   "text-align": Ident
   "color": Color
   "background-color": Color
+  "background": Ident + Hash -- function could be other things here, need to be strict about color function
   "opacity": Number
-  "border": Number
+  "border": Number * (Ident * Color)^-1
+  "border-width": Number^-4
+  "border-color": Color
+  "border-style": Ident^-4
 
   "width": Number
   "height": Number

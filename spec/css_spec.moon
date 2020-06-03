@@ -51,4 +51,8 @@ describe "sanitize_style", ->
   check "opacity: 0.3", "opacity: 0.3"
 
   check "border: 0; width: 400px; height: 208px", "border: 0; width: 400px; height: 208px;"
+  check "border: 23px; border-color: #fff", "border: 23px; border-color: #fff"
+  check nil, "border: "
+  check "border: 1px solid blue", "border: 1px solid blue"
+  check "border-width: 1px 2px", "border-width: 1px 2px"
 
