@@ -14,3 +14,6 @@ watch: build
 lint:
 	moonc -l $$(find web_sanitize | grep moon$$)
 
+download_entities::
+	curl -O https://html.spec.whatwg.org/entities.json
+

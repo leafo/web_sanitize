@@ -201,6 +201,11 @@ Sanitizer = (opts) ->
 
     concat buffer
 
+-- TODO: this should convert HTML entities to text, not the other way around!
+-- https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references
+
+-- For backwards compat we will need to introduce a new method that returns valid html, and one that returns just the raw text
+
 -- parse the html, extract text between non tag items
 Extractor = (opts) ->
   html_text = Ct (open_tag_ignored / " " + close_tag_ignored / " " + valid_char + escaped_char + text)^0 * -1
