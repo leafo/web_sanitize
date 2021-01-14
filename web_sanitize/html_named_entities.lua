@@ -228,7 +228,7 @@ return {
   ["&lacute;"] = "ĺ",
   ["&circleminus;"] = "⊖",
   ["&jcirc;"] = "Ĵ",
-  ["&bsol;"] = "\",
+  ["&bsol;"] = [==[\]==],
   ["&subsub;"] = "⫕",
   ["&csup;"] = "⫐",
   ["&igrave;"] = "Ì",

@@ -25,7 +25,7 @@ obj_to_lua = (obj) ->
         {"table", items}
       else
         v = tostring v
-        if v\match("'") or v\match '"'
+        if v\match("'") or v\match('"') or v\match "\\"
           {"string", '[==[', v}
         else
           {"string", '"', v}
