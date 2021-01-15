@@ -231,9 +231,6 @@ end
 local unescape_char = P("&gt;") / ">" + P("&lt;") / "<" + P("&amp;") / "&" + P("&nbsp;") / " " + P("&#x27;") / "'" + P("&#x2F;") / "/" + P("&quot;") / '"'
 unescape_text = Cs((unescape_char + 1) ^ 1)
 local alphanum = R("az", "AZ", "09")
-local num = R("09")
-local hex = R("09", "af", "AF")
-local valid_char = P("&") * (alphanum ^ 1 + P("#") * (num ^ 1 + S("xX") * hex ^ 1)) + P(";")
 local white = S(" \t\n") ^ 0
 local word = (alphanum + S("._-")) ^ 1
 local value = C(word) + P('"') * C((1 - P('"')) ^ 0) * P('"') + P("'") * C((1 - P("'")) ^ 0) * P("'")

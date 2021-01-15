@@ -15,7 +15,6 @@ make_string = (delim) ->
 
 alphanum = R "az", "AZ", "09"
 num = R "09"
-hex = R "09", "af", "AF"
 
 white = S" \t\n"^0
 

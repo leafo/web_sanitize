@@ -18,7 +18,6 @@ make_string = function(delim)
 end
 local alphanum = R("az", "AZ", "09")
 local num = R("09")
-local hex = R("09", "af", "AF")
 local white = S(" \t\n") ^ 0
 local ident = (alphanum + S("_-")) ^ 1
 local string_1 = make_string("'")

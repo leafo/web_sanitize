@@ -122,10 +122,6 @@ unescape_char = P"&gt;" / ">" +
 unescape_text = Cs (unescape_char + 1)^1
 
 alphanum = R "az", "AZ", "09"
-num = R "09"
-hex = R "09", "af", "AF"
-
-valid_char = P"&" * (alphanum^1 + P"#" * (num^1 + S"xX" * hex^1)) + P";"
 
 white = S" \t\n"^0
 word = (alphanum + S"._-")^1
