@@ -20,6 +20,15 @@ local escaped_char = S("<>'&\"") / {
 local alphanum = R("az", "AZ", "09")
 local num = R("09")
 local hex = R("09", "af", "AF")
+local at_most
+at_most = function(p, n)
+  assert(n > 0)
+  if n == 1 then
+    return p
+  else
+    return p * p ^ -(n - 1)
+  end
+end
 local valid_char = C(P("&") * (alphanum ^ 1 + P("#") * (num ^ 1 + S("xX") * hex ^ 1)) + P(";"))
 local white = S(" \t\n") ^ 0
 local text = C((1 - escaped_char) ^ 1)
@@ -239,18 +248,53 @@ Sanitizer = function(opts)
     return concat(buffer)
   end
 end
+local MAX_UNICODE = 0x10FFFF
+local translate_entity
+translate_entity = function(str, kind, value)
+  if kind == "named" then
+    local entities = require("web_sanitize.html_named_entities")
+    return entities[str:lower()] or str
+  end
+  local codepoint
+  local _exp_0 = kind
+  if "dec" == _exp_0 then
+    codepoint = tonumber(value)
+  elseif "hex" == _exp_0 then
+    codepoint = tonumber(value, 16)
+  end
+  local utf8_encode
+  utf8_encode = require("web_sanitize.unicode").utf8_encode
+  if codepoint and codepoint <= MAX_UNICODE then
+    return utf8_encode(codepoint)
+  else
+    return str
+  end
+end
+local _html_entity = C(P("&") * (Cc("named") * at_most(alphanum, 50) + P("#") * (Cc("dec") * C(at_most(num, 10)) + S("xX") * Cc("hex") * C(at_most(hex, 10)))) * P(";"))
+local decode_html_entity = Cs(_html_entity / translate_entity)
 local Extractor
 Extractor = function(opts)
-  local html_text = Ct((open_tag_ignored / " " + close_tag_ignored / " " + valid_char + escaped_char + text) ^ 0 * -1)
+  local escape_html = opts and opts.escape_html
+  local printable = opts and opts.printable
+  local html_text
+  if escape_html then
+    html_text = Cs((open_tag_ignored / " " + close_tag_ignored / " " + _html_entity + escaped_char + 1) ^ 0 * -1)
+  else
+    html_text = Cs((open_tag_ignored / " " + close_tag_ignored / " " + decode_html_entity + 1) ^ 0 * -1)
+  end
   return function(str)
-    local buffer = assert(html_text:match(str), "failed to parse html")
-    local out = concat(buffer)
+    local out = assert(html_text:match(str), "failed to parse html")
+    if printable then
+      out = assert(require("web_sanitize.unicode").strip_bad_chars(out))
+    end
     out = out:gsub("%s+", " ")
-    return (out:match("^%s*(.-)%s*$"))
+    out = out:match("^%s*(.-)%s*$")
+    return out
   end
 end
 return {
   Sanitizer = Sanitizer,
   Extractor = Extractor,
-  escape_text = escape_text
+  escape_text = escape_text,
+  decode_html_entity = decode_html_entity
 }

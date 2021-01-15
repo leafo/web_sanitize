@@ -6,7 +6,9 @@ end
 local sanitize_style
 sanitize_style = require("web_sanitize.css").sanitize_style
 local sanitize_html = Sanitizer()
-local extract_text = Extractor()
+local extract_text = Extractor({
+  escape_html = true
+})
 return {
   VERSION = "1.0.0",
   sanitize_html = sanitize_html,

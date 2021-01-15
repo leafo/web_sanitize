@@ -20,6 +20,14 @@ alphanum = R "az", "AZ", "09"
 num = R "09"
 hex = R "09", "af", "AF"
 
+at_most = (p, n)->
+  assert n > 0
+  if n == 1
+    p
+  else
+    p * p^-(n-1)
+
+-- wtf is + ; write a spec that isolates this to ensure I know what difference it makes
 valid_char = C P"&" * (alphanum^1 + P"#" * (num^1 + S"xX" * hex^1)) + P";"
 
 white = S" \t\n"^0
@@ -201,21 +209,53 @@ Sanitizer = (opts) ->
 
     concat buffer
 
--- TODO: this should convert HTML entities to text, not the other way around!
--- https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references
 
--- For backwards compat we will need to introduce a new method that returns valid html, and one that returns just the raw text
+MAX_UNICODE = 0x10FFFF
+
+-- if we get an invalid entity then we return the text as is
+translate_entity = (str, kind, value) ->
+  if kind == "named"
+    entities = require "web_sanitize.html_named_entities"
+    return entities[str\lower!] or str
+
+  codepoint = switch kind
+    when "dec"
+      tonumber value
+    when "hex"
+      tonumber value, 16
+
+  import utf8_encode from require "web_sanitize.unicode"
+  if codepoint and codepoint <= MAX_UNICODE
+    utf8_encode codepoint
+  else
+    str
+
+
+_html_entity = C P"&" * (Cc"named" * at_most(alphanum, 50) + P"#" * (Cc"dec" * C(at_most(num, 10)) + S"xX" * Cc"hex" * C(at_most(hex, 10)))) * P";"
+decode_html_entity = Cs _html_entity / translate_entity
 
 -- parse the html, extract text between non tag items
+-- https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references
+-- opts:
+--   escape_html: set to true to ensure that the returned text is safe for html insertion (this will leave any html escape sequences alone
+--   printable: set to true to return printable characters only (strip control characters, also any invalid unicode)
 Extractor = (opts) ->
-  html_text = Ct (open_tag_ignored / " " + close_tag_ignored / " " + valid_char + escaped_char + text)^0 * -1
+  escape_html = opts and opts.escape_html
+  printable = opts and opts.printable
+
+  html_text = if escape_html
+    Cs (open_tag_ignored / " " + close_tag_ignored / " " + _html_entity + escaped_char + 1)^0 * -1
+  else
+    Cs (open_tag_ignored / " " + close_tag_ignored / " " + decode_html_entity + 1)^0 * -1
 
   (str) ->
-    buffer = assert html_text\match(str), "failed to parse html"
-    out = concat buffer
+    out = assert html_text\match(str), "failed to parse html"
+    if printable
+      out = assert require("web_sanitize.unicode").strip_bad_chars out
+
     out = out\gsub "%s+", " "
-    (out\match "^%s*(.-)%s*$")
+    out = out\match "^%s*(.-)%s*$"
+    out
 
-
-{ :Sanitizer, :Extractor, :escape_text }
+{ :Sanitizer, :Extractor, :escape_text, :decode_html_entity }
 
