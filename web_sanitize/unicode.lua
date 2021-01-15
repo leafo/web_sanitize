@@ -5,13 +5,6 @@ do
 end
 local cont = R("\128\191")
 local utf8_codepoint = R("\194\223") * cont + R("\224\239") * cont * cont + R("\240\244") * cont * cont * cont
-local has_utf8_codepoint
-do
-  local p = (1 - utf8_codepoint) ^ 0 * utf8_codepoint
-  has_utf8_codepoint = function(str)
-    return not not p:match(str)
-  end
-end
 local acceptable_character = S("\r\n\t") + R("\032\126") + utf8_codepoint
 local acceptable_string = acceptable_character ^ 0 * P(-1)
 local strip_invalid_utf8
@@ -28,11 +21,41 @@ do
     return p:match(text)
   end
 end
+local unpack = unpack or table.unpack
+local MAX_UNICODE = 0x10FFFF
+local _utf8_encode
+_utf8_encode = function(codepoint)
+  assert(codepoint and codepoint <= MAX_UNICODE, "invalid codepoint")
+  if codepoint < 0x80 then
+    return string.char(codepoint)
+  else
+    local lshift, rshift, band, bor, bnot
+    do
+      local _obj_0 = bit32 or require("bit")
+      lshift, rshift, band, bor, bnot = _obj_0.lshift, _obj_0.rshift, _obj_0.band, _obj_0.bor, _obj_0.bnot
+    end
+    local mfb = 0x3f
+    local chars = { }
+    while true do
+      table.insert(chars, 1, bor(0x80, band(codepoint, 0x3f)))
+      codepoint = rshift(codepoint, 6)
+      mfb = rshift(mfb, 1)
+      if not (codepoint > mfb) then
+        break
+      end
+    end
+    local remaining = bor(lshift(bnot(mfb), 1), codepoint)
+    remaining = band(0xFF, remaining)
+    table.insert(chars, 1, remaining)
+    return string.char(unpack(chars))
+  end
+end
+local utf8_encode = utf8 and utf8.char or _utf8_encode
 return {
-  utf8_codepoint = utf8_codepoint,
-  has_utf8_codepoint = has_utf8_codepoint,
   strip_invalid_utf8 = strip_invalid_utf8,
   acceptable_character = acceptable_character,
   acceptable_string = acceptable_string,
-  strip_bad_chars = strip_bad_chars
+  strip_bad_chars = strip_bad_chars,
+  _utf8_encode = _utf8_encode,
+  utf8_encode = utf8_encode
 }
