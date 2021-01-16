@@ -248,9 +248,9 @@ Extractor = (opts) ->
   printable = opts and opts.printable
 
   html_text = if escape_html
-    Cs (open_tag_ignored / " " + close_tag_ignored / " " + html_entity + escaped_char + 1)^0 * -1
+    Cs (open_tag_ignored / " " + close_tag_ignored / " " + comment / "" + html_entity + escaped_char + 1)^0 * -1
   else
-    Cs (open_tag_ignored / " " + close_tag_ignored / " " + decode_html_entity + 1)^0 * -1
+    Cs (open_tag_ignored / " " + close_tag_ignored / " " + comment / "" + decode_html_entity + 1)^0 * -1
 
   (str) ->
     out = assert html_text\match(str), "failed to parse html"

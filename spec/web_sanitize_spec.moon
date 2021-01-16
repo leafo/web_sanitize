@@ -410,8 +410,12 @@ extract_text_tests = {
 
   {
     '<!-- comment -->Hello'
-    '&lt;!-- comment --&gt;Hello'
-    '<!-- comment -->Hello'
+    'Hello'
+  }
+
+  {
+    'some<!-- <div> -->world'
+    'someworld'
   }
 
   {

@@ -286,9 +286,9 @@ Extractor = function(opts)
   local printable = opts and opts.printable
   local html_text
   if escape_html then
-    html_text = Cs((open_tag_ignored / " " + close_tag_ignored / " " + html_entity + escaped_char + 1) ^ 0 * -1)
+    html_text = Cs((open_tag_ignored / " " + close_tag_ignored / " " + comment / "" + html_entity + escaped_char + 1) ^ 0 * -1)
   else
-    html_text = Cs((open_tag_ignored / " " + close_tag_ignored / " " + decode_html_entity + 1) ^ 0 * -1)
+    html_text = Cs((open_tag_ignored / " " + close_tag_ignored / " " + comment / "" + decode_html_entity + 1) ^ 0 * -1)
   end
   return function(str)
     local out = assert(html_text:match(str), "failed to parse html")
