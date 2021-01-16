@@ -420,6 +420,11 @@ plain_text_tests = {
     "Hello © world"
   }
 
+  { -- TODO: this is broken because it should be able to identify the &lt in &lthi as <
+    "&cent&cent;&lthi&lt;"
+    "¢¢&lthi<"
+  }
+
   {
     'hello <script dad="world"><b>yes</b></b>'
     'hello yes'
@@ -506,9 +511,9 @@ sanitize_tests_strip = {
 describe "web_sanitize", ->
   describe "sanitize_html", ->
     import sanitize_html from require "web_sanitize"
-    for i, {input, output} in ipairs tests
-      it "#{i}: should sanitize and match", ->
-        assert.are.equal output, sanitize_html(input)
+    for i, {input, expected} in ipairs tests
+      it "#{i}: should sanitize and match: #{input}", ->
+        assert.are.equal expected, sanitize_html input
 
   describe "extract_text", ->
     import extract_text from require "web_sanitize"

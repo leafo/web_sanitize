@@ -29,7 +29,7 @@ at_most = function(p, n)
     return p * p ^ -(n - 1)
   end
 end
-local valid_char = C(P("&") * (alphanum ^ 1 + P("#") * (num ^ 1 + S("xX") * hex ^ 1)) + P(";"))
+local html_entity = C(P("&") * (alphanum ^ 1 + P("#") * (num ^ 1 + S("xX") * hex ^ 1)) * P(";") ^ -1)
 local white = S(" \t\n") ^ 0
 local text = C((1 - escaped_char) ^ 1)
 local word = (alphanum + S("._-:")) ^ 1
@@ -222,7 +222,7 @@ Sanitizer = function(opts)
   if opts and opts.strip_comments then
     open_tag = comment + open_tag
   end
-  local html = Ct((open_tag + close_tag + valid_char + escaped_char + text) ^ 0 * -1)
+  local html = Ct((open_tag + close_tag + html_entity + escaped_char + text) ^ 0 * -1)
   return function(str)
     tag_stack = { }
     local buffer = assert(html:match(str), "failed to parse html")
@@ -270,8 +270,8 @@ translate_entity = function(str, kind, value)
     return str
   end
 end
-local _html_entity = C(P("&") * (Cc("named") * at_most(alphanum, 50) + P("#") * (Cc("dec") * C(at_most(num, 10)) + S("xX") * Cc("hex") * C(at_most(hex, 10)))) * P(";"))
-local decode_html_entity = Cs(_html_entity / translate_entity)
+local annoteted_html_entity = C(P("&") * (Cc("named") * at_most(alphanum, 50) + P("#") * (Cc("dec") * C(at_most(num, 10)) + S("xX") * Cc("hex") * C(at_most(hex, 5)))) * P(";") ^ -1)
+local decode_html_entity = Cs(annoteted_html_entity / translate_entity)
 local trim
 trim = function(str)
   if #str > 200 then
@@ -286,7 +286,7 @@ Extractor = function(opts)
   local printable = opts and opts.printable
   local html_text
   if escape_html then
-    html_text = Cs((open_tag_ignored / " " + close_tag_ignored / " " + _html_entity + escaped_char + 1) ^ 0 * -1)
+    html_text = Cs((open_tag_ignored / " " + close_tag_ignored / " " + html_entity + escaped_char + 1) ^ 0 * -1)
   else
     html_text = Cs((open_tag_ignored / " " + close_tag_ignored / " " + decode_html_entity + 1) ^ 0 * -1)
   end

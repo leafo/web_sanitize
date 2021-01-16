@@ -27,8 +27,7 @@ at_most = (p, n)->
   else
     p * p^-(n-1)
 
--- wtf is + ; write a spec that isolates this to ensure I know what difference it makes
-valid_char = C P"&" * (alphanum^1 + P"#" * (num^1 + S"xX" * hex^1)) + P";"
+html_entity = C P"&" * (alphanum^1 + P"#" * (num^1 + S"xX" * hex^1)) * P";"^-1
 
 white = S" \t\n"^0
 text = C (1 - escaped_char)^1
@@ -191,7 +190,7 @@ Sanitizer = (opts) ->
   if opts and opts.strip_comments
     open_tag = comment + open_tag
 
-  html = Ct (open_tag + close_tag + valid_char + escaped_char + text)^0 * -1
+  html = Ct (open_tag + close_tag + html_entity + escaped_char + text)^0 * -1
 
   (str) ->
     tag_stack = {}
@@ -230,10 +229,8 @@ translate_entity = (str, kind, value) ->
   else
     str
 
-
-_html_entity = C P"&" * (Cc"named" * at_most(alphanum, 50) + P"#" * (Cc"dec" * C(at_most(num, 10)) + S"xX" * Cc"hex" * C(at_most(hex, 10)))) * P";"
-decode_html_entity = Cs _html_entity / translate_entity
-
+annoteted_html_entity = C P"&" * (Cc"named" * at_most(alphanum, 50) + P"#" * (Cc"dec" * C(at_most(num, 10)) + S"xX" * Cc"hex" * C(at_most(hex, 5)))) * P";"^-1
+decode_html_entity = Cs annoteted_html_entity / translate_entity
 
 trim = (str) ->
   if #str > 200
@@ -251,7 +248,7 @@ Extractor = (opts) ->
   printable = opts and opts.printable
 
   html_text = if escape_html
-    Cs (open_tag_ignored / " " + close_tag_ignored / " " + _html_entity + escaped_char + 1)^0 * -1
+    Cs (open_tag_ignored / " " + close_tag_ignored / " " + html_entity + escaped_char + 1)^0 * -1
   else
     Cs (open_tag_ignored / " " + close_tag_ignored / " " + decode_html_entity + 1)^0 * -1
 
