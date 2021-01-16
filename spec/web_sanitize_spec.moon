@@ -357,7 +357,15 @@ tests = {
   }
 }
 
-html_text_tests = {
+extract_text_tests = {
+  -- test syntax:
+  -- {
+  --   1: the input
+  --   2: the html output
+  --   3: the plain text output (falls back to html if nil)
+  --   4: the printable plain text output (falls back to plain output if nil)
+  -- }
+
   {
     "hello world"
     "hello world"
@@ -366,6 +374,7 @@ html_text_tests = {
   {
     "<b title='yeah'"
     '&lt;b title=&#x27;yeah&#x27;'
+    "<b title='yeah'"
   }
 
   {
@@ -376,6 +385,7 @@ html_text_tests = {
   {
     "<b color=red>hi</b wazzaup"
     'hi&lt;/b wazzaup'
+    "hi</b wazzaup"
   }
 
   {
@@ -401,6 +411,7 @@ html_text_tests = {
   {
     '<!-- comment -->Hello'
     '&lt;!-- comment --&gt;Hello'
+    '<!-- comment -->Hello'
   }
 
   {
@@ -411,31 +422,23 @@ html_text_tests = {
   {
     "Hello &copy; world"
     "Hello &copy; world"
-  }
-}
-
-plain_text_tests = {
-  {
-    "Hello &copy; world"
     "Hello © world"
   }
 
-  { -- TODO: this is broken because it should be able to identify the &lt in &lthi as <
+  {
+    "&cent&cent;&lthi&lt;"
     "&cent&cent;&lthi&lt;"
     "¢¢&lthi<"
   }
 
   {
-    'hello <script dad="world"><b>yes</b></b>'
-    'hello yes'
-  }
-
-  {
     "&amp; &copy; &fart; &#x00A9; &#xA9; &#169; &#x22D9; &#x22d9; &#8921; < > <hello/> world"
+    "&amp; &copy; &fart; &#x00A9; &#xA9; &#169; &#x22D9; &#x22d9; &#8921; &lt; &gt; world"
     "& © &fart; © © © ⋙ ⋙ ⋙ < > world"
   }
 
   {
+    "&#1;" -- add one with optional ;
     "&#1;"
     "\1"
     ""
@@ -443,11 +446,13 @@ plain_text_tests = {
 
   {
     "&#2;&#3;"
+    "&#2;&#3;"
     "\2\3"
     ""
   }
 
   {
+    "&#xF;"
     "&#xF;"
     "\15"
     ""
@@ -455,19 +460,16 @@ plain_text_tests = {
 
   {
     "&#16;&#15;hi "
+    "&#16;&#15;hi"
     "\016\015hi"
     "hi"
-  }
-
-  {
-    '<!-- comment -->Hello'
-    '<!-- comment -->Hello'
   }
 
   {
     "\t\n<div> <ul> <li></li>\r\n<li></li> </ul> </div>"
     ""
   }
+
 }
 
 sanitize_tests_strip = {
@@ -516,13 +518,16 @@ describe "web_sanitize", ->
         assert.are.equal expected, sanitize_html input
 
   describe "extract_text", ->
-    import extract_text from require "web_sanitize"
-    for i, {input, output} in ipairs html_text_tests
-      it "#{i}: extract text and match", ->
-        assert.are.equal output, extract_text(input)
+    describe "to html", ->
+      for i, {input, html_expected} in ipairs extract_text_tests
+        it "#{i}: extract text and match", ->
+          import extract_text from require "web_sanitize"
+          assert.are.equal html_expected, extract_text(input)
 
-    describe "plain text", ->
-      for i, {input, expected} in ipairs plain_text_tests
+    describe "to plain text", ->
+      for i, {input, html_expected, plain_expected} in ipairs extract_text_tests
+        expected = plain_expected or html_expected
+
         it "#{i}: extracts text", ->
           import Extractor from require "web_sanitize.html"
           extract_text = Extractor { }
@@ -530,9 +535,9 @@ describe "web_sanitize", ->
 
           assert.are.equal expected, output
 
-    describe "plain text printable", ->
-      for i, {input, expected, printable_expected} in ipairs plain_text_tests
-        expected = printable_expected or expected
+    describe "to printable plain text", ->
+      for i, {input, html_expected, plain_expected, printable_expected} in ipairs extract_text_tests
+        expected = printable_expected or plain_expected or html_expected
 
         it "#{i}: extracts text", ->
           import Extractor from require "web_sanitize.html"
