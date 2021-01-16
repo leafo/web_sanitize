@@ -22,6 +22,7 @@ do
   end
 end
 local unpack = unpack or table.unpack
+local lshift, rshift, band, bor, bnot
 local MAX_UNICODE = 0x10FFFF
 local _utf8_encode
 _utf8_encode = function(codepoint)
@@ -29,10 +30,22 @@ _utf8_encode = function(codepoint)
   if codepoint < 0x80 then
     return string.char(codepoint)
   else
-    local lshift, rshift, band, bor, bnot
-    do
-      local _obj_0 = bit32 or require("bit")
-      lshift, rshift, band, bor, bnot = _obj_0.lshift, _obj_0.rshift, _obj_0.band, _obj_0.bor, _obj_0.bnot
+    if not (lshift) then
+      local _bit
+      if not (bit or bit32) then
+        _bit = (loadstring or load)([[          return {
+            lshift = function(x,y) return x << y end,
+            rshift = function(x,y) return x >> y end,
+            bor = function(x,y) return x | y end,
+            band = function(x,y) return x ^ y end,
+            bnot = function(x) return ~x end,
+          }
+        ]])
+      end
+      do
+        local _obj_0 = (_bit and _bit()) or bit32 or require("bit")
+        lshift, rshift, band, bor, bnot = _obj_0.lshift, _obj_0.rshift, _obj_0.band, _obj_0.bor, _obj_0.bnot
+      end
     end
     local mfb = 0x3f
     local chars = { }

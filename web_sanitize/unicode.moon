@@ -16,8 +16,10 @@ strip_bad_chars = do
   p = Cs (acceptable_character + P(1) / "")^0 * -1
   (text) -> p\match text
 
-
 unpack = unpack or table.unpack
+
+local lshift, rshift, band, bor, bnot
+
 
 MAX_UNICODE = 0x10FFFF
 _utf8_encode = (codepoint) ->
@@ -26,7 +28,20 @@ _utf8_encode = (codepoint) ->
   if codepoint < 0x80
     string.char codepoint
   else
-    import lshift, rshift, band, bor, bnot from bit32 or require "bit"
+    unless lshift
+      -- on 5.4 we only have bitwise operators
+      _bit = unless bit or bit32
+        (loadstring or load) [[
+          return {
+            lshift = function(x,y) return x << y end,
+            rshift = function(x,y) return x >> y end,
+            bor = function(x,y) return x | y end,
+            band = function(x,y) return x ^ y end,
+            bnot = function(x) return ~x end,
+          }
+        ]]
+
+      { :lshift, :rshift, :band, :bor, :bnot } = (_bit and _bit!) or bit32 or require "bit"
 
     mfb = 0x3f
     chars = {}
