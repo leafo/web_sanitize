@@ -433,21 +433,25 @@ plain_text_tests = {
   {
     "&#1;"
     "\1"
+    ""
   }
 
   {
     "&#2;&#3;"
     "\2\3"
+    ""
   }
 
   {
     "&#xF;"
     "\15"
+    ""
   }
 
   {
     "&#16;&#15;hi "
     "\016\015hi"
+    "hi"
   }
 
   {
@@ -512,12 +516,22 @@ describe "web_sanitize", ->
       it "#{i}: extract text and match", ->
         assert.are.equal output, extract_text(input)
 
-
     describe "plain text", ->
       for i, {input, expected} in ipairs plain_text_tests
         it "#{i}: extracts text", ->
           import Extractor from require "web_sanitize.html"
           extract_text = Extractor { }
+          output = assert extract_text input
+
+          assert.are.equal expected, output
+
+    describe "plain text printable", ->
+      for i, {input, expected, printable_expected} in ipairs plain_text_tests
+        expected = printable_expected or expected
+
+        it "#{i}: extracts text", ->
+          import Extractor from require "web_sanitize.html"
+          extract_text = Extractor { printable: true }
           output = assert extract_text input
 
           assert.are.equal expected, output
