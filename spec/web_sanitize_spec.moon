@@ -357,7 +357,7 @@ tests = {
   }
 }
 
-text_tests = {
+html_text_tests = {
   {
     "hello world"
     "hello world"
@@ -406,6 +406,58 @@ text_tests = {
   {
     'hello <script dad="world"><b>yes</b></b>'
     'hello yes'
+  }
+
+  {
+    "Hello &copy; world"
+    "Hello &copy; world"
+  }
+}
+
+plain_text_tests = {
+  {
+    "Hello &copy; world"
+    "Hello © world"
+  }
+
+  {
+    'hello <script dad="world"><b>yes</b></b>'
+    'hello yes'
+  }
+
+  {
+    "&amp; &copy; &fart; &#x00A9; &#xA9; &#169; &#x22D9; &#x22d9; &#8921; < > <hello/> world"
+    "& © &fart; © © © ⋙ ⋙ ⋙ < > world"
+  }
+
+  {
+    "&#1;"
+    "\1"
+  }
+
+  {
+    "&#2;&#3;"
+    "\2\3"
+  }
+
+  {
+    "&#xF;"
+    "\15"
+  }
+
+  {
+    "&#16;&#15;hi "
+    "\016\015hi"
+  }
+
+  {
+    '<!-- comment -->Hello'
+    '<!-- comment -->Hello'
+  }
+
+  {
+    "\t\n<div> <ul> <li></li>\r\n<li></li> </ul> </div>"
+    ""
   }
 }
 
@@ -456,10 +508,19 @@ describe "web_sanitize", ->
 
   describe "extract_text", ->
     import extract_text from require "web_sanitize"
-    for i, {input, output} in ipairs text_tests
+    for i, {input, output} in ipairs html_text_tests
       it "#{i}: extract text and match", ->
         assert.are.equal output, extract_text(input)
 
+
+    describe "plain text", ->
+      for i, {input, expected} in ipairs plain_text_tests
+        it "#{i}: extracts text", ->
+          import Extractor from require "web_sanitize.html"
+          extract_text = Extractor { }
+          output = assert extract_text input
+
+          assert.are.equal expected, output
 
   describe "sanitize_html strip tags", ->
     local sanitize_html
