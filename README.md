@@ -87,10 +87,10 @@ local safe_html = web_sanitize.sanitize_html("hi<script>alert('hi')</script>")
 
 #### `extract_text(unsafe_html)`
 
-Extracts just the textual content of unsafe HTML. No HTML tags will be present
-in the output. There may be HTML escape sequences present if the text
-contains any characters that might be interpreted as part of an HTML tag (eg. a
-`<`).
+Extracts just the textual content of unsafe HTML, returning valid HTML. No HTML
+tags will be present in the output. There may be HTML escape sequences present
+if the text contains any characters that might be interpreted as part of an
+HTML tag (eg. a `<`).
 
 ```lua
 local text = web_sanitize.extract_text("<div>hello <b>world</b></div>")
