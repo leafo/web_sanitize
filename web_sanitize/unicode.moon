@@ -36,7 +36,7 @@ _utf8_encode = (codepoint) ->
             lshift = function(x,y) return x << y end,
             rshift = function(x,y) return x >> y end,
             bor = function(x,y) return x | y end,
-            band = function(x,y) return x ^ y end,
+            band = function(x,y) return x & y end,
             bnot = function(x) return ~x end,
           }
         ]]
