@@ -474,6 +474,13 @@ extract_text_tests = {
     ""
   }
 
+
+  {
+    "&nbsp; &nbsp;hello &nbsp;\n&nbsp; world &nbsp;"
+    "&nbsp; &nbsp;hello &nbsp; &nbsp; world &nbsp;"
+    "hello world"
+  }
+
 }
 
 sanitize_tests_strip = {

@@ -246,18 +246,18 @@ Extractor = (opts) ->
   else
     Cs (open_tag_ignored / " " + close_tag_ignored / " " + comment / "" + decode_html_entity + 1)^0 * -1
 
-
   import whitespace, strip_unprintable from require "web_sanitize.unicode"
 
   nospace = 1 - whitespace
-  trim = whitespace^0 * C (whitespace^0 * nospace^1)^0
+  flatten_whitespace = whitespace^1 / " "
+  trim = whitespace^0 * Cs (flatten_whitespace^-1 * nospace^1)^0
 
   (str) ->
     out = assert html_text\match(str), "failed to parse html"
     if printable
       out = assert strip_unprintable out
 
-    out = assert trim\match (out\gsub "%s+", " ")
+    out = assert trim\match out
     out
 
 { :Sanitizer, :Extractor, :escape_text, :decode_html_entity }

@@ -288,13 +288,14 @@ Extractor = function(opts)
     whitespace, strip_unprintable = _obj_0.whitespace, _obj_0.strip_unprintable
   end
   local nospace = 1 - whitespace
-  local trim = whitespace ^ 0 * C((whitespace ^ 0 * nospace ^ 1) ^ 0)
+  local flatten_whitespace = whitespace ^ 1 / " "
+  local trim = whitespace ^ 0 * Cs((flatten_whitespace ^ -1 * nospace ^ 1) ^ 0)
   return function(str)
     local out = assert(html_text:match(str), "failed to parse html")
     if printable then
       out = assert(strip_unprintable(out))
     end
-    out = assert(trim:match((out:gsub("%s+", " "))))
+    out = assert(trim:match(out))
     return out
   end
 end
