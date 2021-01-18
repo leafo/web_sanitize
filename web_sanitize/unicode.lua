@@ -6,8 +6,7 @@ end
 local cont = R("\128\191")
 local utf8_codepoint = R("\194\223") * cont + R("\224\239") * cont * cont + R("\240\244") * cont * cont * cont
 local whitespace = S("\13\32\10\11\12\9") + P("\239\187\191") + P("\194") * S("\133\160") + P("\225") * (P("\154\128") + P("\160\142")) + P("\226") * (P("\128") * S("\131\135\139\128\132\136\140\175\129\133\168\141\130\134\169\138\137") + P("\129") * S("\159\160")) + P("\227\128\128")
-local acceptable_character = S("\r\n\t") + R("\032\126") + utf8_codepoint
-local acceptable_string = acceptable_character ^ 0 * P(-1)
+local printable_character = S("\r\n\t") + R("\032\126") + utf8_codepoint
 local strip_invalid_utf8
 do
   local p = Cs((R("\0\127") + utf8_codepoint + P(1) / "") ^ 0)
@@ -15,10 +14,10 @@ do
     return p:match(text)
   end
 end
-local strip_bad_chars
+local strip_unprintable
 do
-  local p = Cs((acceptable_character + P(1) / "") ^ 0 * -1)
-  strip_bad_chars = function(text)
+  local p = Cs((printable_character + P(1) / "") ^ 0 * -1)
+  strip_unprintable = function(text)
     return p:match(text)
   end
 end
@@ -67,9 +66,7 @@ end
 local utf8_encode = utf8 and utf8.char or _utf8_encode
 return {
   strip_invalid_utf8 = strip_invalid_utf8,
-  acceptable_character = acceptable_character,
-  acceptable_string = acceptable_string,
-  strip_bad_chars = strip_bad_chars,
+  strip_unprintable = strip_unprintable,
   _utf8_encode = _utf8_encode,
   utf8_encode = utf8_encode,
   whitespace = whitespace

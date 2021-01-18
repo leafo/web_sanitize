@@ -282,16 +282,19 @@ Extractor = function(opts)
   else
     html_text = Cs((open_tag_ignored / " " + close_tag_ignored / " " + comment / "" + decode_html_entity + 1) ^ 0 * -1)
   end
-  local whitespace
-  whitespace = require("web_sanitize.unicode").whitespace
+  local whitespace, strip_unprintable
+  do
+    local _obj_0 = require("web_sanitize.unicode")
+    whitespace, strip_unprintable = _obj_0.whitespace, _obj_0.strip_unprintable
+  end
   local nospace = 1 - whitespace
   local trim = whitespace ^ 0 * C((whitespace ^ 0 * nospace ^ 1) ^ 0)
   return function(str)
     local out = assert(html_text:match(str), "failed to parse html")
     if printable then
-      out = assert(require("web_sanitize.unicode").strip_bad_chars(out))
+      out = assert(strip_unprintable(out))
     end
-    out = trim:match((out:gsub("%s+", " ")))
+    out = assert(trim:match((out:gsub("%s+", " "))))
     return out
   end
 end
