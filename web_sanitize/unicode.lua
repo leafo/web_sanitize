@@ -71,5 +71,6 @@ return {
   acceptable_string = acceptable_string,
   strip_bad_chars = strip_bad_chars,
   _utf8_encode = _utf8_encode,
-  utf8_encode = utf8_encode
+  utf8_encode = utf8_encode,
+  whitespace = whitespace
 }

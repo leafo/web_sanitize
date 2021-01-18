@@ -272,14 +272,6 @@ translate_entity = function(str, kind, value)
 end
 local annoteted_html_entity = C(P("&") * (Cc("named") * at_most(alphanum, 50) + P("#") * (Cc("dec") * C(at_most(num, 10)) + S("xX") * Cc("hex") * C(at_most(hex, 5)))) * P(";") ^ -1)
 local decode_html_entity = Cs(annoteted_html_entity / translate_entity)
-local trim
-trim = function(str)
-  if #str > 200 then
-    return str:gsub("^%s+", ""):reverse():gsub("^%s+", ""):reverse()
-  else
-    return str:match("^%s*(.-)%s*$")
-  end
-end
 local Extractor
 Extractor = function(opts)
   local escape_html = opts and opts.escape_html
@@ -290,12 +282,16 @@ Extractor = function(opts)
   else
     html_text = Cs((open_tag_ignored / " " + close_tag_ignored / " " + comment / "" + decode_html_entity + 1) ^ 0 * -1)
   end
+  local whitespace
+  whitespace = require("web_sanitize.unicode").whitespace
+  local nospace = 1 - whitespace
+  local trim = whitespace ^ 0 * C((whitespace ^ 0 * nospace ^ 1) ^ 0)
   return function(str)
     local out = assert(html_text:match(str), "failed to parse html")
     if printable then
       out = assert(require("web_sanitize.unicode").strip_bad_chars(out))
     end
-    out = trim(out:gsub("%s+", " "))
+    out = trim:match((out:gsub("%s+", " ")))
     return out
   end
 end

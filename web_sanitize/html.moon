@@ -232,12 +232,6 @@ translate_entity = (str, kind, value) ->
 annoteted_html_entity = C P"&" * (Cc"named" * at_most(alphanum, 50) + P"#" * (Cc"dec" * C(at_most(num, 10)) + S"xX" * Cc"hex" * C(at_most(hex, 5)))) * P";"^-1
 decode_html_entity = Cs annoteted_html_entity / translate_entity
 
-trim = (str) ->
-  if #str > 200
-    str\gsub("^%s+", "")\reverse()\gsub("^%s+", "")\reverse()
-  else
-    str\match "^%s*(.-)%s*$"
-
 -- parse the html, extract text between non tag items
 -- https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references
 -- opts:
@@ -252,12 +246,17 @@ Extractor = (opts) ->
   else
     Cs (open_tag_ignored / " " + close_tag_ignored / " " + comment / "" + decode_html_entity + 1)^0 * -1
 
+
+  import whitespace from require "web_sanitize.unicode"
+  nospace = 1 - whitespace
+  trim = whitespace^0 * C (whitespace^0 * nospace^1)^0
+
   (str) ->
     out = assert html_text\match(str), "failed to parse html"
     if printable
       out = assert require("web_sanitize.unicode").strip_bad_chars out
 
-    out = trim out\gsub "%s+", " "
+    out = trim\match (out\gsub "%s+", " ")
     out
 
 { :Sanitizer, :Extractor, :escape_text, :decode_html_entity }
