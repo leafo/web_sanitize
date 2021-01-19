@@ -373,9 +373,18 @@ make test
 
 ## Changelog
 
+**Jan 18  2021** - 1.1.0
+
+* Update text extractor
+  * Add option for extracting as plain text
+  * Add option for removing non-printable characters
+  * Add HTML entitiy translation when extracting as plain text
+  * Whitespace trimming and normalization is utf8 whitespace aware
+* Minor updates to CSS default whitelist for border attributes
+
 **Jan 15  2020** - 1.0.0
 
-* **Important** -- Added fix where specially crafted HTML could sanitize to HTML with an unclosed tag
+* **Important** &mdash; Added fix where specially crafted HTML could sanitize to HTML with an unclosed tag
 * Fixed whitespace preservation for text around self closing tags
 * Updated CSS whitelist
 * Added cache to `parse_query` for huge speedups when doing repeat matches
