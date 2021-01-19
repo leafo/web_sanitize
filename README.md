@@ -376,7 +376,7 @@ make test
 **Jan 18  2021** - 1.1.0
 
 * Update text extractor
-  * Add option for extracting as plain text
+  * Add option for extracting as html or as plain text
   * Add option for removing non-printable characters
   * Add HTML entitiy translation when extracting as plain text
   * Whitespace trimming and normalization is utf8 whitespace aware
