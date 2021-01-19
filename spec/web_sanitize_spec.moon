@@ -481,6 +481,12 @@ extract_text_tests = {
     "hello world"
   }
 
+  {
+    ""
+    ""
+  }
+
+
 }
 
 sanitize_tests_strip = {
