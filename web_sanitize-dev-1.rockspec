@@ -30,6 +30,7 @@ build = {
     ["web_sanitize.query"] = "web_sanitize/query.lua",
     ["web_sanitize.query.parse_query"] = "web_sanitize/query/parse_query.lua",
     ["web_sanitize.query.scan_html"] = "web_sanitize/query/scan_html.lua",
+    ["web_sanitize.unicode"] = "web_sanitize/unicode.lua",
     ["web_sanitize.whitelist"] = "web_sanitize/whitelist.lua",
   }
 }
