@@ -373,7 +373,7 @@ make test
 
 ## Changelog
 
-**Jan 18  2021** - 1.1.0
+**Jan 25  2021** - 1.2.0
 
 * Update text extractor
   * Add option for extracting as html or as plain text
