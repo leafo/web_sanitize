@@ -486,6 +486,11 @@ extract_text_tests = {
     ""
   }
 
+  {
+    "&nbsp;for designing the art for this jam! ♥"
+    "&nbsp;for designing the art for this jam! ♥"
+    "for designing the art for this jam! ♥"
+  }
 
 }
 
