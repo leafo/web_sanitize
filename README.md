@@ -282,7 +282,7 @@ Here are a few things to be aware of when using the scanner:
 * Any markup inside HTML comments or CDATA sections is ignored
 * Unclosed tags are considered dangling tags and will be processed after the parser reaches the end of the input (With the exception of void tags (eg. img, hr) which are always automatically closed regardless of if self closing (`<a/>`)  syntax is used.)
 * Attributes automatically have their values HTML entities decoded (eg. &amp;amp; becomes &amp;)
-* All edits are performed after the scan has taken place, not during the scan. If you alter the content of a node's inner or outer html then scanner will not see these changes in the current iteration, and will still parse our any child nodes. Additionally, it will overwrite any changes you make th child nodes.
+* All edits are performed after the scan has taken place, not during the scan. If you alter the content of a node's inner or outer html then scanner will not see these changes in the current iteration. Additionally, making edits to a parent node's content will shadow any edits you've made to child nodes. You can work around these limitations by doing multi-pass replacements.
 * Text nodes (when enabled) will treat CDATA tags as separate text nodes. Get the content with `inner_html` method. (`outer_html` will return the CDATA tag)
 
 `NodeStack` has the following methods and properties:
@@ -312,15 +312,15 @@ only hold the most recent value.
 
 ```lua
 -- <div first="value" first="&quot;hey&quot;" Hello=world readonly></div>
-{
-	{ "first", "value"},
-	{ "first", '"hey"'},
-	{ "Hello", "world"},
-	{ "readonly" },
+node.attr = {
+  { "first", "value"},
+  { "first", '"hey"'},
+  { "Hello", "world"},
+  { "readonly" },
 
-	first = '"hey"',
-	hello = "world",
-	readonly = true
+  first = '"hey"',
+  hello = "world",
+  readonly = true
 }
 ````
 
