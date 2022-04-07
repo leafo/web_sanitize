@@ -2,6 +2,40 @@
 flatten_html = (html) ->
   ((html\gsub "%s+%<", "><")\match("^%s*(.-)%s*$"))
 
+describe "web_sanitize.patterns", ->
+  describe "open_tag", ->
+    -- NOTE: open tag integration testing mostly done in the scan_html specs
+    -- below, but feel free to add more unit tests here
+    for tuple in *{
+      {"hello", nil}
+      {">div<", nil}
+      {"<div /", nil}
+      {"<div thing='what' /", nil}
+      {[[<div thing="what>]], nil}
+      {"< DIV >", {
+        tag: "DIV"
+        pos: 1
+        inner_pos: 8
+      }}
+
+      {"< img aria-hidden Colour = blu/ >", {
+        tag: "img"
+        pos: 1
+        inner_pos: 34
+        self_closing: true
+        attr: {
+          {"aria-hidden"}
+          {"Colour", "blu"}
+        }
+      }}
+    }
+      it "matches #{tuple[1]}", ->
+        import open_tag from require "web_sanitize.patterns"
+        assert.same {
+          select 2, unpack tuple
+        }, { open_tag\match tuple[1] }
+
+
 describe "web_sanitize.query.scan", ->
   import replace_html, scan_html from require "web_sanitize.query.scan_html"
 
