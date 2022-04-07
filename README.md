@@ -266,12 +266,67 @@ syntax](https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelector)
 
 The scanner interface is a lower level interface that lets you iterate through
 each node in the HTML document. It's located in the
-`web_sanitize.query.scan_html` module.
+`web_sanitize.query.scan_html` module. For each node parsed in the HTML
+document a callback is called with an object representing the structure of the
+document at the current location.
 
 
 ```lua
 local scanner = require("web_sanitize.query.scan_html")
 ```
+
+Here are a few things to be aware of when using the scanner:
+
+* The scanner performs a *depth first* scan: the callback is issued on a node after the closing tag for that node has been parsed.
+* Any markup in *raw text* elements like `script`, `style`, `title` is ignored (unless it's the appropriate closing tag)
+* Any markup inside HTML comments or CDATA sections is ignored
+* Unclosed tags are considered dangling tags and will be processed after the parser reaches the end of the input (With the exception of void tags (eg. img, hr) which are always automatically closed regardless of if self closing (`<a/>`)  syntax is used.)
+* Attributes automatically have their values HTML entities decoded (eg. &amp;amp; becomes &amp;)
+* All edits are performed after the scan has taken place, not during the scan. If you alter the content of a node's inner or outer html then scanner will not see these changes in the current iteration, and will still parse our any child nodes. Additionally, it will overwrite any changes you make th child nodes.
+* Text nodes (when enabled) will treat CDATA tags as separate text nodes. Get the content with `inner_html` method. (`outer_html` will return the CDATA tag)
+
+`NodeStack` has the following methods and properties:
+
+* `stack[n]` - get the nth item in the stack
+* `stack:current()` - return the `HTMLNode` on top of the stack
+* `stack:is(query)` - return `true` if the stack matches the query selector
+
+`HTMLNode` has the following methods and properties:
+
+* `node.tag` - the name of the tag (eg. `"div"`, `"span"`). Will be `""` for text nodes, and `"cdata"` for `CDATA` text nodes
+* `node.type` - set to `"text_node"` for text nodes, `nil` otherwise
+* `node.num` - integer representing what nth child position this node is (NOTE: this number changes depending on if text nodes are enabled or not)
+* `node.self_closing` - `true` if the tag uses self closing syntax (`<a />`), `nil` otherwise
+* `node.attr` - A table of attributes if the tag has attributes, `nil` otherwise. See attribute table format below
+* `node:outer_html()` - get HTML fragment as string of the entire tag, including the opening and closing tag
+* `node:inner_html()` - get HTML fragment as string of the content of the tag, excludes opening and closing tag
+* `node:inner_text()` - get a string of the textual content inside the tag (effectively `extract_text(inner_html)`, using `extract_text` function described above)
+* `node:replace_outer_html(html_text)` **(`replace_html` only)** - Replaces the entire tag with HTML fragment `html_text`
+* `node:replace_inner_html(html_text)` **(`replace_html` only)** - Replaces the inside of the tag with HTML fragment `html_text`
+* `node:replace_attributes(tbl)` **(`replace_html` only)** - Replaces all attributes on the tag with the table of attributes
+* `node:update_attributes(tbl)` **(`replace_html` only)** - Merges a table of attributes with the current attributes, overwriting any of the existing ones (including duplicates) with the ones provided
+
+The node attributes are stored in a table with both array and hash table
+elements. The hash table elements have their keys normalized to lowercase and
+only hold the most recent value.
+
+```lua
+-- <div first="value" first="&quot;hey&quot;" Hello=world readonly></div>
+{
+	{ "first", "value"},
+	{ "first", '"hey"'},
+	{ "Hello", "world"},
+	{ "readonly" },
+
+	first = '"hey"',
+	hello = "world",
+	readonly = true
+}
+````
+
+When updating or replacing attributes, the same table syntax is used as the
+argument, but it will write duplicates if you have a single attribute repeated
+in both the table and array format.
 
 #### `scan_html(html_text, callback, opts)`
 
@@ -283,6 +338,7 @@ the stack, with the top most node being the current one.
 Each node in the node stack is an instance of `HTMLNode`. In `scan_html` the
 node is read-only, and can be used to get the properties and content of the
 node.
+
 
 Here's how you might get the `href` and text of every `a` tag in the html:
 
@@ -311,8 +367,8 @@ content of the node by calling either `inner_html` or `outer_html`.
 #### `replace_html(html_text, callback, opts)`
 
 Works the same as `scan_html`, except each node in the stack is capable of
-being mutated using the `replace_attributes`, `replace_inner_html`,
-`replace_outer_html` methods.
+being mutated using the `replace_attributes`, `update_attributes`,
+`replace_inner_html`, `replace_outer_html` methods.
 
 Here's how you might convert all `a` tags that don't match a certain URL
 pattern to plain text:
