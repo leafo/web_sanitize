@@ -27,6 +27,7 @@ build = {
     ["web_sanitize.data"] = "web_sanitize/data.lua",
     ["web_sanitize.html"] = "web_sanitize/html.lua",
     ["web_sanitize.html_named_entities"] = "web_sanitize/html_named_entities.lua",
+    ["web_sanitize.patterns"] = "web_sanitize/patterns.lua",
     ["web_sanitize.query"] = "web_sanitize/query.lua",
     ["web_sanitize.query.parse_query"] = "web_sanitize/query/parse_query.lua",
     ["web_sanitize.query.scan_html"] = "web_sanitize/query/scan_html.lua",

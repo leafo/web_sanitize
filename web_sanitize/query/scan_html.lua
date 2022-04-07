@@ -1,6 +1,25 @@
 local void_tags
 void_tags = require("web_sanitize.data").void_tags
-local unescape_text, void_tags_set
+local open_tag, close_tag
+do
+  local _obj_0 = require("web_sanitize.patterns")
+  open_tag, close_tag = _obj_0.open_tag, _obj_0.close_tag
+end
+local P, C, Cs, Cmt, Cp
+do
+  local _obj_0 = require("lpeg")
+  P, C, Cs, Cmt, Cp = _obj_0.P, _obj_0.C, _obj_0.Cs, _obj_0.Cmt, _obj_0.Cp
+end
+local void_tags_set
+do
+  local _tbl_0 = { }
+  for _index_0 = 1, #void_tags do
+    local t = void_tags[_index_0]
+    _tbl_0[t] = true
+  end
+  void_tags_set = _tbl_0
+end
+local unescape_text
 local NodeStack
 do
   local _class_0
@@ -230,34 +249,8 @@ do
   _base_0.__class = _class_0
   HTMLNode = _class_0
 end
-local R, S, V, P
-do
-  local _obj_0 = require("lpeg")
-  R, S, V, P = _obj_0.R, _obj_0.S, _obj_0.V, _obj_0.P
-end
-local C, Cs, Ct, Cmt, Cg, Cb, Cc, Cp
-do
-  local _obj_0 = require("lpeg")
-  C, Cs, Ct, Cmt, Cg, Cb, Cc, Cp = _obj_0.C, _obj_0.Cs, _obj_0.Ct, _obj_0.Cmt, _obj_0.Cg, _obj_0.Cb, _obj_0.Cc, _obj_0.Cp
-end
-do
-  local _tbl_0 = { }
-  for _index_0 = 1, #void_tags do
-    local t = void_tags[_index_0]
-    _tbl_0[t] = true
-  end
-  void_tags_set = _tbl_0
-end
 local unescape_char = P("&gt;") / ">" + P("&lt;") / "<" + P("&amp;") / "&" + P("&nbsp;") / " " + P("&#x27;") / "'" + P("&#x2F;") / "/" + P("&quot;") / '"'
 unescape_text = Cs((unescape_char + 1) ^ 1)
-local alphanum = R("az", "AZ", "09")
-local white = S(" \t\n") ^ 0
-local word = (alphanum + S("._-")) ^ 1
-local value = C(word) + P('"') * C((1 - P('"')) ^ 0) * P('"') + P("'") * C((1 - P("'")) ^ 0) * P("'")
-local attribute_name = (alphanum + S("._-:")) ^ 1
-local attribute = Ct(C(attribute_name) * (white * P("=") * white * value) ^ -1)
-local open_tag = Ct(Cg(Cp(), "pos") * P("<") * white * Cg(word, "tag") * Cg(Ct((white * attribute) ^ 1), "attr") ^ -1 * white * ("/" * white * P(">") * Cg(Cc(true), "self_closing") + P(">")) * Cg(Cp(), "inner_pos"))
-local close_tag = Cp() * P("<") * white * P("/") * white * C(word) * white * P(">")
 local scan_html
 scan_html = function(html_text, callback, opts)
   assert(callback, "missing callback to scan_html")

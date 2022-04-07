@@ -1,7 +1,12 @@
 
 import void_tags from require "web_sanitize.data"
+import open_tag, close_tag from require "web_sanitize.patterns"
 
-local unescape_text, void_tags_set
+import P, C, Cs, Cmt, Cp from require "lpeg"
+
+void_tags_set = {t, true for t in *void_tags}
+
+local unescape_text
 
 class NodeStack
   current: =>
@@ -129,12 +134,10 @@ class HTMLNode
 
     table.insert @changes, {@pos, @end_pos, replacement}
 
-import R, S, V, P from require "lpeg"
-import C, Cs, Ct, Cmt, Cg, Cb, Cc, Cp from require "lpeg"
 
-void_tags_set = {t, true for t in *void_tags}
 
 -- this is far from comprehensive
+-- TODO: use html_named_entities database
 unescape_char = P"&gt;" / ">" +
   P"&lt;" / "<" +
   P"&amp;" / "&" +
@@ -144,38 +147,6 @@ unescape_char = P"&gt;" / ">" +
   P"&quot;" / '"'
 
 unescape_text = Cs (unescape_char + 1)^1
-
-alphanum = R "az", "AZ", "09"
-
-white = S" \t\n"^0
-word = (alphanum + S"._-")^1
-
-value = C(word) +
-  P'"' * C((1 - P'"')^0) * P'"' +
-  P"'" * C((1 - P"'")^0) * P"'"
-
-attribute_name = (alphanum + S"._-:")^1 -- TODO: this is way too strict https://dev.w3.org/html5/spec-LC/syntax.html#attributes-0
-attribute = Ct C(attribute_name) * (white * P"=" * white * value)^-1
-
--- this will parse an opening tag into a table with the following format:
--- {
---   pos: 123
---   inner_pos: 234
---   tag: "div"
---   attr: {
---     {name, value}
---     {name}
---   }
---   self_closing: false -- self closing tag
--- }
-open_tag = Ct Cg(Cp!, "pos") * P"<" * white * Cg(word, "tag") *
-  Cg(Ct((white * attribute)^1), "attr")^-1 *
-  white * ("/" * white * P">" * Cg(Cc(true), "self_closing") + P">") *
-  Cg(Cp!, "inner_pos")
-
--- this will parse a closing tag multiple captures: start_pos, tag_name
--- we don't use Ct here to avoid allocating extra table, closing position can also be obtained from the Cmt function that is used to process the closing tag
-close_tag = Cp! * P"<" * white * P"/" * white * C(word) * white * P">"
 
 scan_html = (html_text, callback, opts) ->
   assert callback, "missing callback to scan_html"
