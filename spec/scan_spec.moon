@@ -158,17 +158,16 @@ describe "web_sanitize.query.scan", ->
           cool: "zone"
         }
 
+      assert.same '<div><hr cool="zone" /></div>', out
+
+      out = replace_html "<div><hr></div>", (stack) ->
+        return unless stack\is "hr"
+        stack\current!\replace_attributes {
+          cool: "zone"
+        }
+
       assert.same '<div><hr cool="zone"></div>', out
 
-    -- TODO: add method for updating attributes
-    it "mutates existing attributes", ->
-      -- also strips the duplicates
-      out = replace_html '<div a="b" b="c" a="whw" b="&amp;&quot;"></div>', (stack) ->
-        node = stack\current!
-        node.attr.color = "green"
-        node\replace_attributes node.attr
-
-      assert.same [[<div a="whw" b="&amp;&quot;" color="green"></div>]], out
 
     it "replaces content in text nodes", ->
       out = replace_html(
@@ -197,6 +196,27 @@ describe "web_sanitize.query.scan", ->
       )
 
       assert.same [[one <a href="http://leafo">http://leafo</a> and <a href='http://doop'>http://woop <span>http://oop</span></a>]], out
+
+    describe "update attributes", ->
+      it "basic update", ->
+        out = replace_html '<div a="b" b="c" a="whw" b="&amp;&quot;"></div>', (stack) ->
+          node = stack\current!
+
+          node\update_attributes {
+            color: "green"
+          }
+
+        assert.same [[<div a="b" b="c" a="whw" b="&amp;&quot;" color="green"></div>]], out
+
+      it "updates self closing tag with duplicates", ->
+        out = replace_html '<img src="" src="efjef" alt="" />', (stack) ->
+          node = stack\current!
+
+          node\update_attributes {
+            src: "http://leafo.net/hi.png"
+          }
+
+        assert.same [[<img alt="" src="http://leafo.net/hi.png" />]], out
 
 
   describe "NodeStack", ->

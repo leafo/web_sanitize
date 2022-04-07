@@ -54,6 +54,34 @@ class HTMLNode
     text = extract_text @inner_html!
     unescape_text\match(text) or text
 
+  -- merge new attributes with existing ones
+  update_attributes: (attrs) =>
+    if @attr
+      provided_attributes = {}
+
+      for k, v in pairs attrs
+        if type(v) == "table"
+          provided_attributes[v[1]\lower!] = true
+        elseif type(k) == "string"
+          provided_attributes[k\lower!] = true
+
+      update = {}
+      -- copy existing ones
+      for idx, tuple in ipairs @attr
+        continue if provided_attributes[tuple[1]\lower!]
+        table.insert update, tuple
+
+      -- add new ones
+      for k,v in pairs attrs
+        if type(v) == "table"
+          table.insert update, v
+        elseif type(k) == "string"
+          update[k] = v
+
+      @replace_attributes update
+    else
+      @replace_attributes attrs
+
   replace_attributes: (attrs) =>
     import escape_text from require "web_sanitize.html"
 
@@ -82,7 +110,11 @@ class HTMLNode
       continue unless v
       push_attr k,v
 
-    buff[i] = ">"
+    if @self_closing
+      buff[i] = " />"
+    else
+      buff[i] = ">"
+
     table.insert @changes, {@pos, @inner_pos or @end_pos, table.concat buff}
 
   replace_inner_html: (replacement) =>
@@ -134,11 +166,11 @@ attribute = Ct C(attribute_name) * (white * P"=" * white * value)^-1
 --     {name, value}
 --     {name}
 --   }
---   closed: false -- self closing tag
+--   self_closing: false -- self closing tag
 -- }
 open_tag = Ct Cg(Cp!, "pos") * P"<" * white * Cg(word, "tag") *
   Cg(Ct((white * attribute)^1), "attr")^-1 *
-  white * ("/" * white * P">" * Cg(Cc(true), "closed") + P">") *
+  white * ("/" * white * P">" * Cg(Cc(true), "self_closing") + P">") *
   Cg(Cp!, "inner_pos")
 
 -- this will parse a closing tag multiple captures: start_pos, tag_name
@@ -178,7 +210,7 @@ scan_html = (html_text, callback, opts) ->
     table.insert tag_stack, node
 
     -- handle void/self closing tags
-    if void_tags_set[node.tag] or node.closed
+    if void_tags_set[node.tag] or node.self_closing
       node.end_pos = node.inner_pos
       node.end_inner_pos = node.inner_pos
 

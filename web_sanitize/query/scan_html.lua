@@ -100,6 +100,43 @@ do
       local text = extract_text(self:inner_html())
       return unescape_text:match(text) or text
     end,
+    update_attributes = function(self, attrs)
+      if self.attr then
+        local provided_attributes = { }
+        for k, v in pairs(attrs) do
+          if type(v) == "table" then
+            provided_attributes[v[1]:lower()] = true
+          elseif type(k) == "string" then
+            provided_attributes[k:lower()] = true
+          end
+        end
+        local update = { }
+        for idx, tuple in ipairs(self.attr) do
+          local _continue_0 = false
+          repeat
+            if provided_attributes[tuple[1]:lower()] then
+              _continue_0 = true
+              break
+            end
+            table.insert(update, tuple)
+            _continue_0 = true
+          until true
+          if not _continue_0 then
+            break
+          end
+        end
+        for k, v in pairs(attrs) do
+          if type(v) == "table" then
+            table.insert(update, v)
+          elseif type(k) == "string" then
+            update[k] = v
+          end
+        end
+        return self:replace_attributes(update)
+      else
+        return self:replace_attributes(attrs)
+      end
+    end,
     replace_attributes = function(self, attrs)
       local escape_text
       escape_text = require("web_sanitize.html").escape_text
@@ -145,7 +182,11 @@ do
           break
         end
       end
-      buff[i] = ">"
+      if self.self_closing then
+        buff[i] = " />"
+      else
+        buff[i] = ">"
+      end
       return table.insert(self.changes, {
         self.pos,
         self.inner_pos or self.end_pos,
@@ -215,7 +256,7 @@ local word = (alphanum + S("._-")) ^ 1
 local value = C(word) + P('"') * C((1 - P('"')) ^ 0) * P('"') + P("'") * C((1 - P("'")) ^ 0) * P("'")
 local attribute_name = (alphanum + S("._-:")) ^ 1
 local attribute = Ct(C(attribute_name) * (white * P("=") * white * value) ^ -1)
-local open_tag = Ct(Cg(Cp(), "pos") * P("<") * white * Cg(word, "tag") * Cg(Ct((white * attribute) ^ 1), "attr") ^ -1 * white * ("/" * white * P(">") * Cg(Cc(true), "closed") + P(">")) * Cg(Cp(), "inner_pos"))
+local open_tag = Ct(Cg(Cp(), "pos") * P("<") * white * Cg(word, "tag") * Cg(Ct((white * attribute) ^ 1), "attr") ^ -1 * white * ("/" * white * P(">") * Cg(Cc(true), "self_closing") + P(">")) * Cg(Cp(), "inner_pos"))
 local close_tag = Cp() * P("<") * white * P("/") * white * C(word) * white * P(">")
 local scan_html
 scan_html = function(html_text, callback, opts)
@@ -280,7 +321,7 @@ scan_html = function(html_text, callback, opts)
     end
     setmetatable(node, BufferHTMLNode.__base)
     table.insert(tag_stack, node)
-    if void_tags_set[node.tag] or node.closed then
+    if void_tags_set[node.tag] or node.self_closing then
       node.end_pos = node.inner_pos
       node.end_inner_pos = node.inner_pos
       callback(tag_stack)
