@@ -374,6 +374,25 @@ describe "web_sanitize.query.scan", ->
           "world"
         }, text_nodes
 
+      it "text nodes and invalid close tag", ->
+        result = {}
+
+        scan_html(
+          "<a>one</a></a></b>hi"
+
+          (stack) ->
+            table.insert result, stack\current!\outer_html!
+
+          text_nodes: true
+        )
+
+        assert.same {
+          "one"
+          "<a>one</a>"
+          "</a>"
+          "</b>hi"
+        }, result
+
       it "scans text nodes with cdata", ->
         result = {}
 

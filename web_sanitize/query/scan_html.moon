@@ -185,8 +185,8 @@ scan_html = (html_text, callback, opts) ->
     tag = tag\lower!
 
     if stack_size == 0
-      -- too many closes, ignore
-      return true
+      -- extra closing tag, fail and let text capture it
+      return false
 
     -- when we have a closing tag for something that isn't on the stack
     if tag != tag_stack[stack_size].tag
@@ -198,7 +198,8 @@ scan_html = (html_text, callback, opts) ->
           found_tag = true
           break
 
-      return true unless found_tag -- just skip it
+      unless found_tag -- fail and let text capture it
+        return false
 
     -- pop until we've consumed the tag
     for k=stack_size,1,-1
@@ -269,7 +270,7 @@ scan_html = (html_text, callback, opts) ->
   check_open_tag = Cmt open_tag, push_tag
   check_close_tag = Cmt close_tag, pop_tag
 
-  text = P"<" + P(1 - P"<")^1
+  text = P"<"^-1 * P(1 - P"<")^1
 
   cdata_node = cdata
 

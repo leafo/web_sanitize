@@ -328,7 +328,7 @@ scan_html = function(html_text, callback, opts)
     local stack_size = #tag_stack
     tag = tag:lower()
     if stack_size == 0 then
-      return true
+      return false
     end
     if tag ~= tag_stack[stack_size].tag then
       local found_tag = false
@@ -339,7 +339,7 @@ scan_html = function(html_text, callback, opts)
         end
       end
       if not (found_tag) then
-        return true
+        return false
       end
     end
     for k = stack_size, 1, -1 do
@@ -404,7 +404,7 @@ scan_html = function(html_text, callback, opts)
   end
   local check_open_tag = Cmt(open_tag, push_tag)
   local check_close_tag = Cmt(close_tag, pop_tag)
-  local text = P("<") + P(1 - P("<")) ^ 1
+  local text = P("<") ^ -1 * P(1 - P("<")) ^ 1
   local cdata_node = cdata
   if opts and opts.text_nodes == true then
     text = Cmt(Cp() * C(text), push_text_node)
