@@ -15,14 +15,14 @@ tag_attribute = Ct C(attribute_name) * (white * P"=" * white * attribute_value)^
 
 -- this will parse an opening tag into a table with the following format:
 -- {
---   pos: 123
---   inner_pos: 234
+--   pos: 123 -- where the openning < starts
+--   inner_pos: 234 -- after the closing > (aka where the inner_html would start)
 --   tag: "div"
 --   attr: {
 --     {name, value}
 --     {name}
 --   }
---   self_closing: false -- self closing tag
+--   self_closing: false -- if the /> syntax is used to close the tag
 -- }
 open_tag = Ct Cg(Cp!, "pos") * P"<" * white * Cg(word, "tag") *
   Cg(Ct((white * tag_attribute)^1), "attr")^-1 *
