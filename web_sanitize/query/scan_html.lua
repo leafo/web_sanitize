@@ -159,6 +159,7 @@ do
       if not (self.changes) then
         error("attempting to change buffer with no changes array")
       end
+      assert(self.type ~= "text_node", "replace_attributes: text nodes have no attributes")
       local escape_text
       escape_text = require("web_sanitize.html").escape_text
       local buff = {

@@ -522,6 +522,22 @@ describe "web_sanitize.query.scan", ->
 
       assert.same "hello leafo <span>worleafold</span>", out
 
+    it "text nodes can't have attributes updated", ->
+      out = replace_html(
+        "hello world <![CDATA[hi]]>"
+
+        (stack) ->
+          node = stack\current!
+          assert.has_error(
+            -> node\replace_attributes { umm: "what" }
+            "replace_attributes: text nodes have no attributes"
+          )
+
+        text_nodes: true
+      )
+
+      assert.same "hello world <![CDATA[hi]]>", out
+
     it "converts links", ->
       out = replace_html(
         "one http://leafo and <a href='http://doop'>http://woop <span>http://oop</span></a>"

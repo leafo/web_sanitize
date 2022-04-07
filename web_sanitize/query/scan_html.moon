@@ -89,6 +89,8 @@ class HTMLNode
     unless @changes
       error "attempting to change buffer with no changes array"
 
+    assert @type != "text_node", "replace_attributes: text nodes have no attributes"
+
     import escape_text from require "web_sanitize.html"
 
     buff = {"<", @tag}
