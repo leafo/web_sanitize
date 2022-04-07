@@ -12,9 +12,11 @@ local tag_attribute = Ct(C(attribute_name) * (white * P("=") * white * attribute
 local open_tag = Ct(Cg(Cp(), "pos") * P("<") * white * Cg(word, "tag") * Cg(Ct((white * tag_attribute) ^ 1), "attr") ^ -1 * white * ("/" * white * P(">") * Cg(Cc(true), "self_closing") + P(">")) * Cg(Cp(), "inner_pos"))
 local close_tag = Cp() * P("<") * white * P("/") * white * C(word) * white * P(">")
 local html_comment = P("<!--") * -P(">") * -P("->") * (P(1) - P("<!--") - P("-->") - P("--!>")) ^ 0 * P("<!") ^ -1 * P("-->")
+local cdata = P("<![CDATA[") * (P(1) - P("]]>")) ^ 0 * P("]]>")
 return {
+  tag_attribute = tag_attribute,
   open_tag = open_tag,
   close_tag = close_tag,
   html_comment = html_comment,
-  tag_attribute = tag_attribute
+  cdata = cdata
 }

@@ -68,6 +68,21 @@ describe "web_sanitize.patterns", ->
         }, { html_comment\match tuple[1] }
 
 
+  describe "cdata", ->
+    for tuple in *{
+      {"hello", nil}
+      {"<![CDATA[<![CDATA[]]>", 22}
+      {"<![CDATA[]]>", 13}
+      {"<![CDATA[<div>hello world</div>]]>", 35}
+    }
+      it "matches #{tuple[1]}", ->
+        import cdata from require "web_sanitize.patterns"
+        assert.same {
+          select 2, unpack tuple
+        }, { cdata\match tuple[1] }
+
+
+
 describe "web_sanitize.query.scan", ->
   import replace_html, scan_html from require "web_sanitize.query.scan_html"
 

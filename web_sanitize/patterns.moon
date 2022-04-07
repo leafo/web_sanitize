@@ -37,9 +37,12 @@ close_tag = Cp! * P"<" * white * P"/" * white * C(word) * white * P">"
 -- https://html.spec.whatwg.org/multipage/syntax.html#comments
 html_comment = P"<!--" * -P">" * -P"->" * (P(1) - P"<!--" - P"-->" - P"--!>")^0 * P"<!"^-1 * P"-->"
 
+cdata = P"<![CDATA[" * (P(1) - P("]]>"))^0 * P"]]>"
+
 {
+  :tag_attribute
   :open_tag
   :close_tag
   :html_comment
-  :tag_attribute
+  :cdata
 }
