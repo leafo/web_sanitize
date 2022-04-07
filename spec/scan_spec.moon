@@ -40,6 +40,57 @@ describe "web_sanitize.query.scan", ->
         "<div>one><span>two"
       }, visited
 
+    it "skips over doctype tag", ->
+      nodes = {}
+
+      scan_html [[<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">]], (stack) ->
+          table.insert nodes, stack\current!
+
+      assert.same {}, nodes
+
+    it "scans past html comment", ->
+      nodes = {}
+      scan_html [[TEst<!-- hello world --><div></div>]], (stack) ->
+        table.insert nodes, stack\current!
+
+      assert.same {
+        {
+          end_inner_pos: 30
+          end_pos: 36
+          pos: 25
+          num: 1
+          tag: "div"
+          inner_pos: 30
+        }
+      }, nodes
+
+    it "scans common html tag", ->
+      nodes = {}
+      scan_html [[<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"></html>]], (stack) ->
+        table.insert nodes, stack\current!
+
+      assert.same {
+        {
+          tag: "html"
+          end_inner_pos: 68
+          end_pos: 75
+          inner_pos: 68
+          num: 1
+          pos: 1
+          attr: {
+            { "xmlns", "http://www.w3.org/1999/xhtml"}
+            { "xml:lang", "en"}
+            { "lang", "en"}
+
+            xmlns: "http://www.w3.org/1999/xhtml"
+            "xml:lang": "en"
+            lang: "en"
+          }
+        }
+
+      }, nodes
+
     it "scans attributes", ->
       expected = {
         div: {
