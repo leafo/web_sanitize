@@ -259,17 +259,17 @@ sanitize_html([[<body>Hello world</body>]]) --> Hello world
 
 ## HTML Parser
 
-The HTML parser lets you extract data from, and manipulate HTML using [query
-selector
+The HTML parser lets you extract data from, and manipulate HTML using a minimal
+Document Object Model and [query selector
 syntax](https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelector).
+It attempts to follow the [HTML
+spec](https://html.spec.whatwg.org/multipage/syntax.html) as best it can.
 
-
-The scanner interface is a lower level interface that lets you iterate through
-each node in the HTML document. It's located in the
-`web_sanitize.query.scan_html` module. For each node parsed in the HTML
+The scanner provies a lower level interface that lets you iterate through each
+node in an HTML document using a callback. For each node parsed in the HTML
 document a callback is called with an object representing the structure of the
-document at the current location.
-
+document at the current location. This node supports mutating the document when
+using the `replace_html` function.
 
 ```lua
 local scanner = require("web_sanitize.query.scan_html")
@@ -285,9 +285,11 @@ Here are a few things to be aware of when using the scanner:
 * All edits are performed after the scan has taken place, not during the scan. If you alter the content of a node's inner or outer html then scanner will not see these changes in the current iteration. Additionally, making edits to a parent node's content will shadow any edits you've made to child nodes. You can work around these limitations by doing multi-pass replacements.
 * Text nodes (when enabled) will treat CDATA tags as separate text nodes. Get the content with `inner_html` method. (`outer_html` will return the CDATA tag)
 
+The scanner exposes two primitive object types: `NodeStack` and `HTMLNode`
+
 `NodeStack` has the following methods and properties:
 
-* `stack[n]` - get the nth item in the stack
+* `stack[n]` - get the nth item in the stack (as an `HTMLNode`)
 * `stack:current()` - return the `HTMLNode` on top of the stack
 * `stack:is(query)` - return `true` if the stack matches the query selector
 
@@ -337,12 +339,22 @@ the stack, with the top most node being the current one.
 
 Each node in the node stack is an instance of `HTMLNode`. In `scan_html` the
 node is read-only, and can be used to get the properties and content of the
-node.
+node (eg. `inner_html`, `inner_text`, `outer_html`).
 
-
-Here's how you might get the `href` and text of every `a` tag in the html:
+Here's how you might get the `href` and text of every `a` element in in an HTML string:
 
 ```lua
+local scanner = require("web_sanitize.query.scan_html")
+
+local my_html = [[
+<ul>
+  <li><a href="http://leafo.net">My homepage</a>
+  <li><a href="http://github.com/leafo">My GitHub</a>
+</ul>
+
+<p>Also, don't forget to check out <a href="http://itch.io">itch.io</a>.</p>
+]]
+
 local urls = {}
 
 scanner.scan_html(my_html, function(stack)
@@ -361,8 +373,8 @@ You can optionally enable *text nodes* to have the parser emit a node for each
 chunk of text. This includes text that is nested within a tag. Set `text_nodes`
 to `true` in an options table passed as the last argument.
 
-Text nodes have the `tag` attribute set to `""` (empty string). You can get the
-content of the node by calling either `inner_html` or `outer_html`.
+You can get the content of the node by calling either `inner_html` or
+`outer_html`.
 
 #### `replace_html(html_text, callback, opts)`
 
