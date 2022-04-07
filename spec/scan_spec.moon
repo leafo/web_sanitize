@@ -67,17 +67,21 @@ describe "web_sanitize.query.scan", ->
 
     it "scans common html tag", ->
       nodes = {}
-      scan_html [[<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"></html>]], (stack) ->
+      scan_html [[
+        <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"></html>
+        <  DIV />
+        <table cellpadding=5>
+      ]], (stack) ->
         table.insert nodes, stack\current!
 
       assert.same {
         {
           tag: "html"
-          end_inner_pos: 68
-          end_pos: 75
-          inner_pos: 68
+          end_inner_pos: 76
+          end_pos: 83
+          inner_pos: 76
           num: 1
-          pos: 1
+          pos: 9
           attr: {
             { "xmlns", "http://www.w3.org/1999/xhtml"}
             { "xml:lang", "en"}
@@ -87,6 +91,31 @@ describe "web_sanitize.query.scan", ->
             "xml:lang": "en"
             lang: "en"
           }
+        }
+
+        {
+          tag: "div"
+          num: 2
+          end_inner_pos: 101
+          end_pos: 101
+          inner_pos: 101
+          num: 2
+          pos: 92
+          self_closing: true
+        }
+
+        {
+          tag: "table"
+          attr: {
+            {"cellpadding", "5"}
+
+            cellpadding: '5'
+          }
+          end_inner_pos: 138
+          end_pos: 138
+          inner_pos: 131
+          num: 3
+          pos: 110
         }
 
       }, nodes
@@ -112,11 +141,21 @@ describe "web_sanitize.query.scan", ->
           id: "divider"
           allowfullscreen: true
         }
+        img: {
+          {"src", ""}
+          {"alt", ""}
+          {"aria-hidden", "true"}
+
+          src: ""
+          alt: ""
+          "aria-hidden": "true"
+        }
       }
 
       scan_html [[
         <div data-dad="&quot;&amp;" CLASS="blue" style="height: 20px" readonly>
           <hr ID="divider" allowFullscreen />
+          <img src="" alt="" aria-hidden=true>
         </div>
       ]], (stack) ->
         node = stack\current!
