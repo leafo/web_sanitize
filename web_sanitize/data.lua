@@ -22,13 +22,23 @@ local raw_text_tags = {
   "textarea",
   "title"
 }
-local unnestable_tags = {
-  "td",
-  "tr",
-  "li"
+local optional_tags = {
+  option = true,
+  optgroup = true,
+  tr = true,
+  td = true,
+  li = true,
+  thead = {
+    "tbody",
+    "tfoot"
+  },
+  tbody = {
+    "tbody",
+    "tfoot"
+  }
 }
 return {
   void_tags = void_tags,
-  unnestable_tags = unnestable_tags,
+  optional_tags = optional_tags,
   raw_text_tags = raw_text_tags
 }

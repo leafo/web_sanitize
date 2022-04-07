@@ -1,5 +1,5 @@
 
-import void_tags from require "web_sanitize.data"
+import void_tags, optional_tags  from require "web_sanitize.data"
 import open_tag, close_tag, html_comment, cdata, unescape_html_text, bein_raw_text_tag, alphanum from require "web_sanitize.patterns"
 
 import P, C, Cc, Cs, Cmt, Cp from require "lpeg"
@@ -148,12 +148,31 @@ scan_html = (html_text, callback, opts) ->
   root_node = {}
   tag_stack = NodeStack!
 
+  local pop_tag
+
   -- Cmt callback for opening tag
   push_tag = (str, pos, node) ->
     top = tag_stack[#tag_stack] or root_node
-    top.num_children = (top.num_children or 0) + 1
-
     node.tag = node.tag\lower! -- normalize tag name
+
+    -- handle automatic closing for optional tags
+    -- will treat parent tag as a sibling and immediately close it before pushing new tag
+    if ot_type = optional_tags[top.tag]
+      close_sibling = if ot_type == true
+        node.tag == top.tag
+      else
+        found = false
+        for t in *ot_type
+          if t == node.tag
+            found = true
+            break
+        found
+
+      if close_sibling
+        pop_tag str, node.pos, node.pos, top.tag
+        top = tag_stack[#tag_stack] or root_node
+
+    top.num_children = (top.num_children or 0) + 1
     node.num = top.num_children -- mark the nth position
 
     -- format attributes:

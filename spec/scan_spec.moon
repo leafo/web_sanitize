@@ -1,11 +1,11 @@
 
 unpack = unpack or table.unpack
 
+trim = (str) ->
+  str\gsub("^%s+", "")\reverse()\gsub("^%s+", "")\reverse!
+
 flatten_html = (html) ->
-  ((html\gsub "%s+%<", "><")\match("^%s*(.-)%s*$"))
-
-
-trim = (str) -> (str\match("^%s*(.-)%s*$")) -- don't use this trim implementation anywhere else it can be used to ddos
+  trim (html\gsub "%s+%<", "<")
 
 describe "web_sanitize.patterns", ->
   describe "open_tag", ->
@@ -137,7 +137,7 @@ describe "web_sanitize.query.scan", ->
 
       assert.same {
         "<span>two",
-        "<div>one><span>two"
+        "<div>one<span>two"
       }, visited
 
     it "skips over doctype tag", ->
@@ -353,6 +353,45 @@ describe "web_sanitize.query.scan", ->
           <img src="" alt="" aria-hidden=true>
           </div>
       ]]), trim(nodes[1]\inner_html!)
+
+    describe "optional_tags", ->
+      result = {}
+
+      it "scans a table with optioanl tags", ->
+        scan_html [[
+          <body>
+            <table cellpadding=5>
+               <tr>
+                  <td align=center>#6
+                  <td>Theme
+                  <td align=right>4.21
+               <tr>
+                  <td align=center>#6
+                  <td>Audio
+                  <td align=right>3.56
+              </table>
+          </body>
+          <div>Hello</div>
+          <div>Another thing</div>
+        ]], (stack) ->
+          table.insert result, flatten_html stack\current!\outer_html!
+
+
+        assert.same {
+          "<td align=center>#6",
+          "<td>Theme",
+          "<td align=center>#6",
+          "<td>Audio",
+          "<td align=right>3.56",
+          "<tr><td align=center>#6<td>Audio<td align=right>3.56",
+          "<td align=right>4.21<tr><td align=center>#6<td>Audio<td align=right>3.56",
+          "<tr><td align=center>#6<td>Theme<td align=right>4.21<tr><td align=center>#6<td>Audio<td align=right>3.56",
+          "<table cellpadding=5><tr><td align=center>#6<td>Theme<td align=right>4.21<tr><td align=center>#6<td>Audio<td align=right>3.56</table>",
+          "<body><table cellpadding=5><tr><td align=center>#6<td>Theme<td align=right>4.21<tr><td align=center>#6<td>Audio<td align=right>3.56</table></body>",
+          "<div>Hello</div>",
+          "<div>Another thing</div>"
+        }, result
+
 
     describe "text_nodes", ->
       it "scans text nodes", ->

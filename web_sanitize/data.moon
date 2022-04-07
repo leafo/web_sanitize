@@ -31,9 +31,18 @@ raw_text_tags = {
   "textarea", "title" -- these are "escapable" raw text fields, that support using html entities
 }
 
--- tag stack will be closed if one of these appears nested inside itself
-unnestable_tags = {
-  "td", "tr", "li"
+-- tag stack will be closed if an opening appears directly inside itself
+-- see: https://html.spec.whatwg.org/multipage/syntax.html#optional-tags
+-- mapping of "tag that can omit closing tag" -> "next adjacent tag that can cause it to happen"
+-- value of true is the same as `node: {node}` (aka self reference)
+optional_tags = {
+  option: true
+  optgroup: true
+  tr: true
+  td: true
+  li: true
+  thead: {"tbody", "tfoot"}
+  tbody: {"tbody", "tfoot"}
 }
 
-{ :void_tags, :unnestable_tags, :raw_text_tags}
+{ :void_tags, :optional_tags, :raw_text_tags}

@@ -1,5 +1,8 @@
-local void_tags
-void_tags = require("web_sanitize.data").void_tags
+local void_tags, optional_tags
+do
+  local _obj_0 = require("web_sanitize.data")
+  void_tags, optional_tags = _obj_0.void_tags, _obj_0.optional_tags
+end
 local open_tag, close_tag, html_comment, cdata, unescape_html_text, bein_raw_text_tag, alphanum
 do
   local _obj_0 = require("web_sanitize.patterns")
@@ -299,11 +302,35 @@ scan_html = function(html_text, callback, opts)
   end
   local root_node = { }
   local tag_stack = NodeStack()
+  local pop_tag
   local push_tag
   push_tag = function(str, pos, node)
     local top = tag_stack[#tag_stack] or root_node
-    top.num_children = (top.num_children or 0) + 1
     node.tag = node.tag:lower()
+    do
+      local ot_type = optional_tags[top.tag]
+      if ot_type then
+        local close_sibling
+        if ot_type == true then
+          close_sibling = node.tag == top.tag
+        else
+          local found = false
+          for _index_0 = 1, #ot_type do
+            local t = ot_type[_index_0]
+            if t == node.tag then
+              found = true
+              break
+            end
+          end
+          close_sibling = found
+        end
+        if close_sibling then
+          pop_tag(str, node.pos, node.pos, top.tag)
+          top = tag_stack[#tag_stack] or root_node
+        end
+      end
+    end
+    top.num_children = (top.num_children or 0) + 1
     node.num = top.num_children
     if node.attr then
       for _, tuple in ipairs(node.attr) do
@@ -323,7 +350,6 @@ scan_html = function(html_text, callback, opts)
     end
     return true
   end
-  local pop_tag
   pop_tag = function(str, end_pos, end_inner_pos, tag)
     local stack_size = #tag_stack
     tag = tag:lower()
