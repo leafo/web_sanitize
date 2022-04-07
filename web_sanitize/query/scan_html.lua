@@ -1,9 +1,9 @@
 local void_tags
 void_tags = require("web_sanitize.data").void_tags
-local open_tag, close_tag
+local open_tag, close_tag, html_comment, cdata
 do
   local _obj_0 = require("web_sanitize.patterns")
-  open_tag, close_tag = _obj_0.open_tag, _obj_0.close_tag
+  open_tag, close_tag, html_comment, cdata = _obj_0.open_tag, _obj_0.close_tag, _obj_0.html_comment, _obj_0.cdata
 end
 local P, C, Cs, Cmt, Cp
 do
@@ -393,7 +393,7 @@ scan_html = function(html_text, callback, opts)
       return true
     end)
   end
-  local html = (check_open_tag + check_close_tag + text) ^ 0 * -1 * Cmt(Cp(), check_dangling_tags)
+  local html = (html_comment + cdata + check_open_tag + check_close_tag + text) ^ 0 * -1 * Cmt(Cp(), check_dangling_tags)
   local res, err = html:match(html_text)
   return res
 end

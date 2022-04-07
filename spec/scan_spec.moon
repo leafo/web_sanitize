@@ -146,6 +146,27 @@ describe "web_sanitize.query.scan", ->
         }
       }, nodes
 
+    it "ignores markup in comment", ->
+      nodes = {}
+      scan_html [[<!-- <div></div> -->]], (stack) ->
+        table.insert nodes, stack\current!
+
+      assert.same { }, nodes
+
+    it "doesn't capture close tag inside comment", ->
+      text = {}
+      scan_html [[<div>Hello <!-- </div> --> world]], (stack) ->
+        table.insert text, stack\current!\inner_html!
+
+      assert.same { "Hello <!-- </div> --> world" }, text
+
+    it "ignores markup in data", ->
+      nodes = {}
+      scan_html "<![CDATA[<div></div>]]>", (stack) ->
+        table.insert nodes, stack\current!
+
+      assert.same { }, nodes
+
     it "scans common html tag", ->
       nodes = {}
       scan_html [[

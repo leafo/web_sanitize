@@ -1,6 +1,6 @@
 
 import void_tags from require "web_sanitize.data"
-import open_tag, close_tag from require "web_sanitize.patterns"
+import open_tag, close_tag, html_comment, cdata from require "web_sanitize.patterns"
 
 import P, C, Cs, Cmt, Cp from require "lpeg"
 
@@ -271,7 +271,7 @@ scan_html = (html_text, callback, opts) ->
       table.remove tag_stack
       true
 
-  html = (check_open_tag + check_close_tag + text)^0 * -1 * Cmt(Cp!, check_dangling_tags)
+  html = (html_comment + cdata + check_open_tag + check_close_tag + text)^0 * -1 * Cmt(Cp!, check_dangling_tags)
   res, err = html\match html_text
 
   res
