@@ -52,11 +52,7 @@ entities = json.decode blob
 mapping = {}
 
 for name, char in pairs entities
-  name = name\lower!
   mapping[name] = char.characters
-
--- TODO: sort entities by name so we can detect changes
--- create a table to be serialized into lua by moonscript
 
 print obj_to_lua mapping
 

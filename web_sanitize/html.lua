@@ -253,7 +253,7 @@ local translate_entity
 translate_entity = function(str, kind, value)
   if kind == "named" then
     local entities = require("web_sanitize.html_named_entities")
-    return entities[str:lower()] or str
+    return entities[str] or entities[str:lower()] or str
   end
   local codepoint
   local _exp_0 = kind

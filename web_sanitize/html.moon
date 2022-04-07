@@ -215,7 +215,7 @@ MAX_UNICODE = 0x10FFFF
 translate_entity = (str, kind, value) ->
   if kind == "named"
     entities = require "web_sanitize.html_named_entities"
-    return entities[str\lower!] or str
+    return entities[str] or entities[str\lower!] or str
 
   codepoint = switch kind
     when "dec"
