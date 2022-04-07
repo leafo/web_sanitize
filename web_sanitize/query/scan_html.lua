@@ -5,10 +5,10 @@ do
   local _obj_0 = require("web_sanitize.patterns")
   open_tag, close_tag, html_comment, cdata, unescape_html_text, bein_raw_text_tag, alphanum = _obj_0.open_tag, _obj_0.close_tag, _obj_0.html_comment, _obj_0.cdata, _obj_0.unescape_html_text, _obj_0.bein_raw_text_tag, _obj_0.alphanum
 end
-local P, C, Cs, Cmt, Cp
+local P, C, Cc, Cs, Cmt, Cp
 do
   local _obj_0 = require("lpeg")
-  P, C, Cs, Cmt, Cp = _obj_0.P, _obj_0.C, _obj_0.Cs, _obj_0.Cmt, _obj_0.Cp
+  P, C, Cc, Cs, Cmt, Cp = _obj_0.P, _obj_0.C, _obj_0.Cc, _obj_0.Cs, _obj_0.Cmt, _obj_0.Cp
 end
 local void_tags_set
 do
@@ -156,6 +156,9 @@ do
       end
     end,
     replace_attributes = function(self, attrs)
+      if not (self.changes) then
+        error("attempting to change buffer with no changes array")
+      end
       local escape_text
       escape_text = require("web_sanitize.html").escape_text
       local buff = {
@@ -354,6 +357,37 @@ scan_html = function(html_text, callback, opts)
     end
     return true
   end
+  local push_text_node
+  push_text_node = function(str, end_pos, start_pos, text_content, is_cdata)
+    local top = tag_stack[#tag_stack] or root_node
+    top.num_children = (top.num_children or 0) + 1
+    local inner_pos
+    if is_cdata then
+      inner_pos = start_pos + 9
+    else
+      inner_pos = start_pos
+    end
+    local end_inner_pos
+    if is_cdata then
+      end_inner_pos = end_pos - 3
+    else
+      end_inner_pos = end_pos
+    end
+    local text_node = {
+      type = "text_node",
+      tag = is_cdata or "",
+      pos = start_pos,
+      end_pos = end_pos,
+      inner_pos = inner_pos,
+      end_inner_pos = end_inner_pos,
+      num = top.num_children
+    }
+    setmetatable(text_node, BufferHTMLNode.__base)
+    table.insert(tag_stack, text_node)
+    callback(tag_stack)
+    table.remove(tag_stack)
+    return true
+  end
   local check_dangling_tags
   check_dangling_tags = function(str, pos)
     local k = #tag_stack
@@ -370,25 +404,10 @@ scan_html = function(html_text, callback, opts)
   local check_open_tag = Cmt(open_tag, push_tag)
   local check_close_tag = Cmt(close_tag, pop_tag)
   local text = P("<") + P(1 - P("<")) ^ 1
+  local cdata_node = cdata
   if opts and opts.text_nodes == true then
-    text = Cmt(Cp() * C(text), function(str, end_pos, start_pos, text_content)
-      local top = tag_stack[#tag_stack] or root_node
-      top.num_children = (top.num_children or 0) + 1
-      local text_node = {
-        type = "text_node",
-        tag = "",
-        pos = start_pos,
-        inner_pos = start_pos,
-        end_pos = end_pos,
-        end_inner_pos = end_pos,
-        num = top.num_children
-      }
-      setmetatable(text_node, BufferHTMLNode.__base)
-      table.insert(tag_stack, text_node)
-      callback(tag_stack)
-      table.remove(tag_stack)
-      return true
-    end)
+    text = Cmt(Cp() * C(text), push_text_node)
+    cdata_node = Cmt(Cp() * C(cdata) * Cc("cdata"), push_text_node)
   end
   local raw_text_closer = P("</") * Cmt(C(alphanum ^ 1), function(_, pos, tag)
     do
@@ -401,7 +420,7 @@ scan_html = function(html_text, callback, opts)
     end
   end)
   local raw_text_tag = #bein_raw_text_tag * check_open_tag * (P(1) - raw_text_closer) ^ 0 * (check_close_tag + P(-1))
-  local html = (html_comment + cdata + raw_text_tag + check_open_tag + check_close_tag + text) ^ 0 * -1 * Cmt(Cp(), check_dangling_tags)
+  local html = (html_comment + cdata_node + raw_text_tag + check_open_tag + check_close_tag + text) ^ 0 * -1 * Cmt(Cp(), check_dangling_tags)
   local res, err = html:match(html_text)
   return res
 end

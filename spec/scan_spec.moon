@@ -1,10 +1,11 @@
 
+unpack = unpack or table.unpack
+
 flatten_html = (html) ->
   ((html\gsub "%s+%<", "><")\match("^%s*(.-)%s*$"))
 
 
 trim = (str) -> (str\match("^%s*(.-)%s*$")) -- don't use this trim implementation anywhere else it can be used to ddos
-
 
 describe "web_sanitize.patterns", ->
   describe "open_tag", ->
@@ -339,24 +340,94 @@ describe "web_sanitize.query.scan", ->
           </div>
       ]]), trim(nodes[1]\inner_html!)
 
-    it "scans text nodes", ->
-      text_nodes = {}
+    describe "text_nodes", ->
+      it "scans text nodes", ->
+        text_nodes = {}
 
-      scan_html(
-        "hello <span>world</span>"
+        scan_html(
+          "hello <span>world</span>"
 
-        (stack) ->
-          node = stack\current!
-          if node.type == "text_node"
-            table.insert text_nodes, node\inner_html!
+          (stack) ->
+            node = stack\current!
+            if node.type == "text_node"
+              table.insert text_nodes, node\inner_html!
 
-        text_nodes: true
-      )
+          text_nodes: true
+        )
 
-      assert.same {
-        "hello "
-        "world"
-      }, text_nodes
+        assert.same {
+          "hello "
+          "world"
+        }, text_nodes
+
+      it "scans text nodes with cdata", ->
+        result = {}
+
+        scan_html(
+          "
+            hello
+            <div>
+              <![CDATA[hello from <div> thing]]>
+            </div>
+            world
+          "
+          (stack) ->
+            node = stack\current!
+            switch node.type
+              when "text_node"
+                table.insert result, {
+                  tag: node.tag
+                  len: #node\outer_html!
+                  inner: trim(node\inner_html!)
+                  outer: trim(node\outer_html!)
+                  num: node.num
+                }
+              else
+                table.insert result, "tag:#{node.tag}"
+
+
+
+          text_nodes: true
+        )
+
+        assert.same {
+          {
+            len: 31
+            num: 1
+            inner: "hello"
+            outer: "hello"
+            tag: ""
+          }
+          { -- this currently reads whitespace as text node
+            len: 15
+            num: 1
+            inner: ""
+            outer: ""
+            tag: ""
+          }
+          {
+            len: 34,
+            num: 2,
+            inner: "hello from <div> thing",
+            outer: [=[<![CDATA[hello from <div> thing]]>]=],
+            tag: "cdata"
+          }
+          {
+            len: 13,
+            num: 3,
+            inner: ""
+            outer: ""
+            tag: ""
+          }
+          "tag:div"
+          {
+            len: 29,
+            num: 3,
+            inner: "world",
+            outer: "world",
+            tag: ""
+          }
+        }, result
 
   describe "replace_html", ->
     it "replaces tag content", ->

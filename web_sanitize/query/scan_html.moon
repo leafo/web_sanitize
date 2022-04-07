@@ -2,7 +2,7 @@
 import void_tags from require "web_sanitize.data"
 import open_tag, close_tag, html_comment, cdata, unescape_html_text, bein_raw_text_tag, alphanum from require "web_sanitize.patterns"
 
-import P, C, Cs, Cmt, Cp from require "lpeg"
+import P, C, Cc, Cs, Cmt, Cp from require "lpeg"
 
 void_tags_set = {t, true for t in *void_tags}
 
@@ -86,6 +86,9 @@ class HTMLNode
       @replace_attributes attrs
 
   replace_attributes: (attrs) =>
+    unless @changes
+      error "attempting to change buffer with no changes array"
+
     import escape_text from require "web_sanitize.html"
 
     buff = {"<", @tag}
@@ -211,6 +214,40 @@ scan_html = (html_text, callback, opts) ->
 
     true
 
+  push_text_node = (str, end_pos, start_pos, text_content, is_cdata) ->
+    top = tag_stack[#tag_stack] or root_node
+    top.num_children = (top.num_children or 0) + 1
+
+    inner_pos = if is_cdata
+      start_pos + 9 -- fixed length of cdata start
+    else
+      start_pos
+
+    end_inner_pos = if is_cdata
+      end_pos - 3 -- fixed length of cdata close
+    else
+      end_pos
+
+
+    text_node = {
+      type: "text_node"
+      tag: is_cdata or ""
+
+      pos: start_pos
+      end_pos: end_pos
+
+      :inner_pos
+      :end_inner_pos
+
+      num: top.num_children
+    }
+
+    setmetatable text_node, BufferHTMLNode.__base
+    table.insert tag_stack, text_node
+    callback tag_stack
+    table.remove tag_stack
+    true
+
   -- this clears the stack of any left over tags for when wwe've reached the
   -- end of the document
   check_dangling_tags = (str, pos) ->
@@ -231,29 +268,11 @@ scan_html = (html_text, callback, opts) ->
 
   text = P"<" + P(1 - P"<")^1
 
+  cdata_node = cdata
+
   if opts and opts.text_nodes == true
-    text = Cmt Cp! * C(text), (str, end_pos, start_pos, text_content) ->
-      top = tag_stack[#tag_stack] or root_node
-      top.num_children = (top.num_children or 0) + 1
-
-      text_node = {
-        type: "text_node"
-        tag: ""
-
-        pos: start_pos
-        inner_pos: start_pos
-
-        end_pos: end_pos
-        end_inner_pos: end_pos
-
-        num: top.num_children
-      }
-
-      setmetatable text_node, BufferHTMLNode.__base
-      table.insert tag_stack, text_node
-      callback tag_stack
-      table.remove tag_stack
-      true
+    text = Cmt Cp! * C(text), push_text_node
+    cdata_node = Cmt Cp! * C(cdata) * Cc("cdata"), push_text_node
 
   -- a raw text tag takes text as is unless there is signal for closing tag (script, style, etc.)
   raw_text_closer = P"</" * Cmt C(alphanum^1), (_, pos, tag) ->
@@ -264,7 +283,7 @@ scan_html = (html_text, callback, opts) ->
 
   raw_text_tag = #bein_raw_text_tag * check_open_tag * (P(1) - raw_text_closer)^0 * (check_close_tag + P(-1))
 
-  html = (html_comment + cdata + raw_text_tag + check_open_tag + check_close_tag + text)^0 * -1 * Cmt(Cp!, check_dangling_tags)
+  html = (html_comment + cdata_node + raw_text_tag + check_open_tag + check_close_tag + text)^0 * -1 * Cmt(Cp!, check_dangling_tags)
   res, err = html\match html_text
 
   res
