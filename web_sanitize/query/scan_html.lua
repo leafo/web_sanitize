@@ -1,9 +1,9 @@
 local void_tags
 void_tags = require("web_sanitize.data").void_tags
-local open_tag, close_tag, html_comment, cdata, unescape_html_text
+local open_tag, close_tag, html_comment, cdata, unescape_html_text, bein_raw_text_tag, alphanum
 do
   local _obj_0 = require("web_sanitize.patterns")
-  open_tag, close_tag, html_comment, cdata, unescape_html_text = _obj_0.open_tag, _obj_0.close_tag, _obj_0.html_comment, _obj_0.cdata, _obj_0.unescape_html_text
+  open_tag, close_tag, html_comment, cdata, unescape_html_text, bein_raw_text_tag, alphanum = _obj_0.open_tag, _obj_0.close_tag, _obj_0.html_comment, _obj_0.cdata, _obj_0.unescape_html_text, _obj_0.bein_raw_text_tag, _obj_0.alphanum
 end
 local P, C, Cs, Cmt, Cp
 do
@@ -390,7 +390,18 @@ scan_html = function(html_text, callback, opts)
       return true
     end)
   end
-  local html = (html_comment + cdata + check_open_tag + check_close_tag + text) ^ 0 * -1 * Cmt(Cp(), check_dangling_tags)
+  local raw_text_closer = P("</") * Cmt(C(alphanum ^ 1), function(_, pos, tag)
+    do
+      local top = tag_stack[#tag_stack]
+      if top then
+        return top.tag:lower() == tag:lower()
+      else
+        return error("somehow have empty tag stack when checking for closing raw text")
+      end
+    end
+  end)
+  local raw_text_tag = #bein_raw_text_tag * check_open_tag * (P(1) - raw_text_closer) ^ 0 * (check_close_tag + P(-1))
+  local html = (html_comment + cdata + raw_text_tag + check_open_tag + check_close_tag + text) ^ 0 * -1 * Cmt(Cp(), check_dangling_tags)
   local res, err = html:match(html_text)
   return res
 end

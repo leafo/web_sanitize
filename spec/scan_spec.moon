@@ -2,6 +2,10 @@
 flatten_html = (html) ->
   ((html\gsub "%s+%<", "><")\match("^%s*(.-)%s*$"))
 
+
+trim = (str) -> (str\match("^%s*(.-)%s*$")) -- don't use this trim implementation anywhere else it can be used to ddos
+
+
 describe "web_sanitize.patterns", ->
   describe "open_tag", ->
     -- NOTE: open tag integration testing mostly done in the scan_html specs
@@ -262,6 +266,78 @@ describe "web_sanitize.query.scan", ->
       ]], (stack) ->
         node = stack\current!
         assert.same expected[node.tag], node.attr
+
+
+    it "scans through rawtext script", ->
+      nodes = {}
+      scan_html [[
+        <script type="text/javascript">
+          <hr ID="divider" allowFullscreen />
+          &Aacute
+          <img src="" alt="" aria-hidden=true>
+          <div>
+        </script>
+      ]], (stack) ->
+        node = stack\current!
+        table.insert nodes, node
+
+      assert.same {
+        {
+          attr: {
+            {"type", "text/javascript"}
+            type: "text/javascript"
+          }
+          end_inner_pos: 176
+          end_pos: 185
+          inner_pos: 40
+          num: 1
+          pos: 9
+          tag: 'script'
+        }
+      }, nodes
+
+      assert.same trim([[
+          <hr ID="divider" allowFullscreen />
+          &Aacute
+          <img src="" alt="" aria-hidden=true>
+          <div>
+        ]]), trim(nodes[1]\inner_html!)
+      assert.same [[Á]], nodes[1]\inner_text!
+
+
+    it "scans rawtext that has no end", ->
+      nodes = {}
+      scan_html [[
+        <script type="text/javascript">
+          <hr ID="divider" allowFullscreen />
+          &Aacute
+          <img src="" alt="" aria-hidden=true>
+          </div>
+      ]], (stack) ->
+        node = stack\current!
+        table.insert nodes, node
+
+      assert.same {
+        {
+          attr: {
+            {"type", "text/javascript"}
+            type: "text/javascript"
+          }
+          end_inner_pos: 175
+          end_pos: 175
+          inner_pos: 40
+          num: 1
+          pos: 9
+          tag: 'script'
+        }
+      }, nodes
+
+      assert.same trim([[
+          <hr ID="divider" allowFullscreen />
+          &Aacute
+          <img src="" alt="" aria-hidden=true>
+          </div>
+      ]]), trim(nodes[1]\inner_html!)
 
     it "scans text nodes", ->
       text_nodes = {}

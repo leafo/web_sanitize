@@ -1,6 +1,6 @@
 
 import void_tags from require "web_sanitize.data"
-import open_tag, close_tag, html_comment, cdata, unescape_html_text from require "web_sanitize.patterns"
+import open_tag, close_tag, html_comment, cdata, unescape_html_text, bein_raw_text_tag, alphanum from require "web_sanitize.patterns"
 
 import P, C, Cs, Cmt, Cp from require "lpeg"
 
@@ -255,7 +255,16 @@ scan_html = (html_text, callback, opts) ->
       table.remove tag_stack
       true
 
-  html = (html_comment + cdata + check_open_tag + check_close_tag + text)^0 * -1 * Cmt(Cp!, check_dangling_tags)
+  -- a raw text tag takes text as is unless there is signal for closing tag (script, style, etc.)
+  raw_text_closer = P"</" * Cmt C(alphanum^1), (_, pos, tag) ->
+    if top = tag_stack[#tag_stack]
+      top.tag\lower! == tag\lower!
+    else
+      error "somehow have empty tag stack when checking for closing raw text"
+
+  raw_text_tag = #bein_raw_text_tag * check_open_tag * (P(1) - raw_text_closer)^0 * (check_close_tag + P(-1))
+
+  html = (html_comment + cdata + raw_text_tag + check_open_tag + check_close_tag + text)^0 * -1 * Cmt(Cp!, check_dangling_tags)
   res, err = html\match html_text
 
   res

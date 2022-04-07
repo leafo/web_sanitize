@@ -12,6 +12,25 @@ at_most = (p, n) ->
   else
     p * p^-(n-1)
 
+case_insensitive_word = (word) ->
+  local pattern
+
+  for char in word\gmatch "."
+    l = char\lower!
+    u = char\upper!
+    p = if l == u
+      P l
+    else
+      S "#{l}#{u}"
+
+    if pattern
+      pattern *= p
+    else
+      pattern = p
+
+  pattern
+
+
 white = S" \t\n"^0
 word = (alphanum + S"._-")^1
 
@@ -48,6 +67,25 @@ html_comment = P"<!--" * -P">" * -P"->" * (P(1) - P"<!--" - P"-->" - P"--!>")^0 
 
 cdata = P"<![CDATA[" * (P(1) - P("]]>"))^0 * P"]]>"
 
+-- this can be used to detect if we're about to parse a "raw text" tag
+bein_raw_text_tag = do
+  import raw_text_tags from require "web_sanitize.data"
+
+  local name_pats
+  for t in *raw_text_tags
+    p = case_insensitive_word t
+    if name_pats
+      name_pats += p
+    else
+      name_pats = p
+
+  P"<" * white * name_pats * -alphanum
+
+
+begin_close_tag = P"<" * white * P"/" * white * C(word)
+
+
+
 -- if we get an invalid entity then we return the text as is
 MAX_UNICODE = 0x10FFFF
 translate_entity = (str, kind, value) ->
@@ -75,10 +113,14 @@ unescape_html_text = Cs (decode_html_entity + P(1))^0
 
 
 {
+  :alphanum
   :tag_attribute
   :open_tag
   :close_tag
+  :bein_raw_text_tag
   :html_comment
   :cdata
   :unescape_html_text
+
+  :case_insensitive_word
 }

@@ -15,6 +15,26 @@ at_most = function(p, n)
     return p * p ^ -(n - 1)
   end
 end
+local case_insensitive_word
+case_insensitive_word = function(word)
+  local pattern
+  for char in word:gmatch(".") do
+    local l = char:lower()
+    local u = char:upper()
+    local p
+    if l == u then
+      p = P(l)
+    else
+      p = S(tostring(l) .. tostring(u))
+    end
+    if pattern then
+      pattern = pattern * p
+    else
+      pattern = p
+    end
+  end
+  return pattern
+end
 local white = S(" \t\n") ^ 0
 local word = (alphanum + S("._-")) ^ 1
 local attribute_value = C(word) + P('"') * C((1 - P('"')) ^ 0) * P('"') + P("'") * C((1 - P("'")) ^ 0) * P("'")
@@ -24,6 +44,23 @@ local open_tag = Ct(Cg(Cp(), "pos") * P("<") * white * Cg(word, "tag") * Cg(Ct((
 local close_tag = Cp() * P("<") * white * P("/") * white * C(word) * white * P(">")
 local html_comment = P("<!--") * -P(">") * -P("->") * (P(1) - P("<!--") - P("-->") - P("--!>")) ^ 0 * P("<!") ^ -1 * P("-->")
 local cdata = P("<![CDATA[") * (P(1) - P("]]>")) ^ 0 * P("]]>")
+local bein_raw_text_tag
+do
+  local raw_text_tags
+  raw_text_tags = require("web_sanitize.data").raw_text_tags
+  local name_pats
+  for _index_0 = 1, #raw_text_tags do
+    local t = raw_text_tags[_index_0]
+    local p = case_insensitive_word(t)
+    if name_pats then
+      name_pats = name_pats + p
+    else
+      name_pats = p
+    end
+  end
+  bein_raw_text_tag = P("<") * white * name_pats * -alphanum
+end
+local begin_close_tag = P("<") * white * P("/") * white * C(word)
 local MAX_UNICODE = 0x10FFFF
 local translate_entity
 translate_entity = function(str, kind, value)
@@ -50,10 +87,13 @@ local annoteted_html_entity = C(P("&") * (Cc("named") * at_most(alphanum, 20) + 
 local decode_html_entity = annoteted_html_entity / translate_entity
 local unescape_html_text = Cs((decode_html_entity + P(1)) ^ 0)
 return {
+  alphanum = alphanum,
   tag_attribute = tag_attribute,
   open_tag = open_tag,
   close_tag = close_tag,
+  bein_raw_text_tag = bein_raw_text_tag,
   html_comment = html_comment,
   cdata = cdata,
-  unescape_html_text = unescape_html_text
+  unescape_html_text = unescape_html_text,
+  case_insensitive_word = case_insensitive_word
 }
