@@ -43,28 +43,29 @@ describe "web_sanitize.query.scan", ->
     it "scans attributes", ->
       expected = {
         div: {
+          {"data-dad", '"&'}
+          {"CLASS", "blue"}
+          {"style", "height: 20px"}
+          {"readonly"}
+
+
           "data-dad": '"&'
           class: "blue"
           style: "height: 20px"
           readonly: true
-
-          "data-dad"
-          "CLASS"
-          "style"
-          "readonly"
         }
         hr: {
-          allowfullscreen: true
-          id: "divider"
+          {"ID", "divider"}
+          {"allowFullscreen"}
 
-          "id"
-          "allowfullscreen"
+          id: "divider"
+          allowfullscreen: true
         }
       }
 
       scan_html [[
         <div data-dad="&quot;&amp;" CLASS="blue" style="height: 20px" readonly>
-          <hr id="divider" allowfullscreen />
+          <hr ID="divider" allowFullscreen />
         </div>
       ]], (stack) ->
         node = stack\current!
@@ -159,6 +160,7 @@ describe "web_sanitize.query.scan", ->
 
       assert.same '<div><hr cool="zone"></div>', out
 
+    -- TODO: add method for updating attributes
     it "mutates existing attributes", ->
       -- also strips the duplicates
       out = replace_html '<div a="b" b="c" a="whw" b="&amp;&quot;"></div>', (stack) ->

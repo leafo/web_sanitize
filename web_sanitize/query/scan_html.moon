@@ -72,22 +72,14 @@ class HTMLNode
         buff[i + 4] = '"'
         i += 5
 
-    seen_attrs = {}
-
     -- add ordered attributes first
-    for name in *attrs
-      lower = name\lower!
-      continue if seen_attrs[lower]
-      value = attrs[lower]
-      continue unless value
-      push_attr name, value
-      seen_attrs[lower] = true
+    for {k, v} in *attrs
+      push_attr k, v
 
     -- add the rest
     for k,v in pairs attrs
       continue unless type(k) == "string"
       continue unless v
-      continue if seen_attrs[k]
       push_attr k,v
 
     buff[i] = ">"
@@ -130,7 +122,28 @@ value = C(word) +
   P'"' * C((1 - P'"')^0) * P'"' +
   P"'" * C((1 - P"'")^0) * P"'"
 
-attribute = C(word) * (white * P"=" * white * value)^-1
+attribute_name = (alphanum + S"._-:")^1 -- TODO: this is way too strict https://dev.w3.org/html5/spec-LC/syntax.html#attributes-0
+attribute = Ct C(attribute_name) * (white * P"=" * white * value)^-1
+
+-- this will parse an opening tag into a table with the following format:
+-- {
+--   pos: 123
+--   inner_pos: 234
+--   tag: "div"
+--   attr: {
+--     {name, value}
+--     {name}
+--   }
+--   closed: false -- self closing tag
+-- }
+open_tag = Ct Cg(Cp!, "pos") * P"<" * white * Cg(word, "tag") *
+  Cg(Ct((white * attribute)^1), "attr")^-1 *
+  white * ("/" * white * P">" * Cg(Cc(true), "closed") + P">") *
+  Cg(Cp!, "inner_pos")
+
+-- this will parse a closing tag multiple captures: start_pos, tag_name
+-- we don't use Ct here to avoid allocating extra table, closing position can also be obtained from the Cmt function that is used to process the closing tag
+close_tag = Cp! * P"<" * white * P"/" * white * C(word) * white * P">"
 
 scan_html = (html_text, callback, opts) ->
   assert callback, "missing callback to scan_html"
@@ -143,24 +156,38 @@ scan_html = (html_text, callback, opts) ->
   root_node = {}
   tag_stack = NodeStack!
 
-  fail_tag = ->
-    tag_stack[#tag_stack] = nil
-
-  check_tag = (str, _, pos, tag) ->
+  -- Cmt callback for opening tag
+  push_tag = (str, pos, node) ->
     top = tag_stack[#tag_stack] or root_node
     top.num_children = (top.num_children or 0) + 1
 
-    node = {
-      tag: tag\lower!
-      :pos
-      num: top.num_children
-    }
+    node.tag = node.tag\lower! -- normalize tag name
+    node.num = top.num_children -- mark the nth position
+
+    -- format attributes:
+    --  * unescape value
+    --  * add normalized key value mapping
+    if node.attr
+      for _, tuple in ipairs node.attr
+        if tuple[2]
+          tuple[2] = unescape_text\match(tuple[2]) or tuple[2]
+
+        node.attr[tuple[1]\lower!] = tuple[2] or true
 
     setmetatable node, BufferHTMLNode.__base
     table.insert tag_stack, node
+
+    -- handle void/self closing tags
+    if void_tags_set[node.tag] or node.closed
+      node.end_pos = node.inner_pos
+      node.end_inner_pos = node.inner_pos
+
+      callback tag_stack
+      table.remove tag_stack
+
     true
 
-  check_close_tag = (str, end_pos, end_inner_pos, tag) ->
+  pop_tag = (str, end_pos, end_inner_pos, tag) ->
     stack_size = #tag_stack
 
     tag = tag\lower!
@@ -197,6 +224,8 @@ scan_html = (html_text, callback, opts) ->
 
     true
 
+  -- this clears the stack of any left over tags for when wwe've reached the
+  -- end of the document
   check_dangling_tags = (str, pos) ->
     k = #tag_stack
     while k > 0
@@ -209,58 +238,9 @@ scan_html = (html_text, callback, opts) ->
 
     true
 
-  -- check for non-self-closing void tags
-  check_void_tag = (str, pos) ->
-    top = tag_stack[#tag_stack]
 
-    if void_tags_set[top.tag]
-      top.end_pos = pos
-      callback tag_stack
-      table.remove tag_stack
-      true
-    else
-      false
-
-  pop_void_tag = (str, pos, ...) ->
-    top = tag_stack[#tag_stack]
-    top.end_pos = pos
-
-    callback tag_stack
-
-    table.remove tag_stack
-    true
-
-  check_attribute = (str, pos, name, val) ->
-    top = tag_stack[#tag_stack]
-    top.attr or= {}
-
-    top.attr[name\lower!] = if val
-      unescape_text\match(val) or val
-    else
-      true
-
-    table.insert top.attr, name
-    true
-
-  save_pos = (field) ->
-    (str, pos) ->
-      top = tag_stack[#tag_stack]
-      top[field] = pos
-      true
-
-  open_tag = Cmt(Cp! * P"<" * white * C(word), check_tag) *
-    (
-      Cmt(white * attribute, check_attribute)^0 * white * (
-        Cmt("/" * white * P">", pop_void_tag) +
-        P">" * (
-         Cmt("", check_void_tag) +
-         Cmt("", save_pos "inner_pos")
-       )
-      ) +
-      Cmt("", fail_tag)
-    )
-
-  close_tag = Cmt(Cp! * P"<" * white * P"/" * white * C(word) * white * P">", check_close_tag)
+  check_open_tag = Cmt open_tag, push_tag
+  check_close_tag = Cmt close_tag, pop_tag
 
   text = P"<" + P(1 - P"<")^1
 
@@ -288,7 +268,7 @@ scan_html = (html_text, callback, opts) ->
       table.remove tag_stack
       true
 
-  html = (open_tag + close_tag + text)^0 * -1 * Cmt(Cp!, check_dangling_tags)
+  html = (check_open_tag + check_close_tag + text)^0 * -1 * Cmt(Cp!, check_dangling_tags)
   res, err = html\match html_text
 
   res

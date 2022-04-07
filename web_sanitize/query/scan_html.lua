@@ -121,28 +121,11 @@ do
           i = i + 5
         end
       end
-      local seen_attrs = { }
       for _index_0 = 1, #attrs do
-        local _continue_0 = false
-        repeat
-          local name = attrs[_index_0]
-          local lower = name:lower()
-          if seen_attrs[lower] then
-            _continue_0 = true
-            break
-          end
-          local value = attrs[lower]
-          if not (value) then
-            _continue_0 = true
-            break
-          end
-          push_attr(name, value)
-          seen_attrs[lower] = true
-          _continue_0 = true
-        until true
-        if not _continue_0 then
-          break
-        end
+        local _des_0 = attrs[_index_0]
+        local k, v
+        k, v = _des_0[1], _des_0[2]
+        push_attr(k, v)
       end
       for k, v in pairs(attrs) do
         local _continue_0 = false
@@ -152,10 +135,6 @@ do
             break
           end
           if not (v) then
-            _continue_0 = true
-            break
-          end
-          if seen_attrs[k] then
             _continue_0 = true
             break
           end
@@ -234,7 +213,10 @@ local alphanum = R("az", "AZ", "09")
 local white = S(" \t\n") ^ 0
 local word = (alphanum + S("._-")) ^ 1
 local value = C(word) + P('"') * C((1 - P('"')) ^ 0) * P('"') + P("'") * C((1 - P("'")) ^ 0) * P("'")
-local attribute = C(word) * (white * P("=") * white * value) ^ -1
+local attribute_name = (alphanum + S("._-:")) ^ 1
+local attribute = Ct(C(attribute_name) * (white * P("=") * white * value) ^ -1)
+local open_tag = Ct(Cg(Cp(), "pos") * P("<") * white * Cg(word, "tag") * Cg(Ct((white * attribute) ^ 1), "attr") ^ -1 * white * ("/" * white * P(">") * Cg(Cc(true), "closed") + P(">")) * Cg(Cp(), "inner_pos"))
+local close_tag = Cp() * P("<") * white * P("/") * white * C(word) * white * P(">")
 local scan_html
 scan_html = function(html_text, callback, opts)
   assert(callback, "missing callback to scan_html")
@@ -282,25 +264,32 @@ scan_html = function(html_text, callback, opts)
   end
   local root_node = { }
   local tag_stack = NodeStack()
-  local fail_tag
-  fail_tag = function()
-    tag_stack[#tag_stack] = nil
-  end
-  local check_tag
-  check_tag = function(str, _, pos, tag)
+  local push_tag
+  push_tag = function(str, pos, node)
     local top = tag_stack[#tag_stack] or root_node
     top.num_children = (top.num_children or 0) + 1
-    local node = {
-      tag = tag:lower(),
-      pos = pos,
-      num = top.num_children
-    }
+    node.tag = node.tag:lower()
+    node.num = top.num_children
+    if node.attr then
+      for _, tuple in ipairs(node.attr) do
+        if tuple[2] then
+          tuple[2] = unescape_text:match(tuple[2]) or tuple[2]
+        end
+        node.attr[tuple[1]:lower()] = tuple[2] or true
+      end
+    end
     setmetatable(node, BufferHTMLNode.__base)
     table.insert(tag_stack, node)
+    if void_tags_set[node.tag] or node.closed then
+      node.end_pos = node.inner_pos
+      node.end_inner_pos = node.inner_pos
+      callback(tag_stack)
+      table.remove(tag_stack)
+    end
     return true
   end
-  local check_close_tag
-  check_close_tag = function(str, end_pos, end_inner_pos, tag)
+  local pop_tag
+  pop_tag = function(str, end_pos, end_inner_pos, tag)
     local stack_size = #tag_stack
     tag = tag:lower()
     if stack_size == 0 then
@@ -347,48 +336,8 @@ scan_html = function(html_text, callback, opts)
     end
     return true
   end
-  local check_void_tag
-  check_void_tag = function(str, pos)
-    local top = tag_stack[#tag_stack]
-    if void_tags_set[top.tag] then
-      top.end_pos = pos
-      callback(tag_stack)
-      table.remove(tag_stack)
-      return true
-    else
-      return false
-    end
-  end
-  local pop_void_tag
-  pop_void_tag = function(str, pos, ...)
-    local top = tag_stack[#tag_stack]
-    top.end_pos = pos
-    callback(tag_stack)
-    table.remove(tag_stack)
-    return true
-  end
-  local check_attribute
-  check_attribute = function(str, pos, name, val)
-    local top = tag_stack[#tag_stack]
-    top.attr = top.attr or { }
-    if val then
-      top.attr[name:lower()] = unescape_text:match(val) or val
-    else
-      top.attr[name:lower()] = true
-    end
-    table.insert(top.attr, name)
-    return true
-  end
-  local save_pos
-  save_pos = function(field)
-    return function(str, pos)
-      local top = tag_stack[#tag_stack]
-      top[field] = pos
-      return true
-    end
-  end
-  local open_tag = Cmt(Cp() * P("<") * white * C(word), check_tag) * (Cmt(white * attribute, check_attribute) ^ 0 * white * (Cmt("/" * white * P(">"), pop_void_tag) + P(">") * (Cmt("", check_void_tag) + Cmt("", save_pos("inner_pos")))) + Cmt("", fail_tag))
-  local close_tag = Cmt(Cp() * P("<") * white * P("/") * white * C(word) * white * P(">"), check_close_tag)
+  local check_open_tag = Cmt(open_tag, push_tag)
+  local check_close_tag = Cmt(close_tag, pop_tag)
   local text = P("<") + P(1 - P("<")) ^ 1
   if opts and opts.text_nodes == true then
     text = Cmt(Cp() * C(text), function(str, end_pos, start_pos, text_content)
@@ -410,7 +359,7 @@ scan_html = function(html_text, callback, opts)
       return true
     end)
   end
-  local html = (open_tag + close_tag + text) ^ 0 * -1 * Cmt(Cp(), check_dangling_tags)
+  local html = (check_open_tag + check_close_tag + text) ^ 0 * -1 * Cmt(Cp(), check_dangling_tags)
   local res, err = html:match(html_text)
   return res
 end
