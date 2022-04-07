@@ -335,8 +335,8 @@ scan_html = function(html_text, callback, opts)
       for k = #tag_stack - 1, 1, -1 do
         if tag_stack[k].tag == tag then
           found_tag = true
+          break
         end
-        break
       end
       if not (found_tag) then
         return true

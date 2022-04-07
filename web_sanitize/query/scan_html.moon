@@ -188,14 +188,15 @@ scan_html = (html_text, callback, opts) ->
       -- too many closes, ignore
       return true
 
+    -- when we have a closing tag for something that isn't on the stack
     if tag != tag_stack[stack_size].tag
       -- tag mismatch, attempt to fix
       found_tag = false
+
       for k=#tag_stack - 1,1,-1
         if tag_stack[k].tag == tag
           found_tag = true
-
-        break
+          break
 
       return true unless found_tag -- just skip it
 

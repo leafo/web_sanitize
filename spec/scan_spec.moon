@@ -111,6 +111,20 @@ describe "web_sanitize.query.scan", ->
       -- it should also get the pre
       assert.same {"div", "ul", "span", "pre"}, visited
 
+    it "automatically closes nested tags", ->
+      result = {}
+
+      scan_html "<a><b><c><d>Hello</a></a>", (stack) ->
+        node = stack\current!
+        table.insert result, node\outer_html!
+
+      assert.same {
+        "<d>Hello"
+        "<c><d>Hello"
+        "<b><c><d>Hello"
+        "<a><b><c><d>Hello</a>"
+      }, result
+
     it "gets content of dangling tags", ->
       visited = {}
 
