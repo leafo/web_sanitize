@@ -36,6 +36,38 @@ describe "web_sanitize.patterns", ->
         }, { open_tag\match tuple[1] }
 
 
+  describe "html comment", ->
+    for tuple in *{
+      {"hello", nil}
+      {"<! what", nil}
+      {"<!- -what-->", nil}
+      {"<!-->-->", nil}
+      {"<!--->-->", nil}
+      {"<!-- <!--  -->", nil}
+      {"<!--f<!--->", nil}
+      {"<!->", nil}
+      {"<!-->", nil}
+      {"<!--->", nil}
+      {"<!---->", 8}
+      {"<!-- -->", 9}
+
+      {"<!-- -->-->", 9}
+
+      {"<!--f>-->", 10}
+      {"<!--f->-->", 11}
+
+      {"<!-- hello world -->", 21}
+      {"<!--hello world-->", 19}
+
+      {"<!--My favorite operators are > and <!-->", 42}
+    }
+      it "matches #{tuple[1]}", ->
+        import html_comment from require "web_sanitize.patterns"
+        assert.same {
+          select 2, unpack tuple
+        }, { html_comment\match tuple[1] }
+
+
 describe "web_sanitize.query.scan", ->
   import replace_html, scan_html from require "web_sanitize.query.scan_html"
 

@@ -33,9 +33,9 @@ open_tag = Ct Cg(Cp!, "pos") * P"<" * white * Cg(word, "tag") *
 -- we don't use Ct here to avoid allocating extra table, closing position can also be obtained from the Cmt function that is used to process the closing tag
 close_tag = Cp! * P"<" * white * P"/" * white * C(word) * white * P">"
 
-html_comment = P"<!" * ((P(1) - P">" - P"->") * (P(1) - P"<!--" - P"-->")^0)^-1 * P"-->"
 
-
+-- https://html.spec.whatwg.org/multipage/syntax.html#comments
+html_comment = P"<!--" * -P">" * -P"->" * (P(1) - P"<!--" - P"-->" - P"--!>")^0 * P"<!"^-1 * P"-->"
 
 {
   :open_tag
