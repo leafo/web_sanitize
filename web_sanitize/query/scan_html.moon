@@ -1,12 +1,10 @@
 
 import void_tags from require "web_sanitize.data"
-import open_tag, close_tag, html_comment, cdata from require "web_sanitize.patterns"
+import open_tag, close_tag, html_comment, cdata, unescape_html_text from require "web_sanitize.patterns"
 
 import P, C, Cs, Cmt, Cp from require "lpeg"
 
 void_tags_set = {t, true for t in *void_tags}
-
-local unescape_text
 
 class NodeStack
   current: =>
@@ -57,7 +55,7 @@ class HTMLNode
   inner_text: =>
     import extract_text from require "web_sanitize"
     text = extract_text @inner_html!
-    unescape_text\match(text) or text
+    unescape_html_text\match(text) or text
 
   -- merge new attributes with existing ones
   update_attributes: (attrs) =>
@@ -134,20 +132,6 @@ class HTMLNode
 
     table.insert @changes, {@pos, @end_pos, replacement}
 
-
-
--- this is far from comprehensive
--- TODO: use html_named_entities database
-unescape_char = P"&gt;" / ">" +
-  P"&lt;" / "<" +
-  P"&amp;" / "&" +
-  P"&nbsp;" / " " +
-  P"&#x27;" / "'" +
-  P"&#x2F;" / "/" +
-  P"&quot;" / '"'
-
-unescape_text = Cs (unescape_char + 1)^1
-
 scan_html = (html_text, callback, opts) ->
   assert callback, "missing callback to scan_html"
   changes = {}
@@ -173,7 +157,7 @@ scan_html = (html_text, callback, opts) ->
     if node.attr
       for _, tuple in ipairs node.attr
         if tuple[2]
-          tuple[2] = unescape_text\match(tuple[2]) or tuple[2]
+          tuple[2] = unescape_html_text\match(tuple[2]) or tuple[2]
 
         node.attr[tuple[1]\lower!] = tuple[2] or true
 

@@ -1,7 +1,16 @@
 
-import P, R, S, C, Cp, Ct, Cg, Cc from require "lpeg"
+import P, R, S, C, Cp, Ct, Cg, Cc, Cs from require "lpeg"
 
 alphanum = R "az", "AZ", "09"
+num = R "09"
+hex = R "09", "af", "AF"
+
+at_most = (p, n) ->
+  assert n > 0
+  if n == 1
+    p
+  else
+    p * p^-(n-1)
 
 white = S" \t\n"^0
 word = (alphanum + S"._-")^1
@@ -39,10 +48,37 @@ html_comment = P"<!--" * -P">" * -P"->" * (P(1) - P"<!--" - P"-->" - P"--!>")^0 
 
 cdata = P"<![CDATA[" * (P(1) - P("]]>"))^0 * P"]]>"
 
+-- if we get an invalid entity then we return the text as is
+MAX_UNICODE = 0x10FFFF
+translate_entity = (str, kind, value) ->
+  if kind == "named"
+    entities = require "web_sanitize.html_named_entities"
+    return entities[str] or entities[str\lower!] or str
+
+  codepoint = switch kind
+    when "dec"
+      tonumber value
+    when "hex"
+      tonumber value, 16
+
+  import utf8_encode from require "web_sanitize.unicode"
+  if codepoint and codepoint <= MAX_UNICODE
+    utf8_encode codepoint
+  else
+    str
+
+annoteted_html_entity = C P"&" * (Cc"named" * at_most(alphanum, 20) + P"#" * (Cc"dec" * C(at_most(num, 10)) + S"xX" * Cc"hex" * C(at_most(hex, 5)))) * P";"^-1
+decode_html_entity = annoteted_html_entity / translate_entity
+
+-- unescapes an html text string that may contain html entities
+unescape_html_text = Cs (decode_html_entity + P(1))^0
+
+
 {
   :tag_attribute
   :open_tag
   :close_tag
   :html_comment
   :cdata
+  :unescape_html_text
 }

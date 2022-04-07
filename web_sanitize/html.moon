@@ -15,12 +15,11 @@ escaped_char = S"<>'&\"" / {
   '"': "&quot;"
 }
 
-
 alphanum = R "az", "AZ", "09"
 num = R "09"
 hex = R "09", "af", "AF"
 
-at_most = (p, n)->
+at_most = (p, n) ->
   assert n > 0
   if n == 1
     p

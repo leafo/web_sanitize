@@ -1,9 +1,9 @@
 local void_tags
 void_tags = require("web_sanitize.data").void_tags
-local open_tag, close_tag, html_comment, cdata
+local open_tag, close_tag, html_comment, cdata, unescape_html_text
 do
   local _obj_0 = require("web_sanitize.patterns")
-  open_tag, close_tag, html_comment, cdata = _obj_0.open_tag, _obj_0.close_tag, _obj_0.html_comment, _obj_0.cdata
+  open_tag, close_tag, html_comment, cdata, unescape_html_text = _obj_0.open_tag, _obj_0.close_tag, _obj_0.html_comment, _obj_0.cdata, _obj_0.unescape_html_text
 end
 local P, C, Cs, Cmt, Cp
 do
@@ -19,7 +19,6 @@ do
   end
   void_tags_set = _tbl_0
 end
-local unescape_text
 local NodeStack
 do
   local _class_0
@@ -117,7 +116,7 @@ do
       local extract_text
       extract_text = require("web_sanitize").extract_text
       local text = extract_text(self:inner_html())
-      return unescape_text:match(text) or text
+      return unescape_html_text:match(text) or text
     end,
     update_attributes = function(self, attrs)
       if self.attr then
@@ -249,8 +248,6 @@ do
   _base_0.__class = _class_0
   HTMLNode = _class_0
 end
-local unescape_char = P("&gt;") / ">" + P("&lt;") / "<" + P("&amp;") / "&" + P("&nbsp;") / " " + P("&#x27;") / "'" + P("&#x2F;") / "/" + P("&quot;") / '"'
-unescape_text = Cs((unescape_char + 1) ^ 1)
 local scan_html
 scan_html = function(html_text, callback, opts)
   assert(callback, "missing callback to scan_html")
@@ -307,7 +304,7 @@ scan_html = function(html_text, callback, opts)
     if node.attr then
       for _, tuple in ipairs(node.attr) do
         if tuple[2] then
-          tuple[2] = unescape_text:match(tuple[2]) or tuple[2]
+          tuple[2] = unescape_html_text:match(tuple[2]) or tuple[2]
         end
         node.attr[tuple[1]:lower()] = tuple[2] or true
       end
