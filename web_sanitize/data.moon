@@ -36,10 +36,13 @@ raw_text_tags = {
 -- mapping of "tag that can omit closing tag" -> "next adjacent tag that can cause it to happen"
 -- value of true is the same as `node: {node}` (aka self reference)
 optional_tags = {
-  option: true
+  p: true
+
   optgroup: true
+  option: {"option", "optgroup"}
   tr: true
-  td: true
+  td: {"td", "tr", "th"}
+  th: {"td", "tr", "th"}
   li: true
   thead: {"tbody", "tfoot"}
   tbody: {"tbody", "tfoot"}

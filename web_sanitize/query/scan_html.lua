@@ -305,33 +305,47 @@ scan_html = function(html_text, callback, opts)
   local pop_tag
   local push_tag
   push_tag = function(str, pos, node)
-    local top = tag_stack[#tag_stack] or root_node
+    local parent = tag_stack[#tag_stack] or root_node
     node.tag = node.tag:lower()
-    do
-      local ot_type = optional_tags[top.tag]
-      if ot_type then
-        local close_sibling
-        if ot_type == true then
-          close_sibling = node.tag == top.tag
-        else
-          local found = false
-          for _index_0 = 1, #ot_type do
-            local t = ot_type[_index_0]
-            if t == node.tag then
-              found = true
-              break
+    while true do
+      local _continue_0 = false
+      repeat
+        do
+          do
+            local ot_type = optional_tags[parent.tag]
+            if ot_type then
+              local close_sibling
+              if ot_type == true then
+                close_sibling = node.tag == parent.tag
+              else
+                local found = false
+                for _index_0 = 1, #ot_type do
+                  local t = ot_type[_index_0]
+                  if t == node.tag then
+                    found = true
+                    break
+                  end
+                end
+                close_sibling = found
+              end
+              if close_sibling then
+                pop_tag(str, node.pos, node.pos, parent.tag)
+                parent = tag_stack[#tag_stack] or root_node
+                _continue_0 = true
+                break
+              end
             end
           end
-          close_sibling = found
+          break
         end
-        if close_sibling then
-          pop_tag(str, node.pos, node.pos, top.tag)
-          top = tag_stack[#tag_stack] or root_node
-        end
+        _continue_0 = true
+      until true
+      if not _continue_0 then
+        break
       end
     end
-    top.num_children = (top.num_children or 0) + 1
-    node.num = top.num_children
+    parent.num_children = (parent.num_children or 0) + 1
+    node.num = parent.num_children
     if node.attr then
       for _, tuple in ipairs(node.attr) do
         if tuple[2] then

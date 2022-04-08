@@ -2,7 +2,7 @@
 unpack = unpack or table.unpack
 
 trim = (str) ->
-  str\gsub("^%s+", "")\reverse()\gsub("^%s+", "")\reverse!
+  (str\gsub("^%s+", "")\reverse()\gsub("^%s+", "")\reverse!)
 
 flatten_html = (html) ->
   trim (html\gsub "%s+%<", "<")
@@ -355,43 +355,63 @@ describe "web_sanitize.query.scan", ->
       ]]), trim(nodes[1]\inner_html!)
 
     describe "optional_tags", ->
-      result = {}
-
-      it "scans a table with optioanl tags", ->
+      it "table with optional tags for tr and td", ->
+        result = {}
         scan_html [[
-          <body>
-            <table cellpadding=5>
-               <tr>
-                  <td align=center>#6
-                  <td>Theme
-                  <td align=right>4.21
-               <tr>
-                  <td align=center>#6
-                  <td>Audio
-                  <td align=right>3.56
-              </table>
-          </body>
-          <div>Hello</div>
-          <div>Another thing</div>
+          <table cellpadding=5>
+             <tr>
+                <td align=center>#6
+                <td>Theme
+                <td align=right>4.21
+             <tr>
+                <td align=center>#6
+                <td>Audio
+                <td align=right>3.56
+            </table>
         ]], (stack) ->
           table.insert result, flatten_html stack\current!\outer_html!
-
 
         assert.same {
           "<td align=center>#6",
           "<td>Theme",
-          "<td align=center>#6",
-          "<td>Audio",
-          "<td align=right>3.56",
-          "<tr><td align=center>#6<td>Audio<td align=right>3.56",
-          "<td align=right>4.21<tr><td align=center>#6<td>Audio<td align=right>3.56",
-          "<tr><td align=center>#6<td>Theme<td align=right>4.21<tr><td align=center>#6<td>Audio<td align=right>3.56",
+          "<td align=right>4.21"
+          "<tr><td align=center>#6<td>Theme<td align=right>4.21",
+          "<td align=center>#6"
+          "<td>Audio"
+          "<td align=right>3.56"
+          "<tr><td align=center>#6<td>Audio<td align=right>3.56"
           "<table cellpadding=5><tr><td align=center>#6<td>Theme<td align=right>4.21<tr><td align=center>#6<td>Audio<td align=right>3.56</table>",
-          "<body><table cellpadding=5><tr><td align=center>#6<td>Theme<td align=right>4.21<tr><td align=center>#6<td>Audio<td align=right>3.56</table></body>",
-          "<div>Hello</div>",
-          "<div>Another thing</div>"
         }, result
 
+      -- this is parsed incorrectly with the p tag
+      it "list with optional tags for li", ->
+        result = {}
+        scan_html [[
+          <ol id=outer>
+            <li>
+              <ol id=inner>
+                <li>k
+                <li>
+                  <p>First
+                  <p>Second
+                <li>Another
+              </ol>
+            <li>Good work
+          </ol>
+        ]], (stack) ->
+          table.insert result, flatten_html stack\current!\outer_html!
+
+        assert.same {
+          '<li>k'
+          '<p>First'
+          '<li>Another'
+          '<p>Second<li>Another' -- this is broken
+          '<li><p>First<p>Second<li>Another'
+          '<ol id=inner><li>k<li><p>First<p>Second<li>Another</ol>'
+          '<li><ol id=inner><li>k<li><p>First<p>Second<li>Another</ol>'
+          '<li>Good work'
+          '<ol id=outer><li><ol id=inner><li>k<li><p>First<p>Second<li>Another</ol><li>Good work</ol>'
+        }, result
 
     describe "text_nodes", ->
       it "scans text nodes", ->

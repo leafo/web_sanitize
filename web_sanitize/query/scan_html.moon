@@ -152,28 +152,32 @@ scan_html = (html_text, callback, opts) ->
 
   -- Cmt callback for opening tag
   push_tag = (str, pos, node) ->
-    top = tag_stack[#tag_stack] or root_node
+    parent = tag_stack[#tag_stack] or root_node
     node.tag = node.tag\lower! -- normalize tag name
 
     -- handle automatic closing for optional tags
     -- will treat parent tag as a sibling and immediately close it before pushing new tag
-    if ot_type = optional_tags[top.tag]
-      close_sibling = if ot_type == true
-        node.tag == top.tag
-      else
-        found = false
-        for t in *ot_type
-          if t == node.tag
-            found = true
-            break
-        found
+    while true
+      if ot_type = optional_tags[parent.tag]
+        close_sibling = if ot_type == true
+          node.tag == parent.tag
+        else
+          found = false
+          for t in *ot_type
+            if t == node.tag
+              found = true
+              break
+          found
 
-      if close_sibling
-        pop_tag str, node.pos, node.pos, top.tag
-        top = tag_stack[#tag_stack] or root_node
+        if close_sibling
+          pop_tag str, node.pos, node.pos, parent.tag
+          parent = tag_stack[#tag_stack] or root_node
+          continue
 
-    top.num_children = (top.num_children or 0) + 1
-    node.num = top.num_children -- mark the nth position
+      break
+
+    parent.num_children = (parent.num_children or 0) + 1
+    node.num = parent.num_children -- mark the nth position
 
     -- format attributes:
     --  * unescape value

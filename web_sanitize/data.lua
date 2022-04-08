@@ -23,10 +23,23 @@ local raw_text_tags = {
   "title"
 }
 local optional_tags = {
-  option = true,
+  p = true,
   optgroup = true,
+  option = {
+    "option",
+    "optgroup"
+  },
   tr = true,
-  td = true,
+  td = {
+    "td",
+    "tr",
+    "th"
+  },
+  th = {
+    "td",
+    "tr",
+    "th"
+  },
   li = true,
   thead = {
     "tbody",
