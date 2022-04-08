@@ -413,6 +413,20 @@ describe "web_sanitize.query.scan", ->
           "<ol><li>k<li><p>First<p>Second<li>Another</li></ol>"
         }, result
 
+      it "autocloses improperly nested element in p tag", ->
+        result = visit_html [[
+          <p>
+            <div>What the heck is going on here</div>
+            <span>hi</span>
+          </p>
+        ]]
+
+        assert.same {
+          "<p>"
+          "<div>What the heck is going on here</div>"
+          "<span>hi</span>"
+        }, result
+
 
       it "autocloses for larger table", ->
         result = visit_html [[
