@@ -360,6 +360,19 @@ describe "web_sanitize.query.scan", ->
         scan_html html, (stack) ->
           table.insert result, flatten_html stack\current!\outer_html!
 
+
+        -- also verify that text nodes don't mess anything up
+        result_with_text_nodes = {}
+        scan_html(
+          html
+          (stack) ->
+            return if stack\current!.type == "text_node"
+            table.insert result_with_text_nodes, flatten_html stack\current!\outer_html!
+          text_nodes: true
+        )
+
+        assert.same result, result_with_text_nodes, "text nodes should not produce different result for optional_tags"
+
         result
 
       it "autocloses for simple table", ->
