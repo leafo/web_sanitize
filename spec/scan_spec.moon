@@ -508,6 +508,61 @@ describe "web_sanitize.query.scan", ->
           '<ol id=outer><li><ol id=inner><li> um<li><ol id=more><li>one<li><tr><td><p> yo</ol></ol><li><p>First<p>Second<li>Good work</ol>'
         }, result
 
+      it "example from html spec", ->
+        -- markup example from https://html.spec.whatwg.org/multipage/syntax.html#optional-tags
+        result = visit_html [[
+          <table>
+           <caption>37547 TEE Electric Powered Rail Car Train Functions (Abbreviated)
+           <colgroup><col><col><col>
+           <thead>
+            <tr> <th>Function                              <th>Control Unit     <th>Central Station
+           <tbody>
+            <tr> <td>Headlights                            <td>✔                <td>✔
+            <tr> <td>Interior Lights                       <td>✔                <td>✔
+            <tr> <td>Electric locomotive operating sounds  <td>✔                <td>✔
+            <tr> <td>Engineer's cab lighting               <td>                 <td>✔
+            <tr> <td>Station Announcements - Swiss         <td>                 <td>✔
+          </table>
+        ]]
+
+        assert.same {
+          '<caption>37547 TEE Electric Powered Rail Car Train Functions (Abbreviated)'
+          '<col>'
+          '<col>'
+          '<col>'
+          '<colgroup><col><col><col>'
+          '<th>Function'
+          '<th>Control Unit'
+          '<th>Central Station'
+          '<tr><th>Function<th>Control Unit<th>Central Station'
+          '<thead><tr><th>Function<th>Control Unit<th>Central Station'
+          '<td>Headlights'
+          '<td>✔'
+          '<td>✔'
+          '<tr><td>Headlights<td>✔<td>✔'
+          '<td>Interior Lights'
+          '<td>✔'
+          '<td>✔'
+          '<tr><td>Interior Lights<td>✔<td>✔'
+          '<td>Electric locomotive operating sounds'
+          '<td>✔'
+          '<td>✔'
+          '<tr><td>Electric locomotive operating sounds<td>✔<td>✔'
+          "<td>Engineer's cab lighting"
+          '<td>'
+          '<td>✔'
+          "<tr><td>Engineer's cab lighting<td><td>✔"
+          '<td>Station Announcements - Swiss'
+          '<td>'
+          '<td>✔'
+          "<tr><td>Station Announcements - Swiss<td><td>✔"
+
+          "<tbody><tr><td>Headlights<td>✔<td>✔<tr><td>Interior Lights<td>✔<td>✔<tr><td>Electric locomotive operating sounds<td>✔<td>✔<tr><td>Engineer's cab lighting<td><td>✔<tr><td>Station Announcements - Swiss<td><td>✔"
+
+          "<table><caption>37547 TEE Electric Powered Rail Car Train Functions (Abbreviated)<colgroup><col><col><col><thead><tr><th>Function<th>Control Unit<th>Central Station<tbody><tr><td>Headlights<td>✔<td>✔<tr><td>Interior Lights<td>✔<td>✔<tr><td>Electric locomotive operating sounds<td>✔<td>✔<tr><td>Engineer's cab lighting<td><td>✔<tr><td>Station Announcements - Swiss<td><td>✔</table>"
+
+        }, result
+
     describe "text_nodes", ->
       it "scans text nodes", ->
         text_nodes = {}

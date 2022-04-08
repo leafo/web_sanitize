@@ -155,8 +155,7 @@ can_auto_close = (tag_stack, stack_pos, current) ->
 
     -- detect if parent if the last item in an element that will end up
     -- autoclosing, meaning we can also close parent
-    if stack_pos == #tag_stack
-      can_auto_close tag_stack, stack_pos - 1, current
+    can_auto_close tag_stack, stack_pos - 1, current
 
 scan_html = (html_text, callback, opts) ->
   assert callback, "missing callback to scan_html"

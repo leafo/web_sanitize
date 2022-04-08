@@ -276,9 +276,7 @@ can_auto_close = function(tag_stack, stack_pos, current)
           end
         end
       end
-      if stack_pos == #tag_stack then
-        return can_auto_close(tag_stack, stack_pos - 1, current)
-      end
+      return can_auto_close(tag_stack, stack_pos - 1, current)
     end
   end
 end

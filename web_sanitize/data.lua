@@ -46,6 +46,20 @@ local optional_tags = {
   tbody = {
     "tbody",
     "tfoot"
+  },
+  colgroup = {
+    "caption",
+    "thead",
+    "tbody",
+    "tfoot",
+    "tr"
+  },
+  caption = {
+    "colgroup",
+    "thead",
+    "tbody",
+    "tfoot",
+    "tr"
   }
 }
 return {

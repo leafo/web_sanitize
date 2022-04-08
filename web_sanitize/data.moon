@@ -44,8 +44,12 @@ optional_tags = {
   td: {"td", "th"}
   th: {"td", "th"}
   li: true
-  thead: {"tbody", "tfoot"}
-  tbody: {"tbody", "tfoot"}
+  thead: {"tbody", "tfoot" }
+  tbody: {"tbody", "tfoot" }
+
+  -- taking some liberties here
+  colgroup: {"caption", "thead", "tbody", "tfoot", "tr"}
+  caption: {"colgroup", "thead", "tbody", "tfoot", "tr"}
 }
 
 { :void_tags, :optional_tags, :raw_text_tags}
