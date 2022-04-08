@@ -354,7 +354,7 @@ describe "web_sanitize.query.scan", ->
           </div>
       ]]), trim(nodes[1]\inner_html!)
 
-    describe "optional_tags #ddd", ->
+    describe "optional_tags", ->
       visit_html = (html) ->
         result = {}
         scan_html html, (stack) ->
@@ -453,6 +453,46 @@ describe "web_sanitize.query.scan", ->
           "<li><ol id=inner><li>k<li><p>First<p>Second<li>Another</ol>"
           "<li>Good work"
           "<ol id=outer><li><ol id=inner><li>k<li><p>First<p>Second<li>Another</ol><li>Good work</ol>"
+        }, result
+
+      it "a more complicated example", ->
+        result = visit_html [[
+          <ol id=outer>
+            <li>
+              <ol id=inner>
+                <li> um
+                <li>
+                  <ol id=more>
+                    <li>one
+                    <li>
+                      <tr>
+                        <td>
+                          <p> yo
+                  </ol>
+              </ol>
+            <li>
+              <p>First
+              <p>Second
+            <li>Good work
+          </ol>
+        ]]
+
+        assert.same {
+          '<li> um'
+          '<li>one'
+          '<p> yo'
+          '<td><p> yo'
+          '<tr><td><p> yo'
+          '<li><tr><td><p> yo'
+          '<ol id=more><li>one<li><tr><td><p> yo</ol>'
+          '<li><ol id=more><li>one<li><tr><td><p> yo</ol>'
+          '<ol id=inner><li> um<li><ol id=more><li>one<li><tr><td><p> yo</ol></ol>'
+          '<li><ol id=inner><li> um<li><ol id=more><li>one<li><tr><td><p> yo</ol></ol>'
+          '<p>First'
+          '<p>Second'
+          '<li><p>First<p>Second'
+          '<li>Good work'
+          '<ol id=outer><li><ol id=inner><li> um<li><ol id=more><li>one<li><tr><td><p> yo</ol></ol><li><p>First<p>Second<li>Good work</ol>'
         }, result
 
     describe "text_nodes", ->
