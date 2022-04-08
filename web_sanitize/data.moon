@@ -41,8 +41,8 @@ optional_tags = {
   optgroup: true
   option: {"option", "optgroup"}
   tr: true
-  td: {"td", "tr", "th"}
-  th: {"td", "tr", "th"}
+  td: {"td", "th"}
+  th: {"td", "th"}
   li: true
   thead: {"tbody", "tfoot"}
   tbody: {"tbody", "tfoot"}

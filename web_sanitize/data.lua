@@ -32,12 +32,10 @@ local optional_tags = {
   tr = true,
   td = {
     "td",
-    "tr",
     "th"
   },
   th = {
     "td",
-    "tr",
     "th"
   },
   li = true,

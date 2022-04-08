@@ -354,10 +354,55 @@ describe "web_sanitize.query.scan", ->
           </div>
       ]]), trim(nodes[1]\inner_html!)
 
-    describe "optional_tags", ->
-      it "table with optional tags for tr and td", ->
+    describe "optional_tags #ddd", ->
+      visit_html = (html) ->
         result = {}
-        scan_html [[
+        scan_html html, (stack) ->
+          table.insert result, flatten_html stack\current!\outer_html!
+
+        result
+
+      it "autocloses for simple table", ->
+        result = visit_html [[
+          <table>
+            <tr>
+              <td>Hello
+            <tr>
+              <td>world
+          </table>
+        ]]
+
+        assert.same {
+          "<td>Hello"
+          "<tr><td>Hello"
+          "<td>world"
+          "<tr><td>world"
+          "<table><tr><td>Hello<tr><td>world</table>"
+        }, result
+
+      it "autocloses for simple list with p tag", ->
+        result = visit_html [[
+          <ol>
+            <li>k
+            <li>
+              <p>First
+              <p>Second
+            <li>Another</li>
+          </ol>
+        ]]
+
+        assert.same {
+          "<li>k"
+          "<p>First"
+          "<p>Second"
+          "<li><p>First<p>Second"
+          "<li>Another</li>"
+          "<ol><li>k<li><p>First<p>Second<li>Another</li></ol>"
+        }, result
+
+
+      it "autocloses for larger table", ->
+        result = visit_html [[
           <table cellpadding=5>
              <tr>
                 <td align=center>#6
@@ -368,8 +413,7 @@ describe "web_sanitize.query.scan", ->
                 <td>Audio
                 <td align=right>3.56
             </table>
-        ]], (stack) ->
-          table.insert result, flatten_html stack\current!\outer_html!
+        ]]
 
         assert.same {
           "<td align=center>#6",
@@ -385,8 +429,7 @@ describe "web_sanitize.query.scan", ->
 
       -- this is parsed incorrectly with the p tag
       it "list with optional tags for li", ->
-        result = {}
-        scan_html [[
+        result = visit_html [[
           <ol id=outer>
             <li>
               <ol id=inner>
@@ -398,19 +441,18 @@ describe "web_sanitize.query.scan", ->
               </ol>
             <li>Good work
           </ol>
-        ]], (stack) ->
-          table.insert result, flatten_html stack\current!\outer_html!
+        ]]
 
         assert.same {
-          '<li>k'
-          '<p>First'
-          '<li>Another'
-          '<p>Second<li>Another' -- this is broken
-          '<li><p>First<p>Second<li>Another'
-          '<ol id=inner><li>k<li><p>First<p>Second<li>Another</ol>'
-          '<li><ol id=inner><li>k<li><p>First<p>Second<li>Another</ol>'
-          '<li>Good work'
-          '<ol id=outer><li><ol id=inner><li>k<li><p>First<p>Second<li>Another</ol><li>Good work</ol>'
+          "<li>k"
+          "<p>First"
+          "<p>Second"
+          "<li><p>First<p>Second"
+          "<li>Another"
+          "<ol id=inner><li>k<li><p>First<p>Second<li>Another</ol>"
+          "<li><ol id=inner><li>k<li><p>First<p>Second<li>Another</ol>"
+          "<li>Good work"
+          "<ol id=outer><li><ol id=inner><li>k<li><p>First<p>Second<li>Another</ol><li>Good work</ol>"
         }, result
 
     describe "text_nodes", ->

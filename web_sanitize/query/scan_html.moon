@@ -137,6 +137,27 @@ class HTMLNode
 
     table.insert @changes, {@pos, @end_pos, replacement}
 
+-- can we auto close the parent when visiting current
+can_auto_close = (tag_stack, stack_pos, current) ->
+  parent = tag_stack[stack_pos]
+  return false unless parent
+
+  -- check if adjacent is autoclosing
+  if ot_type = optional_tags[parent.tag]
+    if ot_type == true
+      -- they are the same tag
+      if current.tag == parent.tag
+        return true
+    else -- ot should be array of tag names that can auto close
+      for t in *ot_type
+        if t == current.tag
+          return true
+
+    -- detect if parent if the last item in an element that will end up
+    -- autoclosing, meaning we can also close parent
+    if stack_pos == #tag_stack
+      can_auto_close tag_stack, stack_pos - 1, current
+
 scan_html = (html_text, callback, opts) ->
   assert callback, "missing callback to scan_html"
   changes = {}
@@ -152,30 +173,15 @@ scan_html = (html_text, callback, opts) ->
 
   -- Cmt callback for opening tag
   push_tag = (str, pos, node) ->
-    parent = tag_stack[#tag_stack] or root_node
     node.tag = node.tag\lower! -- normalize tag name
 
     -- handle automatic closing for optional tags
     -- will treat parent tag as a sibling and immediately close it before pushing new tag
-    while true
-      if ot_type = optional_tags[parent.tag]
-        close_sibling = if ot_type == true
-          node.tag == parent.tag
-        else
-          found = false
-          for t in *ot_type
-            if t == node.tag
-              found = true
-              break
-          found
+    while can_auto_close tag_stack, #tag_stack, node
+      -- pop the top by simulating encountering closing tag
+      pop_tag str, node.pos, node.pos, tag_stack[#tag_stack].tag
 
-        if close_sibling
-          pop_tag str, node.pos, node.pos, parent.tag
-          parent = tag_stack[#tag_stack] or root_node
-          continue
-
-      break
-
+    parent = tag_stack[#tag_stack] or root_node
     parent.num_children = (parent.num_children or 0) + 1
     node.num = parent.num_children -- mark the nth position
 

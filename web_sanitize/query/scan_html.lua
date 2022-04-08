@@ -255,6 +255,33 @@ do
   _base_0.__class = _class_0
   HTMLNode = _class_0
 end
+local can_auto_close
+can_auto_close = function(tag_stack, stack_pos, current)
+  local parent = tag_stack[stack_pos]
+  if not (parent) then
+    return false
+  end
+  do
+    local ot_type = optional_tags[parent.tag]
+    if ot_type then
+      if ot_type == true then
+        if current.tag == parent.tag then
+          return true
+        end
+      else
+        for _index_0 = 1, #ot_type do
+          local t = ot_type[_index_0]
+          if t == current.tag then
+            return true
+          end
+        end
+      end
+      if stack_pos == #tag_stack then
+        return can_auto_close(tag_stack, stack_pos - 1, current)
+      end
+    end
+  end
+end
 local scan_html
 scan_html = function(html_text, callback, opts)
   assert(callback, "missing callback to scan_html")
@@ -305,45 +332,11 @@ scan_html = function(html_text, callback, opts)
   local pop_tag
   local push_tag
   push_tag = function(str, pos, node)
-    local parent = tag_stack[#tag_stack] or root_node
     node.tag = node.tag:lower()
-    while true do
-      local _continue_0 = false
-      repeat
-        do
-          do
-            local ot_type = optional_tags[parent.tag]
-            if ot_type then
-              local close_sibling
-              if ot_type == true then
-                close_sibling = node.tag == parent.tag
-              else
-                local found = false
-                for _index_0 = 1, #ot_type do
-                  local t = ot_type[_index_0]
-                  if t == node.tag then
-                    found = true
-                    break
-                  end
-                end
-                close_sibling = found
-              end
-              if close_sibling then
-                pop_tag(str, node.pos, node.pos, parent.tag)
-                parent = tag_stack[#tag_stack] or root_node
-                _continue_0 = true
-                break
-              end
-            end
-          end
-          break
-        end
-        _continue_0 = true
-      until true
-      if not _continue_0 then
-        break
-      end
+    while can_auto_close(tag_stack, #tag_stack, node) do
+      pop_tag(str, node.pos, node.pos, tag_stack[#tag_stack].tag)
     end
+    local parent = tag_stack[#tag_stack] or root_node
     parent.num_children = (parent.num_children or 0) + 1
     node.num = parent.num_children
     if node.attr then
