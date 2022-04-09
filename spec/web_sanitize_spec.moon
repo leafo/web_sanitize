@@ -355,6 +355,29 @@ tests = {
     [[<div   dir = "ltr" height=429  ></div>]]
     [[<div   dir = "ltr"  ></div>]]
   }
+
+  -- comments
+  {
+    -- not ideal but it works
+    'some<!-- <div> -->world'
+    "some&lt;!-- <div> --&gt;world</div>"
+  }
+
+  {
+    "<div on<!--  -->click='alert(1)'></div>"
+    [[&lt;div on&lt;!--  --&gt;click=&#x27;alert(1)&#x27;&gt;&lt;/div&gt;]]
+  }
+
+  {
+    [[<div attr="<!-- m -->"></div>]]
+    "<div></div>"
+  }
+
+  {
+    -- comments do not work in attributes
+    [[<div lang="<!-- " onclick="alert(4) -->"></div>]]
+    [[<div lang="<!-- "></div>]]
+  }
 }
 
 extract_text_tests = {
@@ -531,6 +554,43 @@ sanitize_tests_strip = {
   }
 }
 
+sanitize_tests_strip_comments = {
+  {
+    'some<!-- <div> -->world'
+    "someworld"
+  }
+  {
+    "<s<!-- html comment  -->trong>test</strong>"
+    "&lt;strong&gt;test&lt;/strong&gt;"
+  }
+
+  {
+    "<<!-- html comment  -->strong>test</strong>"
+    "&lt;strong&gt;test&lt;/strong&gt;"
+  }
+
+  {
+    "<div on<!--  -->click='alert(1)'></div>"
+    [[&lt;div onclick=&#x27;alert(1)&#x27;&gt;&lt;/div&gt;]]
+  }
+
+  {
+    [[<div attr="<!-- m -->"></div>]]
+    [[<div></div>]]
+  }
+
+  {
+    [[<div title="<!-- m -->"></div>]]
+    [[<div title="<!-- m -->"></div>]]
+  }
+
+  {
+    -- comments do not work in attributes
+    [[<div lang="<!-- " onclick="alert(4) -->"></div>]]
+    [[<div lang="<!-- "></div>]]
+  }
+}
+
 
 describe "web_sanitize", ->
   describe "sanitize_html", ->
@@ -576,6 +636,17 @@ describe "web_sanitize", ->
       sanitize_html = Sanitizer strip_tags: true
 
     for i, {input, output} in ipairs sanitize_tests_strip
+      it "#{i}: should sanitize and match", ->
+        assert.are.equal output, sanitize_html input
+
+  describe "sanitize_html strip comments #ddd", ->
+    local sanitize_html
+
+    setup ->
+      import Sanitizer from require "web_sanitize.html"
+      sanitize_html = Sanitizer strip_comments: true
+
+    for i, {input, output} in ipairs sanitize_tests_strip_comments
       it "#{i}: should sanitize and match", ->
         assert.are.equal output, sanitize_html input
 
