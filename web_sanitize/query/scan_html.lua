@@ -3,10 +3,10 @@ do
   local _obj_0 = require("web_sanitize.data")
   void_tags, optional_tags = _obj_0.void_tags, _obj_0.optional_tags
 end
-local open_tag, close_tag, html_comment, cdata, unescape_html_text, bein_raw_text_tag, alphanum
+local open_tag, close_tag, html_comment, cdata, unescape_html_text, escape_html_text, bein_raw_text_tag, alphanum
 do
   local _obj_0 = require("web_sanitize.patterns")
-  open_tag, close_tag, html_comment, cdata, unescape_html_text, bein_raw_text_tag, alphanum = _obj_0.open_tag, _obj_0.close_tag, _obj_0.html_comment, _obj_0.cdata, _obj_0.unescape_html_text, _obj_0.bein_raw_text_tag, _obj_0.alphanum
+  open_tag, close_tag, html_comment, cdata, unescape_html_text, escape_html_text, bein_raw_text_tag, alphanum = _obj_0.open_tag, _obj_0.close_tag, _obj_0.html_comment, _obj_0.cdata, _obj_0.unescape_html_text, _obj_0.escape_html_text, _obj_0.bein_raw_text_tag, _obj_0.alphanum
 end
 local P, C, Cc, Cs, Cmt, Cp
 do
@@ -164,8 +164,6 @@ do
         error("attempting to change buffer with no changes array")
       end
       assert(self.type ~= "text_node", "replace_attributes: text nodes have no attributes")
-      local escape_text
-      escape_text = require("web_sanitize.html").escape_text
       local buff = {
         "<",
         self.tag
@@ -179,7 +177,7 @@ do
           i = i + 2
         else
           buff[i + 2] = '="'
-          buff[i + 3] = escape_text:match(value)
+          buff[i + 3] = escape_html_text:match(value)
           buff[i + 4] = '"'
           i = i + 5
         end

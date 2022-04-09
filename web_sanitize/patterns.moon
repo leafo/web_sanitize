@@ -30,6 +30,16 @@ case_insensitive_word = (word) ->
 
   pattern
 
+escaped_html_char = S"<>'&\"" / {
+  ">": "&gt;"
+  "<": "&lt;"
+  "&": "&amp;"
+  "'": "&#x27;"
+  "/": "&#x2F;"
+  '"': "&quot;"
+}
+
+escape_html_text = Cs (escaped_html_char + 1)^0 * -1
 
 white = S" \t\n"^0
 word = (alphanum + S"._-")^1
@@ -123,6 +133,8 @@ unescape_html_text = Cs (decode_html_entity + P(1))^0
 
   :decode_html_entity
   :unescape_html_text
+  :escaped_html_char
+  :escape_html_text
 
   :case_insensitive_word
 }

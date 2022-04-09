@@ -35,6 +35,15 @@ case_insensitive_word = function(word)
   end
   return pattern
 end
+local escaped_html_char = S("<>'&\"") / {
+  [">"] = "&gt;",
+  ["<"] = "&lt;",
+  ["&"] = "&amp;",
+  ["'"] = "&#x27;",
+  ["/"] = "&#x2F;",
+  ['"'] = "&quot;"
+}
+local escape_html_text = Cs((escaped_html_char + 1) ^ 0 * -1)
 local white = S(" \t\n") ^ 0
 local word = (alphanum + S("._-")) ^ 1
 local attribute_value = C(word) + P('"') * C((1 - P('"')) ^ 0) * P('"') + P("'") * C((1 - P("'")) ^ 0) * P("'")
@@ -96,5 +105,7 @@ return {
   cdata = cdata,
   decode_html_entity = decode_html_entity,
   unescape_html_text = unescape_html_text,
+  escaped_html_char = escaped_html_char,
+  escape_html_text = escape_html_text,
   case_insensitive_word = case_insensitive_word
 }

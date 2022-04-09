@@ -9,20 +9,17 @@ local R, S, V, P
 R, S, V, P = lpeg.R, lpeg.S, lpeg.V, lpeg.P
 local C, Cs, Ct, Cmt, Cg, Cb, Cc, Cp
 C, Cs, Ct, Cmt, Cg, Cb, Cc, Cp = lpeg.C, lpeg.Cs, lpeg.Ct, lpeg.Cmt, lpeg.Cg, lpeg.Cb, lpeg.Cc, lpeg.Cp
-local escaped_char = S("<>'&\"") / {
-  [">"] = "&gt;",
-  ["<"] = "&lt;",
-  ["&"] = "&amp;",
-  ["'"] = "&#x27;",
-  ["/"] = "&#x2F;",
-  ['"'] = "&quot;"
-}
+local escape_html_text, escaped_html_char
+do
+  local _obj_0 = require("web_sanitize.patterns")
+  escape_html_text, escaped_html_char = _obj_0.escape_html_text, _obj_0.escaped_html_char
+end
 local alphanum = R("az", "AZ", "09")
 local num = R("09")
 local hex = R("09", "af", "AF")
 local html_entity = C(P("&") * (alphanum ^ 1 + P("#") * (num ^ 1 + S("xX") * hex ^ 1)) * P(";") ^ -1)
 local white = S(" \t\n") ^ 0
-local text = C((1 - escaped_char) ^ 1)
+local text = C((1 - escaped_html_char) ^ 1)
 local word = (alphanum + S("._-:")) ^ 1
 local value = C(word) + P('"') * C((1 - P('"')) ^ 0) * P('"') + P("'") * C((1 - P("'")) ^ 0) * P("'")
 local attribute = C(word) * (white * P("=") * white * value) ^ -1
@@ -31,7 +28,6 @@ local value_ignored = word + P('"') * (1 - P('"')) ^ 0 * P('"') + P("'") * (1 - 
 local attribute_ignored = word * (white * P("=") * white * value_ignored) ^ -1
 local open_tag_ignored = P("<") * white * word * (white * attribute_ignored) ^ 0 * white * (P("/") * white) ^ -1 * P(">")
 local close_tag_ignored = P("<") * white * P("/") * white * word * white * P(">")
-local escape_text = Cs((escaped_char + 1) ^ 0 * -1)
 local Sanitizer
 Sanitizer = function(opts)
   local allowed_tags, add_attributes, self_closing
@@ -163,7 +159,7 @@ Sanitizer = function(opts)
       end
     end
     if type(new_val) == "string" then
-      return true, " " .. tostring(name) .. "=\"" .. tostring(assert(escape_text:match(new_val))) .. "\""
+      return true, " " .. tostring(name) .. "=\"" .. tostring(assert(escape_html_text:match(new_val))) .. "\""
     else
       return true, str:sub(pos_start, pos_end - 1)
     end
@@ -213,7 +209,7 @@ Sanitizer = function(opts)
   if opts and opts.strip_comments then
     open_tag = comment + open_tag
   end
-  local html = Ct((open_tag + close_tag + html_entity + escaped_char + text) ^ 0 * -1)
+  local html = Ct((open_tag + close_tag + html_entity + escaped_html_char + text) ^ 0 * -1)
   return function(str)
     tag_stack = { }
     local buffer = assert(html:match(str), "failed to parse html")
@@ -245,7 +241,7 @@ Extractor = function(opts)
   local printable = opts and opts.printable
   local html_text
   if escape_html then
-    html_text = Cs((open_tag_ignored / " " + close_tag_ignored / " " + comment / "" + html_entity + escaped_char + 1) ^ 0 * -1)
+    html_text = Cs((open_tag_ignored / " " + close_tag_ignored / " " + comment / "" + html_entity + escaped_html_char + 1) ^ 0 * -1)
   else
     local decode_html_entity
     decode_html_entity = require("web_sanitize.patterns").decode_html_entity
@@ -271,5 +267,5 @@ end
 return {
   Sanitizer = Sanitizer,
   Extractor = Extractor,
-  escape_text = escape_text
+  escape_text = escape_html_text
 }

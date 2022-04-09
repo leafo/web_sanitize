@@ -1,6 +1,6 @@
 
 import void_tags, optional_tags  from require "web_sanitize.data"
-import open_tag, close_tag, html_comment, cdata, unescape_html_text, bein_raw_text_tag, alphanum from require "web_sanitize.patterns"
+import open_tag, close_tag, html_comment, cdata, unescape_html_text, escape_html_text, bein_raw_text_tag, alphanum from require "web_sanitize.patterns"
 
 import P, C, Cc, Cs, Cmt, Cp from require "lpeg"
 
@@ -93,8 +93,6 @@ class HTMLNode
 
     assert @type != "text_node", "replace_attributes: text nodes have no attributes"
 
-    import escape_text from require "web_sanitize.html"
-
     buff = {"<", @tag}
     i = #buff + 1
 
@@ -106,7 +104,7 @@ class HTMLNode
         i += 2
       else
         buff[i + 2] = '="'
-        buff[i + 3] = escape_text\match value
+        buff[i + 3] = escape_html_text\match value
         buff[i + 4] = '"'
         i += 5
 

@@ -6,14 +6,7 @@ lpeg = require "lpeg"
 import R, S, V, P from lpeg
 import C, Cs, Ct, Cmt, Cg, Cb, Cc, Cp from lpeg
 
-escaped_char = S"<>'&\"" / {
-  ">": "&gt;"
-  "<": "&lt;"
-  "&": "&amp;"
-  "'": "&#x27;"
-  "/": "&#x2F;"
-  '"': "&quot;"
-}
+import escape_html_text, escaped_html_char from require "web_sanitize.patterns"
 
 alphanum = R "az", "AZ", "09"
 num = R "09"
@@ -22,7 +15,7 @@ hex = R "09", "af", "AF"
 html_entity = C P"&" * (alphanum^1 + P"#" * (num^1 + S"xX" * hex^1)) * P";"^-1
 
 white = S" \t\n"^0
-text = C (1 - escaped_char)^1
+text = C (1 - escaped_html_char)^1
 word = (alphanum + S"._-:")^1
 
 value = C(word) + P'"' * C((1 - P'"')^0) * P'"' + P"'" * C((1 - P"'")^0) * P"'"
@@ -34,8 +27,6 @@ value_ignored = word + P'"' * (1 - P'"')^0 * P'"' + P"'" * (1 - P"'")^0 * P"'"
 attribute_ignored = word * (white * P"=" * white * value_ignored)^-1
 open_tag_ignored = P"<" * white * word * (white * attribute_ignored)^0 * white * (P"/" * white)^-1 * P">"
 close_tag_ignored = P"<" * white * P"/" * white * word * white * P">"
-
-escape_text = Cs (escaped_char + 1)^0 * -1
 
 Sanitizer = (opts) ->
   {
@@ -139,7 +130,7 @@ Sanitizer = (opts) ->
       return true unless attr
 
     if type(new_val) == "string"
-      true, " #{name}=\"#{assert escape_text\match new_val}\""
+      true, " #{name}=\"#{assert escape_html_text\match new_val}\""
     else
       true, str\sub pos_start, pos_end - 1
 
@@ -182,7 +173,7 @@ Sanitizer = (opts) ->
   if opts and opts.strip_comments
     open_tag = comment + open_tag
 
-  html = Ct (open_tag + close_tag + html_entity + escaped_char + text)^0 * -1
+  html = Ct (open_tag + close_tag + html_entity + escaped_html_char + text)^0 * -1
 
   (str) ->
     tag_stack = {}
@@ -210,7 +201,7 @@ Extractor = (opts) ->
   printable = opts and opts.printable
 
   html_text = if escape_html
-    Cs (open_tag_ignored / " " + close_tag_ignored / " " + comment / "" + html_entity + escaped_char + 1)^0 * -1
+    Cs (open_tag_ignored / " " + close_tag_ignored / " " + comment / "" + html_entity + escaped_html_char + 1)^0 * -1
   else
     import decode_html_entity from require "web_sanitize.patterns"
     Cs (open_tag_ignored / " " + close_tag_ignored / " " + comment / "" + decode_html_entity + 1)^0 * -1
@@ -229,5 +220,10 @@ Extractor = (opts) ->
     out = assert trim\match out
     out
 
-{ :Sanitizer, :Extractor, :escape_text }
+{
+  :Sanitizer, :Extractor
+
+  -- this is a legacy export kept around if anyone ever used it (lua-syntax-highlight). prefer web_sanitize.patterns instead
+  escape_text: escape_html_text
+}
 
