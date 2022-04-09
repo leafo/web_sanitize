@@ -522,6 +522,28 @@ describe "web_sanitize.query.scan", ->
           '<ol id=outer><li><ol id=inner><li> um<li><ol id=more><li>one<li><tr><td><p> yo</ol></ol><li><p>First<p>Second<li>Good work</ol>'
         }, result
 
+      it "optgroup and options", ->
+        result = visit_html [[
+          <select>
+            <optgroup label="things">
+              <option>ice
+              <option>cube
+            <optgroup label="frogs">
+              <option>green
+              <option>blue
+          </select>
+        ]]
+
+        assert.same {
+          '<option>ice'
+          '<option>cube'
+          '<optgroup label="things"><option>ice<option>cube'
+          '<option>green'
+          '<option>blue'
+          '<optgroup label="frogs"><option>green<option>blue'
+          '<select><optgroup label="things"><option>ice<option>cube<optgroup label="frogs"><option>green<option>blue</select>'
+        }, result
+
       it "example from html spec", ->
         -- markup example from https://html.spec.whatwg.org/multipage/syntax.html#optional-tags
         result = visit_html [[
