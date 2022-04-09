@@ -271,6 +271,5 @@ end
 return {
   Sanitizer = Sanitizer,
   Extractor = Extractor,
-  escape_text = escape_text,
-  decode_html_entity = decode_html_entity
+  escape_text = escape_text
 }

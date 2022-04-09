@@ -229,5 +229,5 @@ Extractor = (opts) ->
     out = assert trim\match out
     out
 
-{ :Sanitizer, :Extractor, :escape_text, :decode_html_entity }
+{ :Sanitizer, :Extractor, :escape_text }
 
