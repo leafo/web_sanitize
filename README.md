@@ -48,14 +48,19 @@ $ luarocks install web_sanitize
 
 `web_sanitize` tries to preserve the structure of the input as best as possible
 while sanitizing bad content. For HTML, tags that don't match a whitelist are
-replaced with their escaped equivalent. Attributes of tags that don't match the
-whitelist are stripped from the output. You can excplicitly add your own
-attributes to tags as well, for example, all `a` tags will have a
-`rel="nofollow"` attribute inserted by default
+escaped and written as plain text. Attributes of accepted tags that don't match
+the whitelist are stripped from the output. You can instruct the sanitizer to
+insert your own attributes to tags as well, for example, all `a` tags will have
+a `rel="nofollow"` attribute inserted by default configuration.
 
-Any unclosed tags will be closed at the end of the string. This means it's safe
-to put sanitized HTML anywhere in an existing document without worrying about
-breaking the structure.
+The sanitizer does not aim to be a complete HTML parser, but instead its goal
+is to accept a strict subset of HTML and reject everything else. If you want a
+more complete HTML parser you can use the [HTML Parser/Scanner](#html-parser)
+described below.
+
+Any unclosed tags that are approved will be closed at the end of the string.
+This means it's safe to put sanitized HTML anywhere in an existing document
+without worrying about breaking the structure.
 
 If an outer tag is prematurely closed before the inner tags, the inner
 tags will automatically be closed.
@@ -63,9 +68,10 @@ tags will automatically be closed.
 * `<li><b>Hello World` → `<li><b>Hello World</b></li>`
 * `<li><b>Hello World</li>` → `<li><b>Hello World</b></li>`
 
+## CSS Sanitizer
 
-For CSS, a whitelist is used to define an approved set of CSS properties, along
-with a type specification for what kinds of parameters they can take. If a CSS
+A whitelist is used to define an approved set of CSS properties, along with a
+type specification for what kinds of parameters they can take. If a CSS
 property is not in the whitelist, or does not match the type specification then
 it is stripped from the output. Any valid CSS properties are preserved though.
 
@@ -246,7 +252,7 @@ Similar to above, see [`css_whitelist.moon`][6]
 
 In addition to the `whitelist` option shown above, the sanitizer has the following options:
 
-* `strip_tags` - *boolean* Remove unknown tags from output entirely, default: `false`
+* `strip_tags` - *boolean* Remove unknown tags from output entirely, instead of escapting them as text default: `false`
 * `strip_comments` - *boolean* Remove comments from output instead of escaping them, default: `false`
 
 ```lua
@@ -255,7 +261,6 @@ local sanitize_html = Sanitizer({strip_tags = true})
 
 sanitize_html([[<body>Hello world</body>]]) --> Hello world
 ```
-
 
 ## HTML Parser
 
