@@ -4,6 +4,8 @@ import open_tag, close_tag, html_comment, cdata, unescape_html_text, bein_raw_te
 
 import P, C, Cc, Cs, Cmt, Cp from require "lpeg"
 
+match_text = P"<"^-1 * P(1 - P"<")^1
+
 void_tags_set = {t, true for t in *void_tags}
 
 class NodeStack
@@ -294,16 +296,14 @@ scan_html = (html_text, callback, opts) ->
 
     true
 
-
   check_open_tag = Cmt open_tag, push_tag
   check_close_tag = Cmt close_tag, pop_tag
 
-  text = P"<"^-1 * P(1 - P"<")^1
-
+  text_node = match_text
   cdata_node = cdata
 
   if opts and opts.text_nodes == true
-    text = Cmt Cp! * C(text), push_text_node
+    text_node = Cmt Cp! * C(match_text), push_text_node
     cdata_node = Cmt Cp! * C(cdata) * Cc("cdata"), push_text_node
 
   -- a raw text tag takes text as is unless there is signal for closing tag (script, style, etc.)
@@ -315,7 +315,7 @@ scan_html = (html_text, callback, opts) ->
 
   raw_text_tag = #bein_raw_text_tag * check_open_tag * (P(1) - raw_text_closer)^0 * (check_close_tag + P(-1))
 
-  html = (html_comment + cdata_node + raw_text_tag + check_open_tag + check_close_tag + text)^0 * -1 * Cmt(Cp!, check_dangling_tags)
+  html = (html_comment + cdata_node + raw_text_tag + check_open_tag + check_close_tag + text_node)^0 * -1 * Cmt(Cp!, check_dangling_tags)
   res, err = html\match html_text
 
   res

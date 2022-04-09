@@ -13,6 +13,7 @@ do
   local _obj_0 = require("lpeg")
   P, C, Cc, Cs, Cmt, Cp = _obj_0.P, _obj_0.C, _obj_0.Cc, _obj_0.Cs, _obj_0.Cmt, _obj_0.Cp
 end
+local match_text = P("<") ^ -1 * P(1 - P("<")) ^ 1
 local void_tags_set
 do
   local _tbl_0 = { }
@@ -435,10 +436,10 @@ scan_html = function(html_text, callback, opts)
   end
   local check_open_tag = Cmt(open_tag, push_tag)
   local check_close_tag = Cmt(close_tag, pop_tag)
-  local text = P("<") ^ -1 * P(1 - P("<")) ^ 1
+  local text_node = match_text
   local cdata_node = cdata
   if opts and opts.text_nodes == true then
-    text = Cmt(Cp() * C(text), push_text_node)
+    text_node = Cmt(Cp() * C(match_text), push_text_node)
     cdata_node = Cmt(Cp() * C(cdata) * Cc("cdata"), push_text_node)
   end
   local raw_text_closer = P("</") * Cmt(C(alphanum ^ 1), function(_, pos, tag)
@@ -452,7 +453,7 @@ scan_html = function(html_text, callback, opts)
     end
   end)
   local raw_text_tag = #bein_raw_text_tag * check_open_tag * (P(1) - raw_text_closer) ^ 0 * (check_close_tag + P(-1))
-  local html = (html_comment + cdata_node + raw_text_tag + check_open_tag + check_close_tag + text) ^ 0 * -1 * Cmt(Cp(), check_dangling_tags)
+  local html = (html_comment + cdata_node + raw_text_tag + check_open_tag + check_close_tag + text_node) ^ 0 * -1 * Cmt(Cp(), check_dangling_tags)
   local res, err = html:match(html_text)
   return res
 end
