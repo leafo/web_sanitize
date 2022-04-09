@@ -8,6 +8,6 @@ extract_text = Extractor {
 }
 
 {
-  VERSION: "1.1.0"
+  VERSION: "1.2.0"
   :sanitize_html, :extract_text, :sanitize_style
 }

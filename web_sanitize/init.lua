@@ -10,7 +10,7 @@ local extract_text = Extractor({
   escape_html = true
 })
 return {
-  VERSION = "1.1.0",
+  VERSION = "1.2.0",
   sanitize_html = sanitize_html,
   extract_text = extract_text,
   sanitize_style = sanitize_style
