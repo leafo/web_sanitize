@@ -94,6 +94,7 @@ return {
   bein_raw_text_tag = bein_raw_text_tag,
   html_comment = html_comment,
   cdata = cdata,
+  decode_html_entity = decode_html_entity,
   unescape_html_text = unescape_html_text,
   case_insensitive_word = case_insensitive_word
 }

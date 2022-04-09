@@ -19,13 +19,6 @@ alphanum = R "az", "AZ", "09"
 num = R "09"
 hex = R "09", "af", "AF"
 
-at_most = (p, n) ->
-  assert n > 0
-  if n == 1
-    p
-  else
-    p * p^-(n-1)
-
 html_entity = C P"&" * (alphanum^1 + P"#" * (num^1 + S"xX" * hex^1)) * P";"^-1
 
 white = S" \t\n"^0
@@ -207,30 +200,6 @@ Sanitizer = (opts) ->
 
     concat buffer
 
-
-MAX_UNICODE = 0x10FFFF
-
--- if we get an invalid entity then we return the text as is
-translate_entity = (str, kind, value) ->
-  if kind == "named"
-    entities = require "web_sanitize.html_named_entities"
-    return entities[str] or entities[str\lower!] or str
-
-  codepoint = switch kind
-    when "dec"
-      tonumber value
-    when "hex"
-      tonumber value, 16
-
-  import utf8_encode from require "web_sanitize.unicode"
-  if codepoint and codepoint <= MAX_UNICODE
-    utf8_encode codepoint
-  else
-    str
-
-annoteted_html_entity = C P"&" * (Cc"named" * at_most(alphanum, 50) + P"#" * (Cc"dec" * C(at_most(num, 10)) + S"xX" * Cc"hex" * C(at_most(hex, 5)))) * P";"^-1
-decode_html_entity = Cs annoteted_html_entity / translate_entity
-
 -- parse the html, extract text between non tag items
 -- https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references
 -- opts:
@@ -243,6 +212,7 @@ Extractor = (opts) ->
   html_text = if escape_html
     Cs (open_tag_ignored / " " + close_tag_ignored / " " + comment / "" + html_entity + escaped_char + 1)^0 * -1
   else
+    import decode_html_entity from require "web_sanitize.patterns"
     Cs (open_tag_ignored / " " + close_tag_ignored / " " + comment / "" + decode_html_entity + 1)^0 * -1
 
   import whitespace, strip_unprintable from require "web_sanitize.unicode"

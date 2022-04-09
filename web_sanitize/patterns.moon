@@ -120,6 +120,8 @@ unescape_html_text = Cs (decode_html_entity + P(1))^0
   :bein_raw_text_tag
   :html_comment
   :cdata
+
+  :decode_html_entity
   :unescape_html_text
 
   :case_insensitive_word
