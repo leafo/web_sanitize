@@ -43,7 +43,7 @@ do
       end
       local parse_query
       parse_query = require("web_sanitize.query.parse_query").parse_query
-      local q = assert(parse_query(query))
+      local q = assert(parse_query(query), "Failed to parse query: " .. tostring(query))
       self._query_cache[query] = q
       return q
     end,

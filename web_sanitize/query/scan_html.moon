@@ -20,7 +20,7 @@ class NodeStack
       @_query_cache = {}
 
     import parse_query from require "web_sanitize.query.parse_query"
-    q = assert parse_query query
+    q = assert parse_query(query), "Failed to parse query: #{query}"
     @_query_cache[query] = q
     q
 
