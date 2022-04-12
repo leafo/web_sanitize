@@ -53,7 +53,7 @@ local open_tag = Ct(Cg(Cp(), "pos") * P("<") * white * Cg(word, "tag") * Cg(Ct((
 local close_tag = Cp() * P("<") * white * P("/") * white * C(word) * white * P(">")
 local html_comment = P("<!--") * -P(">") * -P("->") * (P(1) - P("<!--") - P("-->") - P("--!>")) ^ 0 * P("<!") ^ -1 * P("-->")
 local cdata = P("<![CDATA[") * (P(1) - P("]]>")) ^ 0 * P("]]>")
-local bein_raw_text_tag
+local begin_raw_text_tag
 do
   local raw_text_tags
   raw_text_tags = require("web_sanitize.data").raw_text_tags
@@ -67,7 +67,7 @@ do
       name_pats = p
     end
   end
-  bein_raw_text_tag = P("<") * white * name_pats * -alphanum
+  begin_raw_text_tag = P("<") * white * name_pats * -alphanum
 end
 local begin_close_tag = P("<") * white * P("/") * white * C(word)
 local MAX_UNICODE = 0x10FFFF
@@ -100,7 +100,7 @@ return {
   tag_attribute = tag_attribute,
   open_tag = open_tag,
   close_tag = close_tag,
-  bein_raw_text_tag = bein_raw_text_tag,
+  begin_raw_text_tag = begin_raw_text_tag,
   html_comment = html_comment,
   cdata = cdata,
   decode_html_entity = decode_html_entity,

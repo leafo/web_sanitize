@@ -78,7 +78,7 @@ html_comment = P"<!--" * -P">" * -P"->" * (P(1) - P"<!--" - P"-->" - P"--!>")^0 
 cdata = P"<![CDATA[" * (P(1) - P("]]>"))^0 * P"]]>"
 
 -- this can be used to detect if we're about to parse a "raw text" tag
-bein_raw_text_tag = do
+begin_raw_text_tag = do
   import raw_text_tags from require "web_sanitize.data"
 
   local name_pats
@@ -127,7 +127,7 @@ unescape_html_text = Cs (decode_html_entity + P(1))^0
   :tag_attribute
   :open_tag
   :close_tag
-  :bein_raw_text_tag
+  :begin_raw_text_tag
   :html_comment
   :cdata
 

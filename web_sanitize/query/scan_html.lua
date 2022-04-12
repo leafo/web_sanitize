@@ -3,10 +3,10 @@ do
   local _obj_0 = require("web_sanitize.data")
   void_tags, optional_tags = _obj_0.void_tags, _obj_0.optional_tags
 end
-local open_tag, close_tag, html_comment, cdata, unescape_html_text, escape_html_text, bein_raw_text_tag, alphanum
+local open_tag, close_tag, html_comment, cdata, unescape_html_text, escape_html_text, begin_raw_text_tag, alphanum
 do
   local _obj_0 = require("web_sanitize.patterns")
-  open_tag, close_tag, html_comment, cdata, unescape_html_text, escape_html_text, bein_raw_text_tag, alphanum = _obj_0.open_tag, _obj_0.close_tag, _obj_0.html_comment, _obj_0.cdata, _obj_0.unescape_html_text, _obj_0.escape_html_text, _obj_0.bein_raw_text_tag, _obj_0.alphanum
+  open_tag, close_tag, html_comment, cdata, unescape_html_text, escape_html_text, begin_raw_text_tag, alphanum = _obj_0.open_tag, _obj_0.close_tag, _obj_0.html_comment, _obj_0.cdata, _obj_0.unescape_html_text, _obj_0.escape_html_text, _obj_0.begin_raw_text_tag, _obj_0.alphanum
 end
 local P, C, Cc, Cs, Cmt, Cp
 do
@@ -450,7 +450,7 @@ scan_html = function(html_text, callback, opts)
       end
     end
   end)
-  local raw_text_tag = #bein_raw_text_tag * check_open_tag * (P(1) - raw_text_closer) ^ 0 * (check_close_tag + P(-1))
+  local raw_text_tag = #begin_raw_text_tag * check_open_tag * (P(1) - raw_text_closer) ^ 0 * (check_close_tag + P(-1))
   local html = (html_comment + cdata_node + raw_text_tag + check_open_tag + check_close_tag + text_node) ^ 0 * -1 * Cmt(Cp(), check_dangling_tags)
   local res, err = html:match(html_text)
   return res
