@@ -45,8 +45,8 @@ white = S" \t\n"^0
 word = (alphanum + S"._-")^1
 
 attribute_value = C(word) +
-  P'"' * C((1 - P'"')^0) * P'"' +
-  P"'" * C((1 - P"'")^0) * P"'"
+  P'"' * C((1 - P'"')^0) * P'"' * Cg(Cc"double", "quote") +
+  P"'" * C((1 - P"'")^0) * P"'" * Cg(Cc"single", "quote")
 
 attribute_name = (alphanum + S"._-:")^1 -- TODO: this is way too strict https://dev.w3.org/html5/spec-LC/syntax.html#attributes-0
 tag_attribute = Ct C(attribute_name) * (white * P"=" * white * attribute_value)^-1
