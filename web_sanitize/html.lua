@@ -209,9 +209,23 @@ Sanitizer = function(opts)
   if opts and opts.strip_comments then
     open_tag = comment + open_tag
   end
-  local html = Ct((open_tag + close_tag + html_entity + escaped_html_char + text) ^ 0 * -1)
+  local html_chunk = open_tag + close_tag + html_entity + escaped_html_char + text
+  local html_short = Ct(html_chunk ^ 0) * -1
+  local flatten
+  flatten = function(p)
+    return Cmt(p, function(s, p, c)
+      return true, table.concat(c)
+    end)
+  end
+  local html_long = Ct(flatten(Ct(html_chunk * html_chunk ^ -1000)) ^ 0) * -1
   return function(str)
     tag_stack = { }
+    local html
+    if #str > 10000 then
+      html = html_long
+    else
+      html = html_short
+    end
     local buffer = assert(html:match(str), "failed to parse html")
     local k = #buffer + 1
     for i = #tag_stack, 1, -1 do

@@ -173,10 +173,29 @@ Sanitizer = (opts) ->
   if opts and opts.strip_comments
     open_tag = comment + open_tag
 
-  html = Ct (open_tag + close_tag + html_entity + escaped_html_char + text)^0 * -1
+  html_chunk = open_tag + close_tag + html_entity + escaped_html_char + text
+
+  html_short = Ct(html_chunk^0) * -1 -- note this can fail for larger inputs
+
+  -- this trick is used to parse in chunks and then flatten all the captures
+  -- into a string. This will avoid the `stack overflow (too many captures)`
+  -- error by reducing the number of working captures in a single parse
+  flatten = (p) -> Cmt p, (s, p, c) -> true, table.concat c
+
+  html_long = Ct(
+    flatten(Ct(html_chunk * html_chunk^-1000))^0
+  ) * -1
 
   (str) ->
     tag_stack = {}
+
+    -- we use the short pattern to avoid the minor performance penalty for text we
+    -- know is short enough to not trigger the overflow error
+    html = if #str > 10000
+      html_long
+    else
+      html_short
+
     buffer = assert html\match(str), "failed to parse html"
 
     -- close any tags that were left unclosed at the end of the input
