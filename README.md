@@ -259,7 +259,7 @@ In addition to the `whitelist` option shown above, the sanitizer has the followi
 local Sanitizer = require("web_sanitize.html").Sanitizer
 local sanitize_html = Sanitizer({strip_tags = true})
 
-sanitize_html([[<body>Hello world</body>]]) --> Hello world
+sanitize_html([[<body>Hello <strong>world</strong></body>]]) --> Hello <strong>world</strong>
 ```
 
 ## HTML Parser
