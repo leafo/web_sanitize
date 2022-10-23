@@ -112,6 +112,11 @@ tests = {
     "&#x27; &#x2F; &#x2f; &#65;"
   }
 
+  -- attribute value escaping
+  {
+    "<img><span title='</img><script>Hello world</script'></span>"
+    "<img><span title='&lt;/img&gt;&lt;script&gt;Hello world&lt;/script'></span>"
+  }
 
   -- xss
 
