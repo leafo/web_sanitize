@@ -6,7 +6,7 @@ lpeg = require "lpeg"
 import R, S, V, P from lpeg
 import C, Cs, Ct, Cmt, Cg, Cb, Cc, Cp from lpeg
 
-import escape_html_text, escaped_html_char from require "web_sanitize.patterns"
+import attribute_name, escape_html_text, escaped_html_char, escape_attribute_text from require "web_sanitize.patterns"
 
 alphanum = R "az", "AZ", "09"
 num = R "09"
@@ -19,12 +19,12 @@ text = C (1 - escaped_html_char)^1
 word = (alphanum + S"._-:")^1
 
 value = C(word) + P'"' * C((1 - P'"')^0) * P'"' + P"'" * C((1 - P"'")^0) * P"'"
-attribute = C(word) * (white * P"=" * white * value)^-1
+attribute = C(attribute_name) * (white * P"=" * white * value)^-1
 comment = P"<!--" * (1 - P"-->")^0 * P"-->"
 
 -- ignored matchers don't capture anything
 value_ignored = word + P'"' * (1 - P'"')^0 * P'"' + P"'" * (1 - P"'")^0 * P"'"
-attribute_ignored = word * (white * P"=" * white * value_ignored)^-1
+attribute_ignored = attribute_name * (white * P"=" * white * value_ignored)^-1
 open_tag_ignored = P"<" * white * word * (white * attribute_ignored)^0 * white * (P"/" * white)^-1 * P">"
 close_tag_ignored = P"<" * white * P"/" * white * word * white * P">"
 
@@ -129,10 +129,12 @@ Sanitizer = (opts) ->
     else
       return true unless attr
 
+    -- write the attribute back into the buffer
     if type(new_val) == "string"
       true, " #{name}=\"#{assert escape_html_text\match new_val}\""
     else
-      true, str\sub pos_start, pos_end - 1
+      -- NOTE: this passes through a valid attribute, replacing any < or > characters
+      true, assert escape_attribute_text\match (str\sub pos_start, pos_end - 1)
 
   inject_attributes = ->
     tag_idx = #tag_stack
@@ -147,11 +149,12 @@ Sanitizer = (opts) ->
           v attribute_stack[tag_idx] or {}
 
         continue unless v
+        assert attribute_name\match(k), "Attribute name contains invalid characters"
 
         buff[i] = " "
-        buff[i + 1] = k
+        buff[i + 1] = escape_html_text\match k
         buff[i + 2] = '="'
-        buff[i + 3] = v
+        buff[i + 3] = escape_html_text\match v
         buff[i + 4] = '"'
         i += 5
       true, unpack buff

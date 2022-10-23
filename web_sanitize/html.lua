@@ -9,10 +9,10 @@ local R, S, V, P
 R, S, V, P = lpeg.R, lpeg.S, lpeg.V, lpeg.P
 local C, Cs, Ct, Cmt, Cg, Cb, Cc, Cp
 C, Cs, Ct, Cmt, Cg, Cb, Cc, Cp = lpeg.C, lpeg.Cs, lpeg.Ct, lpeg.Cmt, lpeg.Cg, lpeg.Cb, lpeg.Cc, lpeg.Cp
-local escape_html_text, escaped_html_char
+local attribute_name, escape_html_text, escaped_html_char, escape_attribute_text
 do
   local _obj_0 = require("web_sanitize.patterns")
-  escape_html_text, escaped_html_char = _obj_0.escape_html_text, _obj_0.escaped_html_char
+  attribute_name, escape_html_text, escaped_html_char, escape_attribute_text = _obj_0.attribute_name, _obj_0.escape_html_text, _obj_0.escaped_html_char, _obj_0.escape_attribute_text
 end
 local alphanum = R("az", "AZ", "09")
 local num = R("09")
@@ -22,10 +22,10 @@ local white = S(" \t\n") ^ 0
 local text = C((1 - escaped_html_char) ^ 1)
 local word = (alphanum + S("._-:")) ^ 1
 local value = C(word) + P('"') * C((1 - P('"')) ^ 0) * P('"') + P("'") * C((1 - P("'")) ^ 0) * P("'")
-local attribute = C(word) * (white * P("=") * white * value) ^ -1
+local attribute = C(attribute_name) * (white * P("=") * white * value) ^ -1
 local comment = P("<!--") * (1 - P("-->")) ^ 0 * P("-->")
 local value_ignored = word + P('"') * (1 - P('"')) ^ 0 * P('"') + P("'") * (1 - P("'")) ^ 0 * P("'")
-local attribute_ignored = word * (white * P("=") * white * value_ignored) ^ -1
+local attribute_ignored = attribute_name * (white * P("=") * white * value_ignored) ^ -1
 local open_tag_ignored = P("<") * white * word * (white * attribute_ignored) ^ 0 * white * (P("/") * white) ^ -1 * P(">")
 local close_tag_ignored = P("<") * white * P("/") * white * word * white * P(">")
 local Sanitizer
@@ -161,7 +161,7 @@ Sanitizer = function(opts)
     if type(new_val) == "string" then
       return true, " " .. tostring(name) .. "=\"" .. tostring(assert(escape_html_text:match(new_val))) .. "\""
     else
-      return true, str:sub(pos_start, pos_end - 1)
+      return true, assert(escape_attribute_text:match((str:sub(pos_start, pos_end - 1))))
     end
   end
   local inject_attributes
@@ -182,10 +182,11 @@ Sanitizer = function(opts)
             _continue_0 = true
             break
           end
+          assert(attribute_name:match(k), "Attribute name contains invalid characters")
           buff[i] = " "
-          buff[i + 1] = k
+          buff[i + 1] = escape_html_text:match(k)
           buff[i + 2] = '="'
-          buff[i + 3] = v
+          buff[i + 3] = escape_html_text:match(v)
           buff[i + 4] = '"'
           i = i + 5
           _continue_0 = true

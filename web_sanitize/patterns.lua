@@ -43,7 +43,12 @@ local escaped_html_char = S("<>'&\"") / {
   ["/"] = "&#x2F;",
   ['"'] = "&quot;"
 }
+local escaped_html_tag_char = S("<>'&\"") / {
+  [">"] = "&gt;",
+  ["<"] = "&lt;"
+}
 local escape_html_text = Cs((escaped_html_char + 1) ^ 0 * -1)
+local escape_attribute_text = Cs((escaped_html_tag_char + 1) ^ 0 * -1)
 local white = S(" \t\n") ^ 0
 local word = (alphanum + S("._-")) ^ 1
 local attribute_value = C(word) + P('"') * C((1 - P('"')) ^ 0) * P('"') + P("'") * C((1 - P("'")) ^ 0) * P("'")
@@ -103,9 +108,11 @@ return {
   begin_raw_text_tag = begin_raw_text_tag,
   html_comment = html_comment,
   cdata = cdata,
+  attribute_name = attribute_name,
   decode_html_entity = decode_html_entity,
   unescape_html_text = unescape_html_text,
   escaped_html_char = escaped_html_char,
   escape_html_text = escape_html_text,
+  escape_attribute_text = escape_attribute_text,
   case_insensitive_word = case_insensitive_word
 }

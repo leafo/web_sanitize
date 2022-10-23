@@ -381,7 +381,7 @@ tests = {
   {
     -- comments do not work in attributes
     [[<div lang="<!-- " onclick="alert(4) -->"></div>]]
-    [[<div lang="<!-- "></div>]]
+    [[<div lang="&lt;!-- "></div>]]
   }
 }
 
@@ -586,13 +586,13 @@ sanitize_tests_strip_comments = {
 
   {
     [[<div title="<!-- m -->"></div>]]
-    [[<div title="<!-- m -->"></div>]]
+    [[<div title="&lt;!-- m --&gt;"></div>]]
   }
 
   {
     -- comments do not work in attributes
     [[<div lang="<!-- " onclick="alert(4) -->"></div>]]
-    [[<div lang="<!-- "></div>]]
+    [[<div lang="&lt;!-- "></div>]]
   }
 }
 
@@ -644,7 +644,7 @@ describe "web_sanitize", ->
       it "#{i}: should sanitize and match", ->
         assert.are.equal output, sanitize_html input
 
-  describe "sanitize_html strip comments #ddd", ->
+  describe "sanitize_html strip comments", ->
     local sanitize_html
 
     setup ->
@@ -682,7 +682,7 @@ describe "web_sanitize", ->
   describe "modified whitelist", ->
     local sanitize_html
 
-    setup ->
+    before_each ->
       whitelist = require("web_sanitize.whitelist")\clone!
       whitelist.tags.iframe = {
         src: true
@@ -704,6 +704,12 @@ describe "web_sanitize", ->
         [[<iframe style="*&#x27;&#x27;hello world&#x27;&#x27;*"></iframe>]]
         sanitize_html [[<iframe style="hello world">]]
       }
+
+    it "does not allow markup within tag attribute", ->
+      assert.same(
+        [[<span title="&lt;/iframe&gt;"></span>]]
+        sanitize_html [[<span title="</iframe>"></span>]]
+      )
 
   describe "inject attributes", ->
     local sanitize_html, whitelist
@@ -756,6 +762,17 @@ describe "web_sanitize", ->
       }, sanitize_html [[<a onclick="" title="good link" href="http://leafo.net">heres a link</a><a href="http://itch.io">another link</a>]]
 
 
+    it "doesn't inject attribute value that breaks markup", =>
+      whitelist.add_attributes.b = {
+        "world": "</iframe>"
+        "zone": => "<script>"
+      }
+
+      expect {
+        [[<b zone="&lt;script&gt;" world="&lt;/iframe&gt;">Hello</b>]]
+        [[<b world="&lt;/iframe&gt;" zone="&lt;script&gt;">Hello</b>]]
+      }, sanitize_html [[<b world>Hello</b>]]
+
     it "it extracts attributes from tag for injection", =>
       local attributes
       whitelist.add_attributes.a = {
@@ -800,4 +817,19 @@ describe "web_sanitize", ->
           href: "http://itch.io"
         }
       }, attributes
+
+
+    it "fails if invalid attribute name is used", ->
+      whitelist.add_attributes.a = {
+        "<script>": "hello"
+      }
+
+      assert.has_error(
+        ->
+          sanitize_html [[
+            <a href="http://leafo.net">test</a>
+          ]]
+        "Attribute name contains invalid characters"
+      )
+
 
