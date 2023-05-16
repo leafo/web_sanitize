@@ -26,7 +26,7 @@ tests = {
 
   {
     '<pre/>'
-    '<pre/>'
+    '&lt;pre/&gt;'
   }
 
   {
@@ -308,25 +308,46 @@ tests = {
   }
 
   -- self closing tags
+  -- Note: Div is not a valid self closing tag, so we block it
 
   {
     "<div />"
-    "<div />"
+    "&lt;div /&gt;"
   }
 
   {
     "<div/>"
-    "<div/>"
+    "&lt;div/&gt;"
   }
 
   {
     "<div/ >"
-    "<div/ >"
+    "&lt;div/ &gt;"
   }
 
   {
     "<div\t/ \t>"
-    "<div\t/ \t>"
+    "&lt;div\t/ \t&gt;"
+  }
+
+  {
+    "<br />"
+    "<br />"
+  }
+
+  {
+    "<br/>"
+    "<br/>"
+  }
+
+  {
+    "<br/ >"
+    "<br/ >"
+  }
+
+  {
+    "<br\t/ \t>"
+    "<br\t/ \t>"
   }
 
   -- closing tags whitespace
@@ -703,6 +724,12 @@ describe "web_sanitize", ->
       assert.same unpack {
         [[<iframe style="*&#x27;&#x27;hello world&#x27;&#x27;*"></iframe>]]
         sanitize_html [[<iframe style="hello world">]]
+      }
+
+    it "doesn't allow self closing iframe", ->
+      assert.same unpack {
+        [[&lt;iframe src=&quot;&quot; frameborder=&quot;0&quot; src=&quot;http://leafo.net&quot;/&gt;]]
+        sanitize_html [[<iframe src="" frameborder="0" src="http://leafo.net"/>]]
       }
 
     it "does not allow markup within tag attribute", ->

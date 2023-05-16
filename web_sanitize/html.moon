@@ -95,6 +95,15 @@ Sanitizer = (opts) ->
       attribute_stack[idx] = nil
     true, ...
 
+  -- this will successfully pop the tag only if it's approved in self
+  -- closing list
+  pop_self_closing_tag = (str, pos, ...) ->
+    tag = tag_stack[#tag_stack]
+    if self_closing[tag]
+      pop_tag src, pos, ...
+    else
+      false
+
   fail_tag = ->
     idx = #tag_stack
     tag_stack[idx] = nil
@@ -165,7 +174,7 @@ Sanitizer = (opts) ->
 
   open_tag = C(P"<" * white) *
     Cmt(word, check_tag) *
-    (tag_attributes * C(white) * Cmt("", inject_attributes) * (Cmt("/" * white * ">", pop_tag) + C">") + Cmt("", fail_tag))
+    (tag_attributes * C(white) * Cmt("", inject_attributes) * (Cmt("/" * white * ">", pop_self_closing_tag) + C">") + Cmt("", fail_tag))
 
   close_tag = Cmt(C(P"<" * white * P"/" * white) * C(word) * C(white * P">"), check_close_tag)
 

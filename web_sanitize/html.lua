@@ -116,6 +116,15 @@ Sanitizer = function(opts)
     end
     return true, ...
   end
+  local pop_self_closing_tag
+  pop_self_closing_tag = function(str, pos, ...)
+    local tag = tag_stack[#tag_stack]
+    if self_closing[tag] then
+      return pop_tag(src, pos, ...)
+    else
+      return false
+    end
+  end
   local fail_tag
   fail_tag = function()
     local idx = #tag_stack
@@ -201,7 +210,7 @@ Sanitizer = function(opts)
     end
   end
   local tag_attributes = Cmt(Cp() * white * attribute, check_attribute) ^ 0
-  local open_tag = C(P("<") * white) * Cmt(word, check_tag) * (tag_attributes * C(white) * Cmt("", inject_attributes) * (Cmt("/" * white * ">", pop_tag) + C(">")) + Cmt("", fail_tag))
+  local open_tag = C(P("<") * white) * Cmt(word, check_tag) * (tag_attributes * C(white) * Cmt("", inject_attributes) * (Cmt("/" * white * ">", pop_self_closing_tag) + C(">")) + Cmt("", fail_tag))
   local close_tag = Cmt(C(P("<") * white * P("/") * white) * C(word) * C(white * P(">")), check_close_tag)
   if opts and opts.strip_tags then
     open_tag = open_tag + open_tag_ignored
