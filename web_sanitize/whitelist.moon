@@ -90,9 +90,12 @@ add_attributes = {
   }
 }
 
--- tags that don't need to be automatically closed
+-- tags that are allowed to use the `/>` self closing syntax, and don't need
+-- to be automatically closed. Note: if the tag isn't in the  whitelist,
+-- then being here will have no effect
 self_closing = {
-  br: true, img: true, hr: true
+  br: true, img: true, hr: true, input: true, source: true
+  link: true, meta: true, param: true
 }
 
 clone = (t) ->

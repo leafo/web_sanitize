@@ -131,7 +131,12 @@ local add_attributes = {
 local self_closing = {
   br = true,
   img = true,
-  hr = true
+  hr = true,
+  input = true,
+  source = true,
+  link = true,
+  meta = true,
+  param = true
 }
 local clone
 clone = function(t)
