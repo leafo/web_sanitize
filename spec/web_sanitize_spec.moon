@@ -350,6 +350,12 @@ tests = {
     "<br\t/ \t>"
   }
 
+  {
+    "<link />"
+    "&lt;link /&gt;"
+  }
+
+
   -- closing tags whitespace
   {
     [[<div>< /div>]]
