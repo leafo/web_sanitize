@@ -13,6 +13,13 @@ make_string = (delim) ->
   inside = (P("\\" .. delim) + "\\\\" + (1 - d))^0
   d * inside * d
 
+-- URL string that only allows http:// and https:// protocols
+make_url_string = (delim) ->
+  d = P delim
+  protocol = P("https://") + P("http://")
+  inside = (P("\\" .. delim) + "\\\\" + (1 - d))^0
+  d * protocol * inside * d
+
 alphanum = R "az", "AZ", "09"
 num = R "09"
 
@@ -22,8 +29,10 @@ ident = (alphanum + S"_-")^1
 string_1 = make_string "'"
 string_2 = make_string '"'
 
--- TODO: open string
-uri = P("url(") * white * (string_1 + string_2) * white * P(")")
+url_string_1 = make_url_string "'"
+url_string_2 = make_url_string '"'
+
+uri = P("url(") * white * (url_string_1 + url_string_2) * white * P(")")
 
 hash = P("#") * ident
 

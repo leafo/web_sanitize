@@ -4,7 +4,7 @@ local short_names = {
   number = "n",
   string = "s",
   url = "u",
-  ident = "u",
+  ident = "i",
   hash = "h",
   ["function"] = "f"
 }

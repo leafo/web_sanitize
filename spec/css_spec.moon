@@ -56,3 +56,30 @@ describe "sanitize_style", ->
   check "border: 1px solid blue", "border: 1px solid blue"
   check "border-width: 1px 2px", "border-width: 1px 2px"
 
+  -- invalid syntax
+  check nil, "background: url(http://example.com/image.png)"
+  check nil, "background: url(https://example.com/image.png)"
+  check nil, "background: url(javascript:alert(1))"
+
+  -- quoted URLs with bad protocols are stripped
+  check "", "background: url(\"javascript:alert(1)\")"
+  check "", "background: url('javascript:alert(1)')"
+  check "", "background: url(\"data:text/html,<script>alert(1)</script>\")"
+  check "", "background: url(\"vbscript:alert(1)\")"
+  check "", "background-image: url(\"javascript:alert(1)\")"
+
+  -- allow http and https protocols
+  check "background: url(\"https://example.com/image.png\")", "background: url(\"https://example.com/image.png\")"
+  check "background: url(\"http://example.com/image.png\")", "background: url(\"http://example.com/image.png\")"
+  check "background: url('https://example.com/image.png')", "background: url('https://example.com/image.png')"
+  check "background-image: url(\"https://example.com/bg.jpg\")", "background-image: url(\"https://example.com/bg.jpg\")"
+  check "background-image: url(\"http://example.com/bg.jpg\")", "background-image: url(\"http://example.com/bg.jpg\")"
+
+  -- URL not allowed on other properties
+  check "", "margin-left: url(\"https://example.com/image.png\")"
+  check "", "text-align: url(\"https://example.com/image.png\")"
+  check "", "color: url(\"https://example.com/image.png\")"
+
+  -- background-image with ident (like 'none')
+  check "background-image: none", "background-image: none"
+

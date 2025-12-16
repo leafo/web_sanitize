@@ -16,13 +16,22 @@ make_string = function(delim)
   local inside = (P("\\" .. delim) + "\\\\" + (1 - d)) ^ 0
   return d * inside * d
 end
+local make_url_string
+make_url_string = function(delim)
+  local d = P(delim)
+  local protocol = P("https://") + P("http://")
+  local inside = (P("\\" .. delim) + "\\\\" + (1 - d)) ^ 0
+  return d * protocol * inside * d
+end
 local alphanum = R("az", "AZ", "09")
 local num = R("09")
 local white = S(" \t\n") ^ 0
 local ident = (alphanum + S("_-")) ^ 1
 local string_1 = make_string("'")
 local string_2 = make_string('"')
-local uri = P("url(") * white * (string_1 + string_2) * white * P(")")
+local url_string_1 = make_url_string("'")
+local url_string_2 = make_url_string('"')
+local uri = P("url(") * white * (url_string_1 + url_string_2) * white * P(")")
 local hash = P("#") * ident
 local decimal = P(".") * num ^ 1
 local number = decimal + num ^ 1 * (decimal) ^ -1

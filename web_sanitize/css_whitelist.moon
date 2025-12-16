@@ -27,7 +27,8 @@ properties = {
   "text-align": Ident
   "color": Color
   "background-color": Color
-  "background": Ident + Hash -- function could be other things here, need to be strict about color function
+  "background": Url + Ident + Hash -- function could be other things here, need to be strict about color function
+  "background-image": Url + Ident
   "opacity": Number
   "border": Number * (Ident * Color)^-1
   "border-width": Number^-4
