@@ -446,7 +446,52 @@ make test
 
 ## Changelog
 
-**Jan 25  2021** - 1.1.0
+**Dec 16 2025** - 1.6.0
+
+* Stricter `url()` parsing for CSS
+* Fix bug where ident and url treated same in validation table
+
+**May 16 2023** - 1.5.0
+
+* The self closing `/>` syntax for immediately closing an opening tag is only accepted as valid if the tag type is listed in the `self_closing` object in the whitelist. Previously it would have been possible to write something like `<div/>` and have it pass through the sanitizer. This would cause the browser to render any subsequent content that doesn't close that nesting inside of that tag, allowing the input markup to influence the appearance of content outside the sanitized area.
+* Update the default list of `self_closing` tags to include a few more common *void* tags.
+
+**Oct 23 2022** - 1.4.0
+
+**This is a critical update if you are using a custom white list with `iframe` elements allowed.** Due to their non-standard parsing within browsers it maybe be possible to craft HTML to bypass sanitization by using an element with an attribute value of a closing iframe tag. Those using the default whitelist are not affected.
+
+* Make attribute escaping more strict:
+  * Approved attributes passed through will now always have `<` and `>` characters in the value replaced with `&lt;` and `&gt;`
+  * Injected attributes (attributes that are added despite not previously being there): The value will be escaped as HTML text to ensure invalid markup can't be returned by the injection function/literal
+  * Injected attribute names will throw an error if using invalid characters (like `<` or `>`)
+  * Note: Modified attributes will continue to function the same: the value provided is escaped as HTML text, (escaping `<` `>`, `&`, etc.)
+
+**May 20 2022** - 1.3.0
+
+This update includes a fix for the `stack overflow (too many captures)` error produced by LPeg when parsing too large of an input. The structure of the parser has been modified slightly when handing inputs that are over 10kb.
+
+* Add separate pattern for sanitizing HTML inputs that are over 10kb
+* Add an assertion when parsing query selectors with the scanning library
+
+**Apr 09 2022** - 1.2.0
+
+* Substantial updates to the HTML scanner/updater
+  * Support parsing HTML comments (they will no longer be part of text nodes, any markup inside of a comment will be completely passed over)
+  * Support parsing CDATA tags, markup inside of them will not be parsed. They are emitted as individual text nodes when text nodes are enabled (with tag set to `cdata` and type set to `text_node`)
+  * Support parsing "raw text" tags like `script` and `style`. The content of these tags is read as text until the respective closing tag, no nested tags are parsed inside of them.
+  * Support for parsing auto closing tags as defined by the HTML spec. This includes things like auto-closing `tr`, `td` tags when defining a table, or auto closing `li` tags when defining a list.
+  * Support for auto closing `p` tags when an invalid block level tag is included inside
+  * The format of the `attr` field on node now matches the format used on the HTML sanitizer. All attributes are included in tuple form (`{ key, value}` including duplicates) in the array portion of the table, and then lowercase key, values are stored as fields in the table, with the right most value overwriting any duplicates
+  * Add `update_attributes` method on Node class for replacing rewriting an element's attributes with specified ones in addition to existing ones
+  * `replace_attributes` will write all attributes both in tuple and table form (`{"hello", "world"}` and `{ hello = "world" }`, if you have multiple entries with the same name then they will all be written) The argument format is analogous to the `attr` field of a parsed node
+  * Fix a bug for automatically closed tags due to parent closing was not working as intended. It caused the tag to be closed at the end of the document with the contents taking up the rest of the document
+  * Be more diligent about reusing Lpeg patterns where possible to avoid extra allocations when running the scanner
+  * Refactored parsing primitives to parse things more atomically (reducing use of `Cmt`)
+* The HTML entity decoder now correctly respects that HTML entities are case sensitive
+* Add more documentation for `scan_html`/`replace_html`, including interface for the node and stack
+* Add `web_sanitize.patterns` module with some common patterns for parsing HTML (Although this module is undocumented, the interface should be relatively stable)
+
+**Jan 26 2021** - 1.1.0
 
 * Update text extractor
   * Add option for extracting as html or as plain text
