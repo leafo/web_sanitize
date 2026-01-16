@@ -102,6 +102,20 @@ HTML tag (eg. a `<`).
 local text = web_sanitize.extract_text("<div>hello <b>world</b></div>")
 ```
 
+#### `unescape_html(text)`
+
+Decodes HTML entities in a string. Supports:
+- Named entities (`&amp;`, `&nbsp;`, `&eacute;`, etc.)
+- Decimal numeric entities (`&#60;`, `&#8212;`)
+- Hexadecimal numeric entities (`&#x3C;`, `&#x2014;`)
+
+Unlike `extract_text`, this function does not strip HTML tags or modify whitespace - it only decodes entities.
+
+```lua
+local decoded = web_sanitize.unescape_html("Hello &amp; world &#x27;test&#x27;")
+-- Returns: "Hello & world 'test'"
+```
+
 ### CSS
 
 #### `sanitize_style(unsafe_style_attributes)`
