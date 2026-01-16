@@ -121,7 +121,10 @@ translate_entity = (str, kind, value) ->
   else
     str
 
-annoteted_html_entity = C P"&" * (Cc"named" * at_most(alphanum, 31) + P"#" * (Cc"dec" * C(at_most(num, 10)) + S"xX" * Cc"hex" * C(at_most(hex, 6)))) * P";"^-1
+named_entity_suffix = (Cc"named" * at_most(alphanum, 31)) * (P";" + -(alphanum + P"="))
+numeric_entity_suffix = P"#" * (Cc"dec" * C(at_most(num, 10)) + S"xX" * Cc"hex" * C(at_most(hex, 6))) * P";"^-1
+
+annoteted_html_entity = #P"&" * C P"&" * (named_entity_suffix + numeric_entity_suffix)
 decode_html_entity = annoteted_html_entity / translate_entity
 
 -- unescapes an html text string that may contain html entities

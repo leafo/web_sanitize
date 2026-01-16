@@ -97,7 +97,9 @@ translate_entity = function(str, kind, value)
     return str
   end
 end
-local annoteted_html_entity = C(P("&") * (Cc("named") * at_most(alphanum, 31) + P("#") * (Cc("dec") * C(at_most(num, 10)) + S("xX") * Cc("hex") * C(at_most(hex, 6)))) * P(";") ^ -1)
+local named_entity_suffix = (Cc("named") * at_most(alphanum, 31)) * (P(";") + -(alphanum + P("=")))
+local numeric_entity_suffix = P("#") * (Cc("dec") * C(at_most(num, 10)) + S("xX") * Cc("hex") * C(at_most(hex, 6))) * P(";") ^ -1
+local annoteted_html_entity = #P("&") * C(P("&") * (named_entity_suffix + numeric_entity_suffix))
 local decode_html_entity = annoteted_html_entity / translate_entity
 local unescape_html_text = Cs((decode_html_entity + P(1)) ^ 0)
 return {
