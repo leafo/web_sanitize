@@ -460,6 +460,11 @@ make test
 
 ## Changelog
 
+**Jan 16 2026** - 1.7.0
+
+* Add `unescape_html()` function for decoding HTML entities (named, decimal, and hexadecimal)
+* Improved entity pattern handling for semicolon edge cases
+
 **Dec 16 2025** - 1.6.0
 
 * Stricter `url()` parsing for CSS

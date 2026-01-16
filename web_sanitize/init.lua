@@ -16,7 +16,7 @@ unescape_html = function(str)
   return assert(unescape_html_text:match(str))
 end
 return {
-  VERSION = "1.6.0",
+  VERSION = "1.7.0",
   sanitize_html = sanitize_html,
   extract_text = extract_text,
   sanitize_style = sanitize_style,

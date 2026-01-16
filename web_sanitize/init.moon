@@ -12,6 +12,6 @@ unescape_html = (str) ->
   assert unescape_html_text\match str
 
 {
-  VERSION: "1.6.0"
+  VERSION: "1.7.0"
   :sanitize_html, :extract_text, :sanitize_style, :unescape_html
 }
