@@ -4,7 +4,9 @@ import open_tag, close_tag, html_comment, cdata, close_follows, unescape_html_te
 
 import P, C, Cc, Cs, Cmt, Cp from require "lpeg"
 
-match_text = P"<"^-1 * P(1 - P"<")^1
+-- any character, including a < that doesn't start a tag, followed by text up
+-- to the next <, so the scan always reaches the end of the input
+match_text = P(1) * P(1 - P"<")^0
 
 void_tags_set = {t, true for t in *void_tags}
 
@@ -359,6 +361,11 @@ scan = (html_text, callback, opts, NodeClass) ->
 
   html = (html_comment + cdata_node + raw_text_tag + check_open_tag + check_close_tag + text_node)^0 * -1 * Cmt(Cp!, check_dangling_tags)
   res, _ = html\match html_text
+
+  -- a failed match leaves elements without callbacks, and replace_html would
+  -- apply only the edits made before it
+  unless res
+    error "scan_html: failed to scan the whole input"
 
   res
 

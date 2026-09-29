@@ -13,7 +13,7 @@ do
   local _obj_0 = require("lpeg")
   P, C, Cc, Cs, Cmt, Cp = _obj_0.P, _obj_0.C, _obj_0.Cc, _obj_0.Cs, _obj_0.Cmt, _obj_0.Cp
 end
-local match_text = P("<") ^ -1 * P(1 - P("<")) ^ 1
+local match_text = P(1) * P(1 - P("<")) ^ 0
 local void_tags_set
 do
   local _tbl_0 = { }
@@ -528,6 +528,9 @@ scan = function(html_text, callback, opts, NodeClass)
   local raw_text_tag = #begin_raw_text_tag * check_open_tag * (raw_text_open * (P(1) - raw_text_closer) ^ 0 * (check_close_tag + P(-1))) ^ -1
   local html = (html_comment + cdata_node + raw_text_tag + check_open_tag + check_close_tag + text_node) ^ 0 * -1 * Cmt(Cp(), check_dangling_tags)
   local res, _ = html:match(html_text)
+  if not (res) then
+    error("scan_html: failed to scan the whole input")
+  end
   return res
 end
 local apply_changes

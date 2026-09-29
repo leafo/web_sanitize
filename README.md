@@ -571,10 +571,12 @@ make test
 **Sep 29 2026** - 1.8.0
 
 The HTML sanitizer and scanner now run in linear time on malformed and
-adversarial input, and several errors and a crash that untrusted input could
-trigger are fixed. Editing nodes with `replace_html` is also stricter: some
-callbacks that relied on undefined behavior will now raise errors.
+adversarial input, and several bugs that untrusted input could trigger are
+fixed, including the scanner silently stopping partway through some input.
+Editing nodes with `replace_html` is also stricter: some callbacks that relied
+on undefined behavior will now raise errors.
 
+* Fix the scanner silently stopping at two `<` in a row, or a `<` at the end of the input. Elements after that point got no callbacks in `scan_html`, `replace_html` and `query_all`, and `replace_html` returned the rest of the input unedited
 * Fix quadratic processing time for:
   * Many edits in one `replace_html` call
   * Deeply nested tags followed by closing tags that aren't open, in the sanitizer and the scanner

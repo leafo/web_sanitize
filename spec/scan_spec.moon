@@ -131,6 +131,20 @@ describe "web_sanitize.query.scan", ->
         for method in *{"replace_attributes", "update_attributes", "replace_inner_html", "replace_outer_html", "unwrap"}
           assert.is_nil node[method], method
 
+    it "scans a < that doesn't start a tag as text", ->
+      nodes = (html) ->
+        out = {}
+        scan_html html, ((stack) ->
+          node = stack\current!
+          table.insert out, "#{node.tag}=#{node\outer_html!}"
+        ), text_nodes: true
+        out
+
+      assert.same {"=<", 'img=<img src="x">'}, nodes '<<img src="x">'
+      assert.same {"=a", "=<", 'img=<img src="x">', 'div=<div>a<<img src="x"></div>'}, nodes '<div>a<<img src="x"></div>'
+      assert.same {"=a", "=<", "=<b", "=<"}, nodes "a<<b<"
+      assert.same {"=1 ", "=<", "=< 2", "p=<p>1 << 2</p>", "=<"}, nodes "<p>1 << 2</p><"
+
     it "treats closing tags that aren't open as text", ->
       result = {}
 
@@ -929,6 +943,16 @@ describe "web_sanitize.query.scan", ->
                 stack[1][method] stack[1], "y"
           "#{method}: element is still open, replace its HTML from its own callback"
         )
+
+    it "edits elements after a < that doesn't start a tag", ->
+      remove_images = (html) ->
+        replace_html html, (stack) ->
+          node = stack\current!
+          node\replace_outer_html "" if node.tag == "img"
+
+      assert.same "<div>a<</div>", remove_images '<div>a<<img src="x"></div>'
+      assert.same " b <", remove_images '<img src="x"> b <'
+      assert.same "<div>1 << 2</div>", remove_images '<img src="x"><div>1 << 2</div>'
 
     it "unwraps an element, keeping edits to its children", ->
       out = replace_html [[<p>hi <font color="red">see <img src="a.png"> and <span class="q">quote</span></font></p>]], (stack) ->
