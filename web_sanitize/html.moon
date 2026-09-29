@@ -1,5 +1,4 @@
 import insert, concat from table
-unpack = unpack or table.unpack
 
 lpeg = require "lpeg"
 
@@ -92,8 +91,6 @@ Sanitizer = (opts) ->
     buffer[k + 1] = tag
     buffer[k + 2] = rest
 
-    -- one capture: returning many values here can exceed unpack's limit, and
-    -- has crashed LuaJIT even for small closes
     true, concat buffer
 
   pop_tag = (str, pos, ...) ->
@@ -176,7 +173,8 @@ Sanitizer = (opts) ->
         buff[i + 3] = escape_html_text\match v
         buff[i + 4] = '"'
         i += 5
-      true, unpack buff
+
+      true, concat buff
     else
       true
 

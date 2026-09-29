@@ -3,7 +3,6 @@ do
   local _obj_0 = table
   insert, concat = _obj_0.insert, _obj_0.concat
 end
-local unpack = unpack or table.unpack
 local lpeg = require("lpeg")
 local R, S, V, P
 R, S, V, P = lpeg.R, lpeg.S, lpeg.V, lpeg.P
@@ -217,7 +216,7 @@ Sanitizer = function(opts)
           break
         end
       end
-      return true, unpack(buff)
+      return true, concat(buff)
     else
       return true
     end
