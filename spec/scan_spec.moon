@@ -389,6 +389,27 @@ describe "web_sanitize.query.scan", ->
       assert.same [[Á]], nodes[1]\inner_text!
 
 
+    it "scans markup after a self closing raw text tag", ->
+      visited = (html) ->
+        out = {}
+        scan_html html, (stack) ->
+          node = stack\current!
+          table.insert out, "#{node.tag}=#{node\outer_html!}"
+        out
+
+      assert.same {"script=<script />"}, visited "<script />x</b>"
+      assert.same {"style=<style/>"}, visited "<style/>a</p>"
+      assert.same {
+        "script=<script />"
+        "b=<b>y</b>"
+        "div=<div><script />x<b>y</b></div>"
+      }, visited "<div><script />x<b>y</b></div>"
+
+      assert.same {
+        "textarea=<TEXTAREA/>"
+        "i=<i>z</i>"
+      }, visited "<TEXTAREA/><i>z</i>"
+
     it "scans rawtext that has no end", ->
       nodes = {}
       scan_html [[

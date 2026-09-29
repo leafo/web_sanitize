@@ -219,7 +219,7 @@ scan = (html_text, callback, opts, NodeClass) ->
   root_node = {}
   tag_stack = NodeStack!
 
-  local pop_tag
+  local pop_tag, last_opened
 
   -- Cmt callback for opening tag
   push_tag = (str, pos, node) ->
@@ -248,6 +248,7 @@ scan = (html_text, callback, opts, NodeClass) ->
 
     setmetatable node, BufferHTMLNode.__base
     tag_stack\push node
+    last_opened = node
 
     -- handle void/self closing tags
     if void_tags_set[node.tag] or node.self_closing
@@ -347,12 +348,13 @@ scan = (html_text, callback, opts, NodeClass) ->
 
   -- a raw text tag takes text as is unless there is signal for closing tag (script, style, etc.)
   raw_text_closer = P"</" * Cmt C(alphanum^1), (_, pos, tag) ->
-    if top = tag_stack[#tag_stack]
-      top.tag\lower! == tag\lower!
-    else
-      error "somehow have empty tag stack when checking for closing raw text"
+    tag_stack[#tag_stack].tag == tag\lower!
 
-  raw_text_tag = #begin_raw_text_tag * check_open_tag * (P(1) - raw_text_closer)^0 * (check_close_tag + P(-1))
+  -- a self closing raw text tag is already closed, so what follows is parsed
+  -- as markup
+  raw_text_open = Cmt P(0), -> tag_stack[#tag_stack] == last_opened
+
+  raw_text_tag = #begin_raw_text_tag * check_open_tag * (raw_text_open * (P(1) - raw_text_closer)^0 * (check_close_tag + P(-1)))^-1
 
   html = (html_comment + cdata_node + raw_text_tag + check_open_tag + check_close_tag + text_node)^0 * -1 * Cmt(Cp!, check_dangling_tags)
   res, err = html\match html_text

@@ -415,7 +415,7 @@ scan = function(html_text, callback, opts, NodeClass)
   end
   local root_node = { }
   local tag_stack = NodeStack()
-  local pop_tag
+  local pop_tag, last_opened
   local push_tag
   push_tag = function(str, pos, node)
     node.tag = node.tag:lower()
@@ -435,6 +435,7 @@ scan = function(html_text, callback, opts, NodeClass)
     end
     setmetatable(node, BufferHTMLNode.__base)
     tag_stack:push(node)
+    last_opened = node
     if void_tags_set[node.tag] or node.self_closing then
       node.end_pos = node.inner_pos
       node.end_inner_pos = node.inner_pos
@@ -519,16 +520,12 @@ scan = function(html_text, callback, opts, NodeClass)
     cdata_node = cdata_guard * Cmt(Cp() * C(cdata) * Cc("cdata"), push_text_node)
   end
   local raw_text_closer = P("</") * Cmt(C(alphanum ^ 1), function(_, pos, tag)
-    do
-      local top = tag_stack[#tag_stack]
-      if top then
-        return top.tag:lower() == tag:lower()
-      else
-        return error("somehow have empty tag stack when checking for closing raw text")
-      end
-    end
+    return tag_stack[#tag_stack].tag == tag:lower()
   end)
-  local raw_text_tag = #begin_raw_text_tag * check_open_tag * (P(1) - raw_text_closer) ^ 0 * (check_close_tag + P(-1))
+  local raw_text_open = Cmt(P(0), function()
+    return tag_stack[#tag_stack] == last_opened
+  end)
+  local raw_text_tag = #begin_raw_text_tag * check_open_tag * (raw_text_open * (P(1) - raw_text_closer) ^ 0 * (check_close_tag + P(-1))) ^ -1
   local html = (html_comment + cdata_node + raw_text_tag + check_open_tag + check_close_tag + text_node) ^ 0 * -1 * Cmt(Cp(), check_dangling_tags)
   local res, err = html:match(html_text)
   return res
