@@ -9,10 +9,10 @@ local R, S, V, P
 R, S, V, P = lpeg.R, lpeg.S, lpeg.V, lpeg.P
 local C, Cs, Ct, Cmt, Cg, Cb, Cc, Cp
 C, Cs, Ct, Cmt, Cg, Cb, Cc, Cp = lpeg.C, lpeg.Cs, lpeg.Ct, lpeg.Cmt, lpeg.Cg, lpeg.Cb, lpeg.Cc, lpeg.Cp
-local attribute_name, escape_html_text, escaped_html_char, escape_attribute_text
+local attribute_name, escape_html_text, escaped_html_char, escape_attribute_text, close_follows
 do
   local _obj_0 = require("web_sanitize.patterns")
-  attribute_name, escape_html_text, escaped_html_char, escape_attribute_text = _obj_0.attribute_name, _obj_0.escape_html_text, _obj_0.escaped_html_char, _obj_0.escape_attribute_text
+  attribute_name, escape_html_text, escaped_html_char, escape_attribute_text, close_follows = _obj_0.attribute_name, _obj_0.escape_html_text, _obj_0.escaped_html_char, _obj_0.escape_attribute_text, _obj_0.close_follows
 end
 local alphanum = R("az", "AZ", "09")
 local num = R("09")
@@ -229,8 +229,9 @@ Sanitizer = function(opts)
     open_tag = open_tag + open_tag_ignored
     close_tag = close_tag + close_tag_ignored
   end
+  local comment_guard, reset_comment_guard = close_follows("<!--", "-->")
   if opts and opts.strip_comments then
-    open_tag = comment + open_tag
+    open_tag = comment_guard * comment + open_tag
   end
   local html_chunk = open_tag + close_tag + html_entity + escaped_html_char + text
   local html_short = Ct(html_chunk ^ 0) * -1
@@ -245,6 +246,7 @@ Sanitizer = function(opts)
     tag_stack = { }
     open_counts = { }
     attribute_stack = { }
+    reset_comment_guard()
     local html
     if #str > 10000 then
       html = html_long
@@ -278,13 +280,15 @@ local Extractor
 Extractor = function(opts)
   local escape_html = opts and opts.escape_html
   local printable = opts and opts.printable
+  local comment_guard, reset_comment_guard = close_follows("<!--", "-->")
+  local guarded_comment = comment_guard * comment
   local html_text
   if escape_html then
-    html_text = Cs((open_tag_ignored / " " + close_tag_ignored / " " + comment / "" + html_entity + escaped_html_char + 1) ^ 0 * -1)
+    html_text = Cs((open_tag_ignored / " " + close_tag_ignored / " " + guarded_comment / "" + html_entity + escaped_html_char + 1) ^ 0 * -1)
   else
     local decode_html_entity
     decode_html_entity = require("web_sanitize.patterns").decode_html_entity
-    html_text = Cs((open_tag_ignored / " " + close_tag_ignored / " " + comment / "" + decode_html_entity + 1) ^ 0 * -1)
+    html_text = Cs((open_tag_ignored / " " + close_tag_ignored / " " + guarded_comment / "" + decode_html_entity + 1) ^ 0 * -1)
   end
   local whitespace, strip_unprintable
   do
@@ -295,6 +299,7 @@ Extractor = function(opts)
   local flatten_whitespace = whitespace ^ 1 / " "
   local trim = whitespace ^ 0 * Cs((flatten_whitespace ^ -1 * nospace ^ 1) ^ 0)
   return function(str)
+    reset_comment_guard()
     local out = assert(html_text:match(str), "failed to parse html")
     if printable then
       out = assert(strip_unprintable(out))

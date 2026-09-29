@@ -1,6 +1,6 @@
 
 import void_tags, optional_tags  from require "web_sanitize.data"
-import open_tag, close_tag, html_comment, cdata, unescape_html_text, escape_html_text, begin_raw_text_tag, alphanum from require "web_sanitize.patterns"
+import open_tag, close_tag, html_comment, cdata, close_follows, unescape_html_text, escape_html_text, begin_raw_text_tag, alphanum from require "web_sanitize.patterns"
 
 import P, C, Cc, Cs, Cmt, Cp from require "lpeg"
 
@@ -313,11 +313,12 @@ scan_html = (html_text, callback, opts) ->
   check_close_tag = Cmt close_tag, pop_tag
 
   text_node = match_text
-  cdata_node = cdata
+  cdata_guard = close_follows "<![CDATA[", "]]>"
+  cdata_node = cdata_guard * cdata
 
   if opts and opts.text_nodes == true
     text_node = Cmt Cp! * C(match_text), push_text_node
-    cdata_node = Cmt Cp! * C(cdata) * Cc("cdata"), push_text_node
+    cdata_node = cdata_guard * Cmt Cp! * C(cdata) * Cc("cdata"), push_text_node
 
   -- a raw text tag takes text as is unless there is signal for closing tag (script, style, etc.)
   raw_text_closer = P"</" * Cmt C(alphanum^1), (_, pos, tag) ->

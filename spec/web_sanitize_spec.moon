@@ -692,6 +692,16 @@ describe "web_sanitize", ->
 
           assert.are.equal expected, output
 
+    it "extracts text around comments without a closing marker", ->
+      import Extractor from require "web_sanitize.html"
+      extract_text = Extractor { }
+
+      assert.are.equal "a c <!-- d", extract_text "a <!-- b --> c <!-- d"
+      assert.are.equal "a d", extract_text "a <!-- b <!-- c --> d"
+      assert.are.equal "x<!--", extract_text "<!---->x<!--"
+      -- the comment ends past where the previous input's comment did
+      assert.are.equal "abcdefgh z", extract_text "abcdefgh <!-- y --> z"
+
   describe "sanitize_html strip tags", ->
     local sanitize_html
 
@@ -713,6 +723,13 @@ describe "web_sanitize", ->
     for i, {input, output} in ipairs sanitize_tests_strip_comments
       it "#{i}: should sanitize and match", ->
         assert.are.equal output, sanitize_html input
+
+    it "escapes comments without a closing marker", ->
+      assert.are.equal "a  c &lt;!-- d", sanitize_html "a <!-- b --> c <!-- d"
+      assert.are.equal "a  d", sanitize_html "a <!-- b <!-- c --> d"
+      assert.are.equal "x&lt;!--", sanitize_html "<!---->x<!--"
+      -- the comment ends past where the previous input's comment did
+      assert.are.equal "abcdefgh  z", sanitize_html "abcdefgh <!-- y --> z"
 
   describe "whitelist", ->
     whitelist = require "web_sanitize.whitelist"

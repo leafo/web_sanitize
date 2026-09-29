@@ -6,7 +6,7 @@ lpeg = require "lpeg"
 import R, S, V, P from lpeg
 import C, Cs, Ct, Cmt, Cg, Cb, Cc, Cp from lpeg
 
-import attribute_name, escape_html_text, escaped_html_char, escape_attribute_text from require "web_sanitize.patterns"
+import attribute_name, escape_html_text, escaped_html_char, escape_attribute_text, close_follows from require "web_sanitize.patterns"
 
 alphanum = R "az", "AZ", "09"
 num = R "09"
@@ -191,8 +191,10 @@ Sanitizer = (opts) ->
     open_tag += open_tag_ignored
     close_tag += close_tag_ignored
 
+  comment_guard, reset_comment_guard = close_follows "<!--", "-->"
+
   if opts and opts.strip_comments
-    open_tag = comment + open_tag
+    open_tag = comment_guard * comment + open_tag
 
   html_chunk = open_tag + close_tag + html_entity + escaped_html_char + text
 
@@ -211,6 +213,7 @@ Sanitizer = (opts) ->
     tag_stack = {}
     open_counts = {}
     attribute_stack = {}
+    reset_comment_guard!
 
     -- we use the short pattern to avoid the minor performance penalty for text we
     -- know is short enough to not trigger the overflow error
@@ -242,11 +245,14 @@ Extractor = (opts) ->
   escape_html = opts and opts.escape_html
   printable = opts and opts.printable
 
+  comment_guard, reset_comment_guard = close_follows "<!--", "-->"
+  guarded_comment = comment_guard * comment
+
   html_text = if escape_html
-    Cs (open_tag_ignored / " " + close_tag_ignored / " " + comment / "" + html_entity + escaped_html_char + 1)^0 * -1
+    Cs (open_tag_ignored / " " + close_tag_ignored / " " + guarded_comment / "" + html_entity + escaped_html_char + 1)^0 * -1
   else
     import decode_html_entity from require "web_sanitize.patterns"
-    Cs (open_tag_ignored / " " + close_tag_ignored / " " + comment / "" + decode_html_entity + 1)^0 * -1
+    Cs (open_tag_ignored / " " + close_tag_ignored / " " + guarded_comment / "" + decode_html_entity + 1)^0 * -1
 
   import whitespace, strip_unprintable from require "web_sanitize.unicode"
 
@@ -255,6 +261,7 @@ Extractor = (opts) ->
   trim = whitespace^0 * Cs (flatten_whitespace^-1 * nospace^1)^0
 
   (str) ->
+    reset_comment_guard!
     out = assert html_text\match(str), "failed to parse html"
     if printable
       out = assert strip_unprintable out

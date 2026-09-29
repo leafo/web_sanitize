@@ -163,6 +163,19 @@ describe "web_sanitize.query.scan", ->
         "<DIV><b>x</div>"
       }, result
 
+    it "scans CDATA without a closing marker as text", ->
+      nodes = (html) ->
+        out = {}
+        scan_html html, ((stack) ->
+          node = stack\current!
+          table.insert out, "#{node.tag}=#{node\outer_html!}"
+        ), text_nodes: true
+        out
+
+      assert.same {"cdata=<![CDATA[x]]>", "=<![CDATA[y"}, nodes "<![CDATA[x]]><![CDATA[y"
+      assert.same {"cdata=<![CDATA[]]>", "=z", "=<![CDATA["}, nodes "<![CDATA[]]>z<![CDATA["
+      assert.same {"cdata=<![CDATA[a<![CDATA[b]]>"}, nodes "<![CDATA[a<![CDATA[b]]>"
+
     it "scans deep stack followed by unmatched closing tags", ->
       html = string.rep("<div>", 2000) .. string.rep("</span>", 2000)
       visited = 0

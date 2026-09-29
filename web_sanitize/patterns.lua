@@ -1,7 +1,7 @@
-local P, R, S, C, Cp, Ct, Cg, Cc, Cs
+local P, R, S, C, Cp, Ct, Cg, Cc, Cs, Cmt
 do
   local _obj_0 = require("lpeg")
-  P, R, S, C, Cp, Ct, Cg, Cc, Cs = _obj_0.P, _obj_0.R, _obj_0.S, _obj_0.C, _obj_0.Cp, _obj_0.Ct, _obj_0.Cg, _obj_0.Cc, _obj_0.Cs
+  P, R, S, C, Cp, Ct, Cg, Cc, Cs, Cmt = _obj_0.P, _obj_0.R, _obj_0.S, _obj_0.C, _obj_0.Cp, _obj_0.Ct, _obj_0.Cg, _obj_0.Cc, _obj_0.Cs, _obj_0.Cmt
 end
 local alphanum = R("az", "AZ", "09")
 local num = R("09")
@@ -58,6 +58,24 @@ local open_tag = Ct(Cg(Cp(), "pos") * P("<") * white * Cg(word, "tag") * Cg(Ct((
 local close_tag = Cp() * P("<") * white * P("/") * white * C(word) * white * P(">")
 local html_comment = P("<!--") * -P(">") * -P("->") * (P(1) - P("<!--") - P("-->") - P("--!>")) ^ 0 * P("<!") ^ -1 * P("-->")
 local cdata = P("<![CDATA[") * (P(1) - P("]]>")) ^ 0 * P("]]>")
+local close_follows
+close_follows = function(open, close)
+  local last_close
+  local guard = #P(open) * Cmt(P(0), function(subject, pos)
+    if not (last_close) then
+      last_close = 0
+      local found = subject:find(close, 1, true)
+      while found do
+        last_close = found
+        found = subject:find(close, found + 1, true)
+      end
+    end
+    return last_close >= pos + #open
+  end)
+  return guard, function()
+    last_close = nil
+  end
+end
 local begin_raw_text_tag
 do
   local raw_text_tags
@@ -110,6 +128,7 @@ return {
   begin_raw_text_tag = begin_raw_text_tag,
   html_comment = html_comment,
   cdata = cdata,
+  close_follows = close_follows,
   attribute_name = attribute_name,
   decode_html_entity = decode_html_entity,
   unescape_html_text = unescape_html_text,

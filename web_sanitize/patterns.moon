@@ -1,5 +1,5 @@
 
-import P, R, S, C, Cp, Ct, Cg, Cc, Cs from require "lpeg"
+import P, R, S, C, Cp, Ct, Cg, Cc, Cs, Cmt from require "lpeg"
 
 alphanum = R "az", "AZ", "09"
 num = R "09"
@@ -83,6 +83,25 @@ html_comment = P"<!--" * -P">" * -P"->" * (P(1) - P"<!--" - P"-->" - P"--!>")^0 
 
 cdata = P"<![CDATA[" * (P(1) - P("]]>"))^0 * P"]]>"
 
+-- Guard for patterns that scan from an open literal to the first close
+-- literal, used for comments and CDATA. Without it every unterminated open
+-- rescans to the end of the input, which is quadratic. The last close position
+-- is cached, so call the returned reset function before matching a new input.
+close_follows = (open, close) ->
+  local last_close
+
+  guard = #P(open) * Cmt P(0), (subject, pos) ->
+    unless last_close
+      last_close = 0
+      found = subject\find close, 1, true
+      while found
+        last_close = found
+        found = subject\find close, found + 1, true
+
+    last_close >= pos + #open
+
+  guard, -> last_close = nil
+
 -- this can be used to detect if we're about to parse a "raw text" tag
 begin_raw_text_tag = do
   import raw_text_tags from require "web_sanitize.data"
@@ -139,6 +158,7 @@ unescape_html_text = Cs (decode_html_entity + P(1))^0
   :begin_raw_text_tag
   :html_comment
   :cdata
+  :close_follows
 
   :attribute_name
 

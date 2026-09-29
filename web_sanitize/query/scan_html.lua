@@ -3,10 +3,10 @@ do
   local _obj_0 = require("web_sanitize.data")
   void_tags, optional_tags = _obj_0.void_tags, _obj_0.optional_tags
 end
-local open_tag, close_tag, html_comment, cdata, unescape_html_text, escape_html_text, begin_raw_text_tag, alphanum
+local open_tag, close_tag, html_comment, cdata, close_follows, unescape_html_text, escape_html_text, begin_raw_text_tag, alphanum
 do
   local _obj_0 = require("web_sanitize.patterns")
-  open_tag, close_tag, html_comment, cdata, unescape_html_text, escape_html_text, begin_raw_text_tag, alphanum = _obj_0.open_tag, _obj_0.close_tag, _obj_0.html_comment, _obj_0.cdata, _obj_0.unescape_html_text, _obj_0.escape_html_text, _obj_0.begin_raw_text_tag, _obj_0.alphanum
+  open_tag, close_tag, html_comment, cdata, close_follows, unescape_html_text, escape_html_text, begin_raw_text_tag, alphanum = _obj_0.open_tag, _obj_0.close_tag, _obj_0.html_comment, _obj_0.cdata, _obj_0.close_follows, _obj_0.unescape_html_text, _obj_0.escape_html_text, _obj_0.begin_raw_text_tag, _obj_0.alphanum
 end
 local P, C, Cc, Cs, Cmt, Cp
 do
@@ -447,10 +447,11 @@ scan_html = function(html_text, callback, opts)
   local check_open_tag = Cmt(open_tag, push_tag)
   local check_close_tag = Cmt(close_tag, pop_tag)
   local text_node = match_text
-  local cdata_node = cdata
+  local cdata_guard = close_follows("<![CDATA[", "]]>")
+  local cdata_node = cdata_guard * cdata
   if opts and opts.text_nodes == true then
     text_node = Cmt(Cp() * C(match_text), push_text_node)
-    cdata_node = Cmt(Cp() * C(cdata) * Cc("cdata"), push_text_node)
+    cdata_node = cdata_guard * Cmt(Cp() * C(cdata) * Cc("cdata"), push_text_node)
   end
   local raw_text_closer = P("</") * Cmt(C(alphanum ^ 1), function(_, pos, tag)
     do
