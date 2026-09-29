@@ -399,8 +399,8 @@ You can get the content of the node by calling either `inner_html` or
 
 #### `replace_html(html_text, callback, opts)`
 
-Works the same as `scan_html`, except each node in the stack is capable of
-being mutated using the `replace_attributes`, `update_attributes`,
+Works the same as `scan_html`, except the callback can edit the current node,
+`stack:current()`, using the `replace_attributes`, `update_attributes`,
 `replace_inner_html`, `replace_outer_html` methods.
 
 Here's how you might convert all `a` tags that don't match a certain URL
@@ -442,6 +442,37 @@ local formatted_html = replace_html(my_html, function(stack)
 end, { text_nodes = true })
 
 print(formatted_html)
+```
+
+Rules for editing:
+
+* Only edit the current node. The other nodes on the stack are its ancestors,
+  and their closing tags haven't been parsed yet.
+* Make `replace_outer_html` the only edit to a node, since it replaces the
+  whole node.
+
+To change an ancestor based on something inside it, record it in a table keyed
+by the ancestor, then edit the ancestor in its own callback, which runs after
+all of its children. This replaces every `figure` that contains an `iframe`:
+
+```lua
+local has_embed = {} -- figures that contain an iframe
+
+local out = scanner.replace_html(my_html, function(stack)
+  local node = stack:current()
+
+  if stack:is("figure iframe") then
+    -- mark the closest figure, its own callback runs after this one
+    for i = #stack - 1, 1, -1 do
+      if stack[i].tag == "figure" then
+        has_embed[stack[i]] = true
+        break
+      end
+    end
+  elseif stack:is("figure") and has_embed[node] then
+    node:replace_outer_html("<p>Embed removed</p>")
+  end
+end)
 ```
 
 ## Fast?
@@ -489,18 +520,6 @@ about 300KB. With untrusted input, avoid these:
   element of a 288KB document nested 32,000 levels deep copied 4.6GB. Only read
   them for the nodes you need. Text nodes never overlap, so reading every text
   node copies the document at most once.
-
-* **Editing a node from another node's callback, or after replacing it.**
-  Make each node's edits in its own callback:
-  * Replacing the inner or outer HTML of an ancestor from a descendant's
-    callback raises an "element is still open" error, because the end of the
-    ancestor hasn't been parsed yet. Changing an ancestor's attributes works.
-  * Changing a node after replacing its outer HTML, such as calling
-    `replace_attributes` after `replace_outer_html`, writes the change over the
-    replacement and corrupts the output. It also makes `replace_html` apply
-    every edit with a fallback that copies the whole document once per edit.
-    Make the outer HTML replacement the node's only edit, since it discards
-    the node's other edits anyway.
 
 ## Tests
 
