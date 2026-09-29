@@ -23,6 +23,12 @@ do
   end
   void_tags_set = _tbl_0
 end
+local assert_editable
+assert_editable = function(node, method)
+  if node._tags_replaced then
+    return error(tostring(method) .. ": can't edit a node after replace_outer_html or unwrap")
+  end
+end
 local NodeStack
 do
   local _class_0
@@ -147,6 +153,7 @@ do
       return unescape_html_text:match(text) or text
     end,
     update_attributes = function(self, attrs)
+      assert_editable(self, "update_attributes")
       if self.attr then
         local provided_attributes = { }
         for k, v in pairs(attrs) do
@@ -184,6 +191,7 @@ do
       end
     end,
     replace_attributes = function(self, attrs)
+      assert_editable(self, "replace_attributes")
       if not (self.changes) then
         error("attempting to change buffer with no changes array")
       end
@@ -242,6 +250,7 @@ do
       })
     end,
     replace_inner_html = function(self, replacement)
+      assert_editable(self, "replace_inner_html")
       if not (self.changes) then
         error("attempting to change buffer with no changes array")
       end
@@ -261,10 +270,35 @@ do
       if not (self.end_pos) then
         error("replace_outer_html: element is still open, replace its HTML from its own callback")
       end
+      assert_editable(self, "replace_outer_html")
+      self._tags_replaced = true
       return table.insert(self.changes, {
         self.pos,
         self.end_pos,
         replacement
+      })
+    end,
+    unwrap = function(self)
+      if not (self.changes) then
+        error("attempting to change buffer with no changes array")
+      end
+      if self.type == "text_node" then
+        error("unwrap: text nodes have no tags")
+      end
+      if not (self.end_pos) then
+        error("unwrap: element is still open, unwrap it from its own callback")
+      end
+      assert_editable(self, "unwrap")
+      self._tags_replaced = true
+      table.insert(self.changes, {
+        self.pos,
+        self.inner_pos,
+        ""
+      })
+      return table.insert(self.changes, {
+        self.end_inner_pos,
+        self.end_pos,
+        ""
       })
     end
   }

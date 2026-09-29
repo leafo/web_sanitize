@@ -323,6 +323,7 @@ The scanner exposes two primitive object types: `NodeStack` and `HTMLNode`
 * `node:inner_html()` - get HTML fragment as string of the content of the tag, excludes opening and closing tag
 * `node:inner_text()` - get a string of the textual content inside the tag (effectively `extract_text(inner_html)`, using `extract_text` function described above)
 * `node:replace_outer_html(html_text)` **(`replace_html` only)** - Replaces the entire tag with HTML fragment `html_text`
+* `node:unwrap()` **(`replace_html` only)** - Removes the opening and closing tags, keeping the content along with any edits made to the children
 * `node:replace_inner_html(html_text)` **(`replace_html` only)** - Replaces the inside of the tag with HTML fragment `html_text`
 * `node:replace_attributes(tbl)` **(`replace_html` only)** - Replaces all attributes on the tag with the table of attributes
 * `node:update_attributes(tbl)` **(`replace_html` only)** - Merges a table of attributes with the current attributes, overwriting any of the existing ones (including duplicates) with the ones provided
@@ -401,10 +402,10 @@ You can get the content of the node by calling either `inner_html` or
 
 Works the same as `scan_html`, except the callback can edit the current node,
 `stack:current()`, using the `replace_attributes`, `update_attributes`,
-`replace_inner_html`, `replace_outer_html` methods.
+`replace_inner_html`, `replace_outer_html` and `unwrap` methods.
 
-Here's how you might convert all `a` tags that don't match a certain URL
-pattern to plain text:
+Here's how you might remove all `a` tags that don't match a certain URL
+pattern, keeping the link text:
 
 ```lua
 scanner.replace_html(my_html, function(stack)
@@ -413,7 +414,7 @@ scanner.replace_html(my_html, function(stack)
     local url = node.attr.href or ""
 
     if not url:match("^https?://leafo%.net") then
-      node:replace_outer_html(node:inner_html())
+      node:unwrap()
     end
   end
 end)
@@ -448,8 +449,8 @@ Rules for editing:
 
 * Only edit the current node. The other nodes on the stack are its ancestors,
   and their closing tags haven't been parsed yet.
-* Make `replace_outer_html` the only edit to a node, since it replaces the
-  whole node.
+* Make `replace_outer_html` or `unwrap` the only edit to a node, since they
+  replace or remove the node's own tags.
 
 To change an ancestor based on something inside it, record it in a table keyed
 by the ancestor, then edit the ancestor in its own callback, which runs after

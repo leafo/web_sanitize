@@ -1,5 +1,5 @@
 
-import void_tags, optional_tags  from require "web_sanitize.data"
+import void_tags, optional_tags from require "web_sanitize.data"
 import open_tag, close_tag, html_comment, cdata, close_follows, unescape_html_text, escape_html_text, begin_raw_text_tag, alphanum from require "web_sanitize.patterns"
 
 import P, C, Cc, Cs, Cmt, Cp from require "lpeg"
@@ -7,6 +7,12 @@ import P, C, Cc, Cs, Cmt, Cp from require "lpeg"
 match_text = P"<"^-1 * P(1 - P"<")^1
 
 void_tags_set = {t, true for t in *void_tags}
+
+-- edits made after replace_outer_html or unwrap would land inside text that
+-- was already replaced
+assert_editable = (node, method) ->
+  if node._tags_replaced
+    error "#{method}: can't edit a node after replace_outer_html or unwrap"
 
 class NodeStack
   new: =>
@@ -87,6 +93,7 @@ class HTMLNode
 
   -- merge new attributes with existing ones
   update_attributes: (attrs) =>
+    assert_editable @, "update_attributes"
     if @attr
       provided_attributes = {}
 
@@ -114,6 +121,7 @@ class HTMLNode
       @replace_attributes attrs
 
   replace_attributes: (attrs) =>
+    assert_editable @, "replace_attributes"
     unless @changes
       error "attempting to change buffer with no changes array"
 
@@ -152,6 +160,7 @@ class HTMLNode
     table.insert @changes, {@pos, @inner_pos or @end_pos, table.concat buff}
 
   replace_inner_html: (replacement) =>
+    assert_editable @, "replace_inner_html"
     unless @changes
       error "attempting to change buffer with no changes array"
 
@@ -167,7 +176,28 @@ class HTMLNode
     unless @end_pos
       error "replace_outer_html: element is still open, replace its HTML from its own callback"
 
+    assert_editable @, "replace_outer_html"
+    @_tags_replaced = true
     table.insert @changes, {@pos, @end_pos, replacement}
+
+  -- Removes the opening and closing tags as separate edits, so edits made to
+  -- the children in their own callbacks are kept
+  unwrap: =>
+    unless @changes
+      error "attempting to change buffer with no changes array"
+
+    if @type == "text_node"
+      error "unwrap: text nodes have no tags"
+
+    unless @end_pos
+      error "unwrap: element is still open, unwrap it from its own callback"
+
+    assert_editable @, "unwrap"
+    @_tags_replaced = true
+
+    -- the closing tag range is empty when the source has none
+    table.insert @changes, {@pos, @inner_pos, ""}
+    table.insert @changes, {@end_inner_pos, @end_pos, ""}
 
 -- can we auto close the parent when visiting current
 can_auto_close = (tag_stack, stack_pos, current) ->

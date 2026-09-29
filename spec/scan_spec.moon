@@ -903,6 +903,85 @@ describe "web_sanitize.query.scan", ->
           "#{method}: element is still open, replace its HTML from its own callback"
         )
 
+    it "unwraps an element, keeping edits to its children", ->
+      out = replace_html [[<p>hi <font color="red">see <img src="a.png"> and <span class="q">quote</span></font></p>]], (stack) ->
+        node = stack\current!
+        if stack\is "span.q"
+          node\replace_attributes { class: "c" }
+
+        if stack\is "img"
+          node\replace_outer_html "[Image #{node.attr.src}]"
+
+        if stack\is "font"
+          node\unwrap!
+
+      assert.same [[<p>hi see [Image a.png] and <span class="c">quote</span></p>]], out
+
+    it "unwraps elements without a closing tag", ->
+      unwrap = (html, query) ->
+        replace_html html, (stack) ->
+          stack\current!\unwrap! if stack\is query
+
+      assert.same "abc", unwrap "a<br>b<img src=x />c", "br, img"
+      assert.same "onetwo", unwrap "<p>one<p>two", "p"
+      assert.same "ab", unwrap "<div>a<b>b", "div, b"
+      assert.same "<div>x</div>y", unwrap "<div><b>x</div>y", "b"
+      assert.same "xy", unwrap "<div><div>x</div>y</div>", "div"
+      assert.same "x", unwrap "<DIV class=a>x</div >", "div"
+
+    it "raises an error when unwrapping a text node or an open ancestor", ->
+      assert.has_error(
+        -> replace_html "hi", ((stack) -> stack\current!\unwrap!), text_nodes: true
+        "unwrap: text nodes have no tags"
+      )
+
+      assert.has_error(
+        ->
+          replace_html "<div><b>x</b></div>", (stack) ->
+            stack[1]\unwrap! if #stack > 1
+        "unwrap: element is still open, unwrap it from its own callback"
+      )
+
+    it "raises an error when editing a node after replace_outer_html or unwrap", ->
+      edits = {
+        replace_attributes: (node) -> node\replace_attributes { class: "z" }
+        update_attributes: (node) -> node\update_attributes { class: "z" }
+        replace_inner_html: (node) -> node\replace_inner_html "y"
+        replace_outer_html: (node) -> node\replace_outer_html "Z"
+        unwrap: (node) -> node\unwrap!
+      }
+
+      for first in *{"replace_outer_html", "unwrap"}
+        for method, edit in pairs edits
+          assert.has_error(
+            ->
+              replace_html "<b>x</b>rest", (stack) ->
+                node = stack\current!
+                edits[first] node
+                edit node
+            "#{method}: can't edit a node after replace_outer_html or unwrap"
+          )
+
+    it "allows edits before replace_outer_html or unwrap", ->
+      assert.same "xrest", replace_html "<b>x</b>rest", (stack) ->
+        node = stack\current!
+        node\update_attributes { class: "z" }
+        node\unwrap!
+
+      assert.same "yrest", replace_html "<b>x</b>rest", (stack) ->
+        node = stack\current!
+        node\replace_inner_html "y"
+        node\unwrap!
+
+      assert.same "Zrest", replace_html "<b>x</b>rest", (stack) ->
+        node = stack\current!
+        node\replace_attributes {}
+        node\replace_outer_html "Z"
+
+    it "unwraps a self closing element", ->
+      assert.same "ab", replace_html "a<div />b", (stack) ->
+        stack\current!\unwrap!
+
     it "replaces parent attributes after child content", ->
       out = replace_html '<a href="x"><b>hi</b></a> <a><b>there</b></a>', (stack) ->
         node = stack\current!
@@ -932,18 +1011,6 @@ describe "web_sanitize.query.scan", ->
             node\replace_outer_html "[#{node\outer_html!}]"
 
       assert.same "[<div><span>a</span><span>b</span></div>]<p>c</p>", out
-
-    it "keeps insertion when deletion collapses parent content", ->
-      out = replace_html "<div>a<b>x</b></div>", (stack) ->
-        node = stack\current!
-        switch node.tag
-          when "b"
-            node\replace_outer_html ""
-            node\replace_outer_html "new"
-          when "div"
-            node\replace_inner_html "parent"
-
-      assert.same "<div>parentnew</div>", out
 
     it "replaces content next to deleted tags", ->
       out = replace_html "<img><b>x</b><img><i></i><img>", (stack) ->
