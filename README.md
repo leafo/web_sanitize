@@ -493,9 +493,8 @@ about 300KB. With untrusted input, avoid these:
 * **Editing a node from another node's callback, or after replacing it.**
   Make each node's edits in its own callback:
   * Replacing the inner or outer HTML of an ancestor from a descendant's
-    callback raises an error (`attempt to compare nil with number`), because
-    the end of the ancestor hasn't been parsed yet. Changing an ancestor's
-    attributes works.
+    callback raises an "element is still open" error, because the end of the
+    ancestor hasn't been parsed yet. Changing an ancestor's attributes works.
   * Changing a node after replacing its outer HTML, such as calling
     `replace_attributes` after `replace_outer_html`, writes the change over the
     replacement and corrupts the output. It also makes `replace_html` apply

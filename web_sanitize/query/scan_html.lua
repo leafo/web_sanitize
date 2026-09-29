@@ -245,6 +245,9 @@ do
       if not (self.changes) then
         error("attempting to change buffer with no changes array")
       end
+      if not (self.end_inner_pos) then
+        error("replace_inner_html: element is still open, replace its HTML from its own callback")
+      end
       return table.insert(self.changes, {
         self.inner_pos,
         self.end_inner_pos,
@@ -254,6 +257,9 @@ do
     replace_outer_html = function(self, replacement)
       if not (self.changes) then
         error("attempting to change buffer with no changes array")
+      end
+      if not (self.end_pos) then
+        error("replace_outer_html: element is still open, replace its HTML from its own callback")
       end
       return table.insert(self.changes, {
         self.pos,

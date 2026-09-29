@@ -155,11 +155,17 @@ class HTMLNode
     unless @changes
       error "attempting to change buffer with no changes array"
 
+    unless @end_inner_pos
+      error "replace_inner_html: element is still open, replace its HTML from its own callback"
+
     table.insert @changes, {@inner_pos, @end_inner_pos, replacement}
 
   replace_outer_html: (replacement) =>
     unless @changes
       error "attempting to change buffer with no changes array"
+
+    unless @end_pos
+      error "replace_outer_html: element is still open, replace its HTML from its own callback"
 
     table.insert @changes, {@pos, @end_pos, replacement}
 

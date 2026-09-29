@@ -893,6 +893,16 @@ describe "web_sanitize.query.scan", ->
 
       assert.same [[one <a href="http://leafo">http://leafo</a> and <a href='http://doop'>http://woop <span>http://oop</span></a>]], out
 
+    it "raises an error when replacing the html of an open ancestor", ->
+      for method in *{"replace_inner_html", "replace_outer_html"}
+        assert.has_error(
+          ->
+            replace_html "<div><b>x</b></div>", (stack) ->
+              if #stack > 1
+                stack[1][method] stack[1], "y"
+          "#{method}: element is still open, replace its HTML from its own callback"
+        )
+
     it "replaces parent attributes after child content", ->
       out = replace_html '<a href="x"><b>hi</b></a> <a><b>there</b></a>', (stack) ->
         node = stack\current!
