@@ -91,6 +91,9 @@ class HTMLNode
     text = extract_text @inner_html!
     unescape_html_text\match(text) or text
 
+-- nodes passed to replace_html callbacks, which record edits into the changes
+-- table of the subclass replace_html creates
+class EditableHTMLNode extends HTMLNode
   -- merge new attributes with existing ones
   update_attributes: (attrs) =>
     assert_editable @, "update_attributes"
@@ -122,9 +125,6 @@ class HTMLNode
 
   replace_attributes: (attrs) =>
     assert_editable @, "replace_attributes"
-    unless @changes
-      error "attempting to change buffer with no changes array"
-
     assert @type != "text_node", "replace_attributes: text nodes have no attributes"
 
     buff = {"<", @tag}
@@ -161,18 +161,12 @@ class HTMLNode
 
   replace_inner_html: (replacement) =>
     assert_editable @, "replace_inner_html"
-    unless @changes
-      error "attempting to change buffer with no changes array"
-
     unless @end_inner_pos
       error "replace_inner_html: element is still open, replace its HTML from its own callback"
 
     table.insert @changes, {@inner_pos, @end_inner_pos, replacement}
 
   replace_outer_html: (replacement) =>
-    unless @changes
-      error "attempting to change buffer with no changes array"
-
     unless @end_pos
       error "replace_outer_html: element is still open, replace its HTML from its own callback"
 
@@ -183,9 +177,6 @@ class HTMLNode
   -- Removes the opening and closing tags as separate edits, so edits made to
   -- the children in their own callbacks are kept
   unwrap: =>
-    unless @changes
-      error "attempting to change buffer with no changes array"
-
     if @type == "text_node"
       error "unwrap: text nodes have no tags"
 
@@ -219,12 +210,10 @@ can_auto_close = (tag_stack, stack_pos, current) ->
     -- autoclosing, meaning we can also close parent
     can_auto_close tag_stack, stack_pos - 1, current
 
-scan_html = (html_text, callback, opts) ->
+scan = (html_text, callback, opts, NodeClass) ->
   assert callback, "missing callback to scan_html"
-  changes = {}
 
-  class BufferHTMLNode extends HTMLNode
-    changes: changes
+  class BufferHTMLNode extends NodeClass
     buffer: html_text
 
   root_node = {}
@@ -456,15 +445,16 @@ apply_changes_linked = (buffer, changes) ->
 
   table.concat buff
 
-replace_html = (html_text, _callback, opts) ->
+scan_html = (html_text, callback, opts) ->
+  scan html_text, callback, opts, HTMLNode
+
+replace_html = (html_text, callback, opts) ->
   changes = {}
 
-  callback = (tags, ...) ->
-    current = tags[#tags]
-    current.__class.__base.changes = changes
-    _callback tags, ...
+  class ChangesHTMLNode extends EditableHTMLNode
+    changes: changes
 
-  scan_html html_text, callback, opts
+  scan html_text, callback, opts, ChangesHTMLNode
 
   apply_changes_linked(html_text, changes) or apply_changes_sequential html_text, changes
 

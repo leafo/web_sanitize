@@ -125,6 +125,12 @@ describe "web_sanitize.query.scan", ->
         "<a><b><c><d>Hello</a>"
       }, result
 
+    it "doesn't provide edit methods", ->
+      scan_html "<b>x</b>", (stack) ->
+        node = stack\current!
+        for method in *{"replace_attributes", "update_attributes", "replace_inner_html", "replace_outer_html", "unwrap"}
+          assert.is_nil node[method], method
+
     it "treats closing tags that aren't open as text", ->
       result = {}
 

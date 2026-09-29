@@ -151,7 +151,29 @@ do
       extract_text = require("web_sanitize").extract_text
       local text = extract_text(self:inner_html())
       return unescape_html_text:match(text) or text
-    end,
+    end
+  }
+  _base_0.__index = _base_0
+  _class_0 = setmetatable({
+    __init = function() end,
+    __base = _base_0,
+    __name = "HTMLNode"
+  }, {
+    __index = _base_0,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  HTMLNode = _class_0
+end
+local EditableHTMLNode
+do
+  local _class_0
+  local _parent_0 = HTMLNode
+  local _base_0 = {
     update_attributes = function(self, attrs)
       assert_editable(self, "update_attributes")
       if self.attr then
@@ -192,9 +214,6 @@ do
     end,
     replace_attributes = function(self, attrs)
       assert_editable(self, "replace_attributes")
-      if not (self.changes) then
-        error("attempting to change buffer with no changes array")
-      end
       assert(self.type ~= "text_node", "replace_attributes: text nodes have no attributes")
       local buff = {
         "<",
@@ -251,9 +270,6 @@ do
     end,
     replace_inner_html = function(self, replacement)
       assert_editable(self, "replace_inner_html")
-      if not (self.changes) then
-        error("attempting to change buffer with no changes array")
-      end
       if not (self.end_inner_pos) then
         error("replace_inner_html: element is still open, replace its HTML from its own callback")
       end
@@ -264,9 +280,6 @@ do
       })
     end,
     replace_outer_html = function(self, replacement)
-      if not (self.changes) then
-        error("attempting to change buffer with no changes array")
-      end
       if not (self.end_pos) then
         error("replace_outer_html: element is still open, replace its HTML from its own callback")
       end
@@ -279,9 +292,6 @@ do
       })
     end,
     unwrap = function(self)
-      if not (self.changes) then
-        error("attempting to change buffer with no changes array")
-      end
       if self.type == "text_node" then
         error("unwrap: text nodes have no tags")
       end
@@ -303,12 +313,26 @@ do
     end
   }
   _base_0.__index = _base_0
+  setmetatable(_base_0, _parent_0.__base)
   _class_0 = setmetatable({
-    __init = function() end,
+    __init = function(self, ...)
+      return _class_0.__parent.__init(self, ...)
+    end,
     __base = _base_0,
-    __name = "HTMLNode"
+    __name = "EditableHTMLNode",
+    __parent = _parent_0
   }, {
-    __index = _base_0,
+    __index = function(cls, name)
+      local val = rawget(_base_0, name)
+      if val == nil then
+        local parent = rawget(cls, "__parent")
+        if parent then
+          return parent[name]
+        end
+      else
+        return val
+      end
+    end,
     __call = function(cls, ...)
       local _self_0 = setmetatable({}, _base_0)
       cls.__init(_self_0, ...)
@@ -316,7 +340,10 @@ do
     end
   })
   _base_0.__class = _class_0
-  HTMLNode = _class_0
+  if _parent_0.__inherited then
+    _parent_0.__inherited(_parent_0, _class_0)
+  end
+  EditableHTMLNode = _class_0
 end
 local can_auto_close
 can_auto_close = function(tag_stack, stack_pos, current)
@@ -343,16 +370,14 @@ can_auto_close = function(tag_stack, stack_pos, current)
     end
   end
 end
-local scan_html
-scan_html = function(html_text, callback, opts)
+local scan
+scan = function(html_text, callback, opts, NodeClass)
   assert(callback, "missing callback to scan_html")
-  local changes = { }
   local BufferHTMLNode
   do
     local _class_0
-    local _parent_0 = HTMLNode
+    local _parent_0 = NodeClass
     local _base_0 = {
-      changes = changes,
       buffer = html_text
     }
     _base_0.__index = _base_0
@@ -646,16 +671,54 @@ apply_changes_linked = function(buffer, changes)
   end
   return table.concat(buff)
 end
+local scan_html
+scan_html = function(html_text, callback, opts)
+  return scan(html_text, callback, opts, HTMLNode)
+end
 local replace_html
-replace_html = function(html_text, _callback, opts)
+replace_html = function(html_text, callback, opts)
   local changes = { }
-  local callback
-  callback = function(tags, ...)
-    local current = tags[#tags]
-    current.__class.__base.changes = changes
-    return _callback(tags, ...)
+  local ChangesHTMLNode
+  do
+    local _class_0
+    local _parent_0 = EditableHTMLNode
+    local _base_0 = {
+      changes = changes
+    }
+    _base_0.__index = _base_0
+    setmetatable(_base_0, _parent_0.__base)
+    _class_0 = setmetatable({
+      __init = function(self, ...)
+        return _class_0.__parent.__init(self, ...)
+      end,
+      __base = _base_0,
+      __name = "ChangesHTMLNode",
+      __parent = _parent_0
+    }, {
+      __index = function(cls, name)
+        local val = rawget(_base_0, name)
+        if val == nil then
+          local parent = rawget(cls, "__parent")
+          if parent then
+            return parent[name]
+          end
+        else
+          return val
+        end
+      end,
+      __call = function(cls, ...)
+        local _self_0 = setmetatable({}, _base_0)
+        cls.__init(_self_0, ...)
+        return _self_0
+      end
+    })
+    _base_0.__class = _class_0
+    if _parent_0.__inherited then
+      _parent_0.__inherited(_parent_0, _class_0)
+    end
+    ChangesHTMLNode = _class_0
   end
-  scan_html(html_text, callback, opts)
+  scan(html_text, callback, opts, ChangesHTMLNode)
   return apply_changes_linked(html_text, changes) or apply_changes_sequential(html_text, changes)
 end
 return {
