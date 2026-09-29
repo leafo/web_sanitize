@@ -1031,6 +1031,42 @@ describe "web_sanitize.query.scan", ->
       assert.same " b <", remove_images '<img src="x"> b <'
       assert.same "<div>1 << 2</div>", remove_images '<img src="x"><div>1 << 2</div>'
 
+    it "applies edits around empty elements without a closing tag", ->
+      edit = (html, fn) -> replace_html html, (stack) -> fn stack\current!
+
+      -- the parent's closing tag is where the child's content is
+      assert.same "<b>X", edit "<div><b></div>", (node) ->
+        if node.tag == "b" then node\replace_inner_html "X" else node\unwrap!
+
+      assert.same "<div>Y</div>", edit "<div><b></div>", (node) ->
+        node\replace_inner_html node.tag == "b" and "X" or "Y"
+
+      assert.same '<div><b a="1">X</div>', edit "<div><b></div>", (node) ->
+        if node.tag == "b"
+          node\replace_inner_html "X"
+          node\replace_attributes { a: "1" }
+
+      -- the next li starts where the first li's content is
+      assert.same '<ul><li>X<li a="1">y</ul>', edit "<ul><li><li>y</ul>", (node) ->
+        if node.tag == "li"
+          if node.num == 1
+            node\replace_inner_html "X"
+          else
+            node\replace_attributes { a: "1" }
+
+      assert.same "<ul><li>X<li>Z</li></ul>", edit "<ul><li><li>y</ul>", (node) ->
+        if node.tag == "li"
+          if node.num == 1
+            node\replace_inner_html "X"
+          else
+            node\replace_outer_html "<li>Z</li>"
+
+    it "replaces the content of an empty element twice", ->
+      assert.same "<b>y</b>", replace_html "<b></b>", (stack) ->
+        node = stack\current!
+        node\replace_inner_html "x"
+        node\replace_inner_html "y"
+
     it "unwraps an element, keeping edits to its children", ->
       out = replace_html [[<p>hi <font color="red">see <img src="a.png"> and <span class="q">quote</span></font></p>]], (stack) ->
         node = stack\current!
@@ -1249,12 +1285,23 @@ describe "web_sanitize.query.scan", ->
         {1, 13, '<a rel="n">'}
       }
 
-    it "keeps insertion when deletion collapses a range", ->
-      assert.same "<div>parentnew</div>", _apply_changes "<div>a<b>x</b></div>", {
+    it "replaces earlier edits that a later edit covers", ->
+      assert.same "<div>parent</div>", _apply_changes "<div>a<b>x</b></div>", {
         {7, 15, ""}
         {7, 15, "new"}
         {6, 15, "parent"}
       }
+
+    it "covers an insertion at the end of a content edit, not a tag edit", ->
+      -- "<div><b></div>": b's empty content and div's closing tag are both at 9
+      html = "<div><b></div>"
+      assert.same "<div>Y</div>", _apply_changes html, { {9, 9, "X"}, {6, 9, "Y"} }
+      assert.same "<div><i>X</div>", _apply_changes html, { {9, 9, "X"}, {6, 9, "<i>", "tag"} }
+
+    it "doesn't cover an insertion at the start of an edit", ->
+      html = "<div><b></div>"
+      assert.same "<div><b>X</section>", _apply_changes html, { {9, 9, "X"}, {9, 15, "</section>"} }
+      assert.same "<div><b>X", _apply_changes html, { {9, 9, "X"}, {9, 15, "", "tag"} }
 
     it "returns nil for changes it can't apply", ->
       assert.same nil, (_apply_changes "abcdef", { {1, 6, "X"}, {3, 4, "Y"} })

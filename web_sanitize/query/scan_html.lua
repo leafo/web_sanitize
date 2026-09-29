@@ -265,7 +265,8 @@ do
       return table.insert(self.changes, {
         self.pos,
         self.inner_pos or self.end_pos,
-        table.concat(buff)
+        table.concat(buff),
+        "tag"
       })
     end,
     replace_inner_html = function(self, replacement)
@@ -303,12 +304,14 @@ do
       table.insert(self.changes, {
         self.pos,
         self.inner_pos,
-        ""
+        "",
+        "tag"
       })
       return table.insert(self.changes, {
         self.end_inner_pos,
         self.end_pos,
-        ""
+        "",
+        "tag"
       })
     end
   }
@@ -565,66 +568,56 @@ apply_changes = function(buffer, changes)
     sorted = _accum_0
   end
   table.sort(sorted)
-  local gaps = { }
+  local left_gaps, right_gaps = { }, { }
   local head = {
     text = buffer:sub(1, (sorted[1] or max_pos) - 1)
   }
   local tail = head
   for i, p in ipairs(sorted) do
-    local gap = { }
-    tail.next = gap
-    gaps[p] = gap
+    local left, right = { }, { }
+    tail.next = left
+    left.next = right
+    left_gaps[p], right_gaps[p] = left, right
     local text = {
       text = buffer:sub(p, (sorted[i + 1] or max_pos) - 1)
     }
-    gap.next = text
+    right.next = text
     tail = text
-  end
-  local find
-  find = function(gap)
-    while gap.merged do
-      gap.merged = gap.merged.merged or gap.merged
-      gap = gap.merged
-    end
-    return gap
   end
   for _index_0 = 1, #changes do
     local _continue_0 = false
     repeat
       local _des_0 = changes[_index_0]
-      local a, b, sub
-      a, b, sub = _des_0[1], _des_0[2], _des_0[3]
-      local left = find(gaps[a])
-      local right = find(gaps[b])
-      if left.removed or right.removed then
-        return nil
-      end
-      if left == right then
-        if sub == "" then
+      local a, b, sub, kind
+      a, b, sub, kind = _des_0[1], _des_0[2], _des_0[3], _des_0[4]
+      local left, right
+      if a == b then
+        if kind == "tag" then
           _continue_0 = true
           break
         end
+        left, right = left_gaps[a], right_gaps[a]
+      else
+        left = right_gaps[a]
+        right = kind == "tag" and left_gaps[b] or right_gaps[b]
+      end
+      if left.removed or right.removed then
+        return nil
+      end
+      local node = left.next
+      while node ~= right do
+        if not (node.text) then
+          node.removed = true
+        end
+        node = node.next
+      end
+      if sub == "" then
+        left.next = right
+      else
         left.next = {
           text = sub,
-          next = left.next
+          next = right
         }
-      else
-        local node = left.next
-        while node ~= right do
-          if not (node.text) then
-            node.removed = true
-          end
-          node = node.next
-        end
-        if sub == "" then
-          right.merged = left
-          left.next = right.next
-        else
-          left.next = {
-            text = sub,
-            next = right
-          }
-        end
       end
       _continue_0 = true
     until true

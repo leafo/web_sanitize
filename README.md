@@ -590,6 +590,7 @@ on undefined behavior will now raise errors.
 * Fix an error in `update_attributes` on elements with a valueless attribute like `disabled`, and in `replace_attributes` with a `{"name"}` tuple
 * Fix attributes from one call being passed to `add_attributes` functions in the next call when a `Sanitizer` is reused
 * Add `node:unwrap()` for removing an element's tags while keeping its content and the edits made to its children
+* Fix `replace_html` losing or wrongly keeping edits to an empty element whose closing tag is left out, like an `li` closed by the next `li`, and replacing an empty element's content twice keeping both replacements
 * Edit methods now only exist on nodes in `replace_html` callbacks. On `scan_html` nodes they silently did nothing
 * Editing a node after `replace_outer_html` or `unwrap` raises an error. Previously it corrupted the output
 * Replacing the HTML of an ancestor from a descendant's callback raises an "element is still open" error

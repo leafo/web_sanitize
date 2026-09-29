@@ -76,12 +76,26 @@ random_stack_selector = (stack) ->
 
   table.concat parts, " "
 
-tree_tags = {"div", "span", "b", "em", "section", "DIV"}
-tree_edits = {"unwrap", "attributes", "inner", "outer", "none"}
+tree_tags = {"div", "span", "b", "em", "section", "DIV", "li"}
+tree_edits = {
+  "unwrap", "attributes", "inner", "outer", "none"
+  "inner_attributes", "inner_twice", "inner_unwrap"
+}
 
--- A well formed tree where each element and text node has an edit to apply.
--- Adjacent text nodes are avoided since they would parse as one.
-random_tree = (depth=0, counter={n: 0}) ->
+all_closed = (n) ->
+  return true if n.text
+  return false unless n.close
+  for child in *n.children
+    return false unless all_closed child
+  true
+
+-- A tree where each element and text node has an edit to apply. Some elements
+-- leave out their closing tag where the scanner still builds the same tree: a
+-- last child is closed by its parent's closing tag or the end of the input,
+-- and an li by the li after it. A closing tag closes the nearest open element
+-- with its name, so an element sharing a name with an ancestor keeps its
+-- closing tag. Adjacent text nodes are avoided since they would parse as one.
+random_tree = (depth=0, counter={n: 0}, ancestors={}, parent_is_li=false) ->
   children = {}
   for i=1,math.random 0, (depth < 5 and 4 or 0)
     counter.n += 1
@@ -92,44 +106,67 @@ random_tree = (depth=0, counter={n: 0}) ->
         edit: math.random! < 0.3 and "replace" or "none"
       }
     else
+      tag = pick tree_tags
+      -- an li opening directly inside an li closes it
+      tag = "div" if parent_is_li and tag == "li"
+      name = tag\lower!
+      inner_ancestors = setmetatable { [name]: true }, __index: ancestors
       table.insert children, {
-        tag: pick tree_tags
+        :tag, :name
         id: "n#{counter.n}"
         edit: pick tree_edits
-        children: random_tree depth + 1, counter
+        close: true
+        children: random_tree depth + 1, counter, inner_ancestors, name == "li"
       }
 
+  for idx, n in ipairs children
+    continue if n.text
+    following = children[idx + 1]
+    if idx == #children
+      n.close = false if not ancestors[n.name] and math.random! < 0.3
+    elseif n.name == "li" and following.name == "li" and not parent_is_li
+      n.close = false if all_closed(n) and math.random! < 0.5
+
   children
+
+closing_tag = (n) -> n.close and "</#{n.tag}>" or ""
 
 render_tree = (tree) ->
   table.concat for n in *tree
     if n.text
       n.text
     else
-      "<#{n.tag} id=\"#{n.id}\">#{render_tree n.children}</#{n.tag}>"
+      "<#{n.tag} id=\"#{n.id}\">#{render_tree n.children}#{closing_tag n}"
 
--- The output replace_html should produce after applying each node's edit. An
+-- The output replace_html should produce after applying each node's edits. An
 -- inner or outer replacement discards the edits below it, unwrap and attribute
--- edits keep them.
+-- edits keep them. replace_attributes writes the lowercased tag name.
 render_tree_edited = (tree) ->
   table.concat for n in *tree
     if n.text
       n.edit == "replace" and "T#{n.text}" or n.text
     else
+      open = "<#{n.tag} id=\"#{n.id}\">"
+      new_open = "<#{n.name} data-new=\"#{n.id}\">"
       switch n.edit
         when "outer"
           "O#{n.id}"
         when "inner"
-          "<#{n.tag} id=\"#{n.id}\">I#{n.id}</#{n.tag}>"
+          "#{open}I#{n.id}#{closing_tag n}"
+        when "inner_twice"
+          "#{open}J#{n.id}#{closing_tag n}"
+        when "inner_attributes"
+          "#{new_open}I#{n.id}#{closing_tag n}"
+        when "inner_unwrap"
+          "I#{n.id}"
         when "unwrap"
           render_tree_edited n.children
         when "attributes"
-          -- replace_attributes writes the lowercased tag name
-          "<#{n.tag\lower!} data-new=\"#{n.id}\">#{render_tree_edited n.children}</#{n.tag}>"
+          "#{new_open}#{render_tree_edited n.children}#{closing_tag n}"
         else
-          "<#{n.tag} id=\"#{n.id}\">#{render_tree_edited n.children}</#{n.tag}>"
+          "#{open}#{render_tree_edited n.children}#{closing_tag n}"
 
--- Applies each node's edit from random_tree in a replace_html callback
+-- Applies each node's edits from random_tree in a replace_html callback
 tree_edit_callback = (tree) ->
   by_id, by_text = {}, {}
   index = (list) ->
@@ -159,6 +196,15 @@ tree_edit_callback = (tree) ->
         node\replace_inner_html "I#{n.id}"
       when "outer"
         node\replace_outer_html "O#{n.id}"
+      when "inner_twice"
+        node\replace_inner_html "I#{n.id}"
+        node\replace_inner_html "J#{n.id}"
+      when "inner_attributes"
+        node\replace_inner_html "I#{n.id}"
+        node\replace_attributes { "data-new": n.id }
+      when "inner_unwrap"
+        node\replace_inner_html "I#{n.id}"
+        node\unwrap!
 
 -- Random edits to the current node, following the rules for editing: any mix
 -- of attribute and inner HTML edits, optionally ending with replace_outer_html

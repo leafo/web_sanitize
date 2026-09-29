@@ -160,7 +160,7 @@ class EditableHTMLNode extends HTMLNode
     else
       buff[i] = ">"
 
-    table.insert @changes, {@pos, @inner_pos or @end_pos, table.concat buff}
+    table.insert @changes, {@pos, @inner_pos or @end_pos, table.concat(buff), "tag"}
 
   replace_inner_html: (replacement) =>
     assert_editable @, "replace_inner_html"
@@ -190,8 +190,8 @@ class EditableHTMLNode extends HTMLNode
     @_tags_replaced = true
 
     -- the closing tag range is empty when the source has none
-    table.insert @changes, {@pos, @inner_pos, ""}
-    table.insert @changes, {@end_inner_pos, @end_pos, ""}
+    table.insert @changes, {@pos, @inner_pos, "", "tag"}
+    table.insert @changes, {@end_inner_pos, @end_pos, "", "tag"}
 
 -- the optional tags that opening each tag closes, the reverse of optional_tags
 closes_optional = {}
@@ -380,8 +380,10 @@ scan = (html_text, callback, opts, NodeClass) ->
   res
 
 -- Applies the edits recorded by replace_html in order, where a later edit
--- covering earlier ones replaces them. Returns nil when an edit is inverted,
--- out of bounds, or has an endpoint inside text an earlier edit replaced
+-- covering earlier ones replaces them. Each change is {start, stop, text,
+-- kind}, where kind "tag" marks an edit to a tag rather than content. Returns
+-- nil when an edit is inverted, out of bounds, or has an endpoint inside text
+-- an earlier edit replaced
 apply_changes = (buffer, changes) ->
   max_pos = #buffer + 1
   positions = {}
@@ -393,45 +395,44 @@ apply_changes = (buffer, changes) ->
   sorted = [p for p in pairs positions]
   table.sort sorted
 
-  -- the list alternates gaps with non-empty text, so distinct gaps are
-  -- always at distinct offsets. Gaps are the nodes without text
-  gaps = {}
+  -- Each position has a gap on its left and right, and text inserted at the
+  -- position goes between them. An element with empty content inserts at the
+  -- same position where another element's tag can start or end, so which gap
+  -- an edit uses decides whether it covers the insertion. Gaps are the nodes
+  -- without text.
+  left_gaps, right_gaps = {}, {}
   head = { text: buffer\sub 1, (sorted[1] or max_pos) - 1 }
   tail = head
   for i, p in ipairs sorted
-    gap = {}
-    tail.next = gap
-    gaps[p] = gap
+    left, right = {}, {}
+    tail.next = left
+    left.next = right
+    left_gaps[p], right_gaps[p] = left, right
     text = { text: buffer\sub p, (sorted[i + 1] or max_pos) - 1 }
-    gap.next = text
+    right.next = text
     tail = text
 
-  find = (gap) ->
-    while gap.merged
-      gap.merged = gap.merged.merged or gap.merged
-      gap = gap.merged
-    gap
+  for {a, b, sub, kind} in *changes
+    local left, right
+    if a == b
+      -- the empty closing tag range of an element without one
+      continue if kind == "tag"
+      left, right = left_gaps[a], right_gaps[a]
+    else
+      -- an insertion at the start belongs to an element before this one. One
+      -- at the end belongs to an element inside it, which content edits cover
+      -- and tag edits don't.
+      left = right_gaps[a]
+      right = kind == "tag" and left_gaps[b] or right_gaps[b]
 
-  for {a, b, sub} in *changes
-    left = find gaps[a]
-    right = find gaps[b]
     return nil if left.removed or right.removed
 
-    if left == right
-      continue if sub == ""
-      left.next = { text: sub, next: left.next }
-    else
-      node = left.next
-      while node != right
-        node.removed = true unless node.text
-        node = node.next
+    node = left.next
+    while node != right
+      node.removed = true unless node.text
+      node = node.next
 
-      if sub == ""
-        -- both gaps are now the same place in the output
-        right.merged = left
-        left.next = right.next
-      else
-        left.next = { text: sub, next: right }
+    left.next = if sub == "" then right else { text: sub, next: right }
 
   buff = {}
   node = head
