@@ -533,44 +533,8 @@ scan = function(html_text, callback, opts, NodeClass)
   local res, err = html:match(html_text)
   return res
 end
-local apply_changes_sequential
-apply_changes_sequential = function(buffer, changes)
-  for i, _des_0 in ipairs(changes) do
-    local _continue_0 = false
-    repeat
-      local min, max, sub
-      min, max, sub = _des_0[1], _des_0[2], _des_0[3]
-      if min > max then
-        _continue_0 = true
-        break
-      end
-      buffer = buffer:sub(1, min - 1) .. sub .. buffer:sub(max)
-      if #sub == max - min then
-        _continue_0 = true
-        break
-      end
-      for k = i + 1, #changes do
-        local other_change = changes[k]
-        local delta = #sub - (max - min)
-        if min < other_change[1] then
-          local _update_0 = 1
-          other_change[_update_0] = other_change[_update_0] + delta
-        end
-        if min < other_change[2] then
-          local _update_0 = 2
-          other_change[_update_0] = other_change[_update_0] + delta
-        end
-      end
-      _continue_0 = true
-    until true
-    if not _continue_0 then
-      break
-    end
-  end
-  return buffer
-end
-local apply_changes_linked
-apply_changes_linked = function(buffer, changes)
+local apply_changes
+apply_changes = function(buffer, changes)
   local max_pos = #buffer + 1
   local positions = { }
   for _index_0 = 1, #changes do
@@ -719,10 +683,10 @@ replace_html = function(html_text, callback, opts)
     ChangesHTMLNode = _class_0
   end
   scan(html_text, callback, opts, ChangesHTMLNode)
-  return apply_changes_linked(html_text, changes) or apply_changes_sequential(html_text, changes)
+  return apply_changes(html_text, changes) or error("replace_html: an edit overlaps text replaced by an earlier edit, only edit the current node from its own callback")
 end
 return {
   scan_html = scan_html,
   replace_html = replace_html,
-  _apply_changes_linked = apply_changes_linked
+  _apply_changes = apply_changes
 }

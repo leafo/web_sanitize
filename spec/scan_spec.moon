@@ -968,6 +968,19 @@ describe "web_sanitize.query.scan", ->
             "#{method}: can't edit a node after replace_outer_html or unwrap"
           )
 
+    it "raises an error for an edit inside text an earlier edit replaced", ->
+      saved = nil
+      assert.has_error(
+        ->
+          replace_html "<div><b>x</b></div>", (stack) ->
+            node = stack\current!
+            saved = node if node.tag == "b"
+            if node.tag == "div"
+              node\replace_outer_html "<p>y</p>"
+              saved\replace_attributes { class: "z" }
+        "replace_html: an edit overlaps text replaced by an earlier edit, only edit the current node from its own callback"
+      )
+
     it "allows edits before replace_outer_html or unwrap", ->
       assert.same "xrest", replace_html "<b>x</b>rest", (stack) ->
         node = stack\current!
@@ -1087,34 +1100,32 @@ describe "web_sanitize.query.scan", ->
 
         assert.same [[<img alt="" src="http://leafo.net/hi.png" />]], out
 
-  describe "_apply_changes_linked", ->
-    import _apply_changes_linked from require "web_sanitize.query.scan_html"
+  describe "_apply_changes", ->
+    import _apply_changes from require "web_sanitize.query.scan_html"
 
-    -- replace_html falls back to the quadratic version when this returns nil,
-    -- so assert common arrangements of changes take the fast path
     it "applies disjoint deletions", ->
-      assert.same "tt", _apply_changes_linked "<img>t<img>t", {
+      assert.same "tt", _apply_changes "<img>t<img>t", {
         {1, 6, ""}
         {7, 12, ""}
       }
 
     it "applies parent attributes after child content", ->
-      assert.same '<a rel="n"><b>HI</b></a>', _apply_changes_linked '<a href="x"><b>hi</b></a>', {
+      assert.same '<a rel="n"><b>HI</b></a>', _apply_changes '<a href="x"><b>hi</b></a>', {
         {16, 18, "HI"}
         {1, 13, '<a rel="n">'}
       }
 
     it "keeps insertion when deletion collapses a range", ->
-      assert.same "<div>parentnew</div>", _apply_changes_linked "<div>a<b>x</b></div>", {
+      assert.same "<div>parentnew</div>", _apply_changes "<div>a<b>x</b></div>", {
         {7, 15, ""}
         {7, 15, "new"}
         {6, 15, "parent"}
       }
 
     it "returns nil for changes it can't apply", ->
-      assert.same nil, (_apply_changes_linked "abcdef", { {1, 6, "X"}, {3, 4, "Y"} })
-      assert.same nil, (_apply_changes_linked "abcdef", { {4, 2, "X"} })
-      assert.same nil, (_apply_changes_linked "abcdef", { {1, 9, "X"} })
+      assert.same nil, (_apply_changes "abcdef", { {1, 6, "X"}, {3, 4, "Y"} })
+      assert.same nil, (_apply_changes "abcdef", { {4, 2, "X"} })
+      assert.same nil, (_apply_changes "abcdef", { {1, 9, "X"} })
 
 
   describe "NodeStack", ->

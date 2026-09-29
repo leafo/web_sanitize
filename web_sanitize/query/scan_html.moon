@@ -359,35 +359,10 @@ scan = (html_text, callback, opts, NodeClass) ->
 
   res
 
--- Fallback for replace_html when apply_changes_linked gives up. Quadratic, but
--- its output is the reference behavior for overlapping changes
-apply_changes_sequential = (buffer, changes) ->
-  for i, {min, max, sub} in ipairs changes
-    continue if min > max
-    buffer = buffer\sub(1, min - 1) .. sub .. buffer\sub(max)
-
-    if #sub == max - min
-      continue
-
-    -- update all the other changes
-    for k=i+1,#changes
-      other_change = changes[k]
-      delta = #sub - (max - min)
-
-      if min < other_change[1]
-        other_change[1] += delta
-
-      if min < other_change[2]
-        other_change[2] += delta
-
-  buffer
-
--- Fast path for replace_html. Output must match apply_changes_sequential,
--- which works on buffer offsets: after a deletion moves two endpoints to the
--- same offset, they act as one position, so their gaps are merged here.
--- Returns nil for inverted or out of bounds changes, and for endpoints inside
--- an earlier replacement, where the sequential result depends on stale offsets
-apply_changes_linked = (buffer, changes) ->
+-- Applies the edits recorded by replace_html in order, where a later edit
+-- covering earlier ones replaces them. Returns nil when an edit is inverted,
+-- out of bounds, or has an endpoint inside text an earlier edit replaced
+apply_changes = (buffer, changes) ->
   max_pos = #buffer + 1
   positions = {}
   for {a, b} in *changes
@@ -432,6 +407,7 @@ apply_changes_linked = (buffer, changes) ->
         node = node.next
 
       if sub == ""
+        -- both gaps are now the same place in the output
         right.merged = left
         left.next = right.next
       else
@@ -456,6 +432,7 @@ replace_html = (html_text, callback, opts) ->
 
   scan html_text, callback, opts, ChangesHTMLNode
 
-  apply_changes_linked(html_text, changes) or apply_changes_sequential html_text, changes
+  apply_changes(html_text, changes) or
+    error "replace_html: an edit overlaps text replaced by an earlier edit, only edit the current node from its own callback"
 
-{ :scan_html, :replace_html, _apply_changes_linked: apply_changes_linked }
+{ :scan_html, :replace_html, _apply_changes: apply_changes }
