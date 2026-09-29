@@ -210,6 +210,7 @@ Sanitizer = (opts) ->
   (str) ->
     tag_stack = {}
     open_counts = {}
+    attribute_stack = {}
 
     -- we use the short pattern to avoid the minor performance penalty for text we
     -- know is short enough to not trigger the overflow error

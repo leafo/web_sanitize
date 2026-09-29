@@ -244,6 +244,7 @@ Sanitizer = function(opts)
   return function(str)
     tag_stack = { }
     open_counts = { }
+    attribute_stack = { }
     local html
     if #str > 10000 then
       html = html_long

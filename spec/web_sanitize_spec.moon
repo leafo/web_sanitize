@@ -883,6 +883,24 @@ describe "web_sanitize", ->
         }
       }, attributes
 
+    it "doesn't share extracted attributes between calls", =>
+      attributes = {}
+      whitelist.add_attributes.a = {
+        rel: (attrs) ->
+          table.insert attributes, attrs
+      }
+
+      sanitize_html [[<a href="http://leafo.net">unclosed]]
+      sanitize_html [[<a>second</a>]]
+
+      assert.same {
+        {
+          {"href", "http://leafo.net"}
+          href: "http://leafo.net"
+        }
+        {}
+      }, attributes
+
 
     it "fails if invalid attribute name is used", ->
       whitelist.add_attributes.a = {
