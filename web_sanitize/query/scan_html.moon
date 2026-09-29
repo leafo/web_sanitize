@@ -9,6 +9,32 @@ match_text = P"<"^-1 * P(1 - P"<")^1
 void_tags_set = {t, true for t in *void_tags}
 
 class NodeStack
+  new: =>
+    @_tag_positions = {}
+
+  push: (node) =>
+    idx = #@ + 1
+    @[idx] = node
+
+    positions = @_tag_positions[node.tag]
+    unless positions
+      positions = {}
+      @_tag_positions[node.tag] = positions
+
+    positions[#positions + 1] = idx
+
+  pop: =>
+    idx = #@
+    node = @[idx]
+    positions = @_tag_positions[node.tag]
+    positions[#positions] = nil
+    @[idx] = nil
+    node
+
+  has_tag: (tag) =>
+    positions = @_tag_positions[tag]
+    positions != nil and positions[1] != nil
+
   current: =>
     @[#@]
 
@@ -178,7 +204,8 @@ scan_html = (html_text, callback, opts) ->
     -- will treat parent tag as a sibling and immediately close it before pushing new tag
     while can_auto_close tag_stack, #tag_stack, node
       -- pop the top by simulating encountering closing tag
-      pop_tag str, node.pos, node.pos, tag_stack[#tag_stack].tag
+      assert pop_tag(str, node.pos, node.pos, tag_stack[#tag_stack].tag),
+        "tag stack out of sync, node properties are read-only"
 
     parent = tag_stack[#tag_stack] or root_node
     parent.num_children = (parent.num_children or 0) + 1
@@ -195,7 +222,7 @@ scan_html = (html_text, callback, opts) ->
         node.attr[tuple[1]\lower!] = tuple[2] or true
 
     setmetatable node, BufferHTMLNode.__base
-    table.insert tag_stack, node
+    tag_stack\push node
 
     -- handle void/self closing tags
     if void_tags_set[node.tag] or node.self_closing
@@ -203,34 +230,18 @@ scan_html = (html_text, callback, opts) ->
       node.end_inner_pos = node.inner_pos
 
       callback tag_stack
-      table.remove tag_stack
+      tag_stack\pop!
 
     true
 
   pop_tag = (str, end_pos, end_inner_pos, tag) ->
-    stack_size = #tag_stack
-
     tag = tag\lower!
 
-    if stack_size == 0
-      -- extra closing tag, fail and let text capture it
-      return false
-
-    -- when we have a closing tag for something that isn't on the stack
-    if tag != tag_stack[stack_size].tag
-      -- tag mismatch, attempt to fix
-      found_tag = false
-
-      for k=#tag_stack - 1,1,-1
-        if tag_stack[k].tag == tag
-          found_tag = true
-          break
-
-      unless found_tag -- fail and let text capture it
-        return false
+    -- closing tag for something that isn't open, fail and let text capture it
+    return false unless tag_stack\has_tag tag
 
     -- pop until we've consumed the tag
-    for k=stack_size,1,-1
+    for k=#tag_stack,1,-1
       popping = tag_stack[k]
 
       popping.end_inner_pos = end_inner_pos
@@ -241,7 +252,7 @@ scan_html = (html_text, callback, opts) ->
         end_inner_pos
 
       callback tag_stack
-      tag_stack[k] = nil
+      tag_stack\pop!
       break if popping.tag == tag
 
     true
@@ -275,9 +286,13 @@ scan_html = (html_text, callback, opts) ->
     }
 
     setmetatable text_node, BufferHTMLNode.__base
-    table.insert tag_stack, text_node
+
+    -- text nodes are never an ancestor or closed by a tag, so they bypass the
+    -- tag index
+    idx = #tag_stack + 1
+    tag_stack[idx] = text_node
     callback tag_stack
-    table.remove tag_stack
+    tag_stack[idx] = nil
     true
 
   -- this clears the stack of any left over tags for when wwe've reached the
@@ -289,7 +304,7 @@ scan_html = (html_text, callback, opts) ->
       popping.end_pos = pos
       popping.end_inner_pos = pos
       callback tag_stack
-      tag_stack[k] = nil
+      tag_stack\pop!
       k -= 1
 
     true

@@ -125,6 +125,56 @@ describe "web_sanitize.query.scan", ->
         "<a><b><c><d>Hello</a>"
       }, result
 
+    it "treats closing tags that aren't open as text", ->
+      result = {}
+
+      scan_html "<div>a</span>b</b></div></div>", ((stack) ->
+        node = stack\current!
+        table.insert result, node\outer_html!
+      ), text_nodes: true
+
+      assert.same {
+        "a"
+        "</span>b"
+        "</b>"
+        "<div>a</span>b</b></div>"
+        "</div>"
+      }, result
+
+    it "closes the nearest open tag with a matching name", ->
+      result = {}
+
+      scan_html "<div><div>x</div>y</div>", (stack) ->
+        table.insert result, stack\current!\outer_html!
+
+      assert.same {
+        "<div>x</div>"
+        "<div><div>x</div>y</div>"
+      }, result
+
+    it "matches closing tags case insensitively", ->
+      result = {}
+
+      scan_html "<DIV><b>x</div>y</B>", (stack) ->
+        table.insert result, stack\current!\outer_html!
+
+      assert.same {
+        "<b>x"
+        "<DIV><b>x</div>"
+      }, result
+
+    it "scans deep stack followed by unmatched closing tags", ->
+      html = string.rep("<div>", 2000) .. string.rep("</span>", 2000)
+      visited = 0
+      outermost = nil
+
+      scan_html html, (stack) ->
+        visited += 1
+        outermost = stack\current!\outer_html! if #stack == 1
+
+      assert.same 2000, visited
+      assert.same html, outermost
+
     it "gets content of dangling tags", ->
       visited = {}
 

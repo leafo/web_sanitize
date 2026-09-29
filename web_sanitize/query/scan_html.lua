@@ -27,6 +27,28 @@ local NodeStack
 do
   local _class_0
   local _base_0 = {
+    push = function(self, node)
+      local idx = #self + 1
+      self[idx] = node
+      local positions = self._tag_positions[node.tag]
+      if not (positions) then
+        positions = { }
+        self._tag_positions[node.tag] = positions
+      end
+      positions[#positions + 1] = idx
+    end,
+    pop = function(self)
+      local idx = #self
+      local node = self[idx]
+      local positions = self._tag_positions[node.tag]
+      positions[#positions] = nil
+      self[idx] = nil
+      return node
+    end,
+    has_tag = function(self, tag)
+      local positions = self._tag_positions[tag]
+      return positions ~= nil and positions[1] ~= nil
+    end,
     current = function(self)
       return self[#self]
     end,
@@ -86,7 +108,9 @@ do
   }
   _base_0.__index = _base_0
   _class_0 = setmetatable({
-    __init = function() end,
+    __init = function(self)
+      self._tag_positions = { }
+    end,
     __base = _base_0,
     __name = "NodeStack"
   }, {
@@ -331,7 +355,7 @@ scan_html = function(html_text, callback, opts)
   push_tag = function(str, pos, node)
     node.tag = node.tag:lower()
     while can_auto_close(tag_stack, #tag_stack, node) do
-      pop_tag(str, node.pos, node.pos, tag_stack[#tag_stack].tag)
+      assert(pop_tag(str, node.pos, node.pos, tag_stack[#tag_stack].tag), "tag stack out of sync, node properties are read-only")
     end
     local parent = tag_stack[#tag_stack] or root_node
     parent.num_children = (parent.num_children or 0) + 1
@@ -345,34 +369,21 @@ scan_html = function(html_text, callback, opts)
       end
     end
     setmetatable(node, BufferHTMLNode.__base)
-    table.insert(tag_stack, node)
+    tag_stack:push(node)
     if void_tags_set[node.tag] or node.self_closing then
       node.end_pos = node.inner_pos
       node.end_inner_pos = node.inner_pos
       callback(tag_stack)
-      table.remove(tag_stack)
+      tag_stack:pop()
     end
     return true
   end
   pop_tag = function(str, end_pos, end_inner_pos, tag)
-    local stack_size = #tag_stack
     tag = tag:lower()
-    if stack_size == 0 then
+    if not (tag_stack:has_tag(tag)) then
       return false
     end
-    if tag ~= tag_stack[stack_size].tag then
-      local found_tag = false
-      for k = #tag_stack - 1, 1, -1 do
-        if tag_stack[k].tag == tag then
-          found_tag = true
-          break
-        end
-      end
-      if not (found_tag) then
-        return false
-      end
-    end
-    for k = stack_size, 1, -1 do
+    for k = #tag_stack, 1, -1 do
       local popping = tag_stack[k]
       popping.end_inner_pos = end_inner_pos
       if popping.tag == tag then
@@ -381,7 +392,7 @@ scan_html = function(html_text, callback, opts)
         popping.end_pos = end_inner_pos
       end
       callback(tag_stack)
-      tag_stack[k] = nil
+      tag_stack:pop()
       if popping.tag == tag then
         break
       end
@@ -414,9 +425,10 @@ scan_html = function(html_text, callback, opts)
       num = top.num_children
     }
     setmetatable(text_node, BufferHTMLNode.__base)
-    table.insert(tag_stack, text_node)
+    local idx = #tag_stack + 1
+    tag_stack[idx] = text_node
     callback(tag_stack)
-    table.remove(tag_stack)
+    tag_stack[idx] = nil
     return true
   end
   local check_dangling_tags
@@ -427,7 +439,7 @@ scan_html = function(html_text, callback, opts)
       popping.end_pos = pos
       popping.end_inner_pos = pos
       callback(tag_stack)
-      tag_stack[k] = nil
+      tag_stack:pop()
       k = k - 1
     end
     return true

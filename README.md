@@ -327,6 +327,8 @@ The scanner exposes two primitive object types: `NodeStack` and `HTMLNode`
 * `node:replace_attributes(tbl)` **(`replace_html` only)** - Replaces all attributes on the tag with the table of attributes
 * `node:update_attributes(tbl)` **(`replace_html` only)** - Merges a table of attributes with the current attributes, overwriting any of the existing ones (including duplicates) with the ones provided
 
+Node properties are read-only. Use the methods above to change the document.
+
 The node attributes are stored in a table with both array and hash table
 elements. The hash table elements have their keys normalized to lowercase and
 only hold the most recent value.
