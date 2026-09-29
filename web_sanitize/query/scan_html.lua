@@ -526,7 +526,7 @@ scan = function(html_text, callback, opts, NodeClass)
     text_node = Cmt(Cp() * C(match_text), push_text_node)
     cdata_node = cdata_guard * Cmt(Cp() * C(cdata) * Cc("cdata"), push_text_node)
   end
-  local raw_text_closer = P("</") * Cmt(C(alphanum ^ 1), function(_, pos, tag)
+  local raw_text_closer = Cmt(close_tag, function(_, _, _, tag)
     return tag_stack[#tag_stack].tag == tag:lower()
   end)
   local raw_text_open = Cmt(P(0), function()

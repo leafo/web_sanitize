@@ -358,8 +358,9 @@ scan = (html_text, callback, opts, NodeClass) ->
     text_node = Cmt Cp! * C(match_text), push_text_node
     cdata_node = cdata_guard * Cmt Cp! * C(cdata) * Cc("cdata"), push_text_node
 
-  -- a raw text tag takes text as is unless there is signal for closing tag (script, style, etc.)
-  raw_text_closer = P"</" * Cmt C(alphanum^1), (_, pos, tag) ->
+  -- a raw text tag (script, style, etc.) takes text as is until a complete
+  -- closing tag for the element, so the closing tag after it always parses
+  raw_text_closer = Cmt close_tag, (_, _, _, tag) ->
     tag_stack[#tag_stack].tag == tag\lower!
 
   -- a self closing raw text tag is already closed, so what follows is parsed

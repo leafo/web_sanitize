@@ -585,6 +585,7 @@ on undefined behavior will now raise errors.
   * Selectors like `a *` checked on every node of a deeply nested document
   * Unterminated comments in `extract_text` and the sanitizer's `strip_comments` option, and unterminated CDATA sections in the scanner
 * Fix a LuaJIT crash in `sanitize_html` on some inputs, and a `too many results to unpack` error when a closing tag closes thousands of open tags
+* Raw text in elements like `script` now ends only at a complete closing tag for the element. A malformed one like `</script!` used to end it, and many `<script>` tags followed by one made scanning quadratic
 * Fix an error when scanning a self closing raw text tag like `<script />` at the top level. Markup after a self closing raw text tag is now scanned instead of being read as raw text
 * Fix an error in `update_attributes` on elements with a valueless attribute like `disabled`, and in `replace_attributes` with a `{"name"}` tuple
 * Fix attributes from one call being passed to `add_attributes` functions in the next call when a `Sanitizer` is reused
