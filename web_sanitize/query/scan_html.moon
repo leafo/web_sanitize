@@ -134,7 +134,8 @@ class EditableHTMLNode extends HTMLNode
       buff[i] = " "
       buff[i + 1] = name
 
-      if value == true
+      -- a tuple without a value, like {"disabled"}, is a boolean attribute
+      if value == true or value == nil
         i += 2
       else
         buff[i + 2] = '="'

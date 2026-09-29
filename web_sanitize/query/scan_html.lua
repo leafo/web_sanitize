@@ -224,7 +224,7 @@ do
       push_attr = function(name, value)
         buff[i] = " "
         buff[i + 1] = name
-        if value == true then
+        if value == true or value == nil then
           i = i + 2
         else
           buff[i + 2] = '="'

@@ -1121,6 +1121,18 @@ describe "web_sanitize.query.scan", ->
 
         assert.same [[<img alt="" src="http://leafo.net/hi.png" />]], out
 
+      it "keeps boolean attributes", ->
+        out = replace_html '<iframe disabled src="x"></iframe>', (stack) ->
+          stack\current!\update_attributes { title: "t" }
+
+        assert.same [[<iframe disabled src="x" title="t"></iframe>]], out
+
+      it "replaces attributes with a boolean attribute tuple", ->
+        out = replace_html '<iframe></iframe>', (stack) ->
+          stack\current!\replace_attributes { {"readonly"}, {"src", "x"} }
+
+        assert.same [[<iframe readonly src="x"></iframe>]], out
+
   describe "_apply_changes", ->
     import _apply_changes from require "web_sanitize.query.scan_html"
 
