@@ -171,6 +171,28 @@ describe "web_sanitize.query.scan", ->
         "thead=<thead><thead><thead>"
       }, visited "<thead><thead><thead>"
 
+      -- an element that isn't optional stops auto closing below it
+      assert.same {
+        "li=<li>a"
+        "div=<div><li>a</div>"
+        "li=<li><div><li>a</div>"
+        "ul=<ul><li><div><li>a</div></ul>"
+      }, visited "<ul><li><div><li>a</div></ul>"
+
+      assert.same {
+        "p=<p>x"
+        "span=<span><p>x</span>"
+        "p=<p><span><p>x</span></p>"
+      }, visited "<p><span><p>x</span></p>"
+
+      assert.same {
+        "tr=<tr>y"
+        "b=<b><tr>y"
+        "td=<td><b><tr>y"
+        "tr=<tr><td><b><tr>y"
+        "table=<table><tr><td><b><tr>y</table>"
+      }, visited "<table><tr><td><b><tr>y</table>"
+
     it "scans a < that doesn't start a tag as text", ->
       nodes = (html) ->
         out = {}

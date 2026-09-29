@@ -1,6 +1,7 @@
 -- Property checks over random input. FUZZ_ITERATIONS and FUZZ_SEED control the
--- run, see `make fuzz`. Seeds only reproduce a failure on the same Lua
--- interpreter, since math.random differs between them.
+-- run, see `make fuzz`. Failures reproduce only by rerunning the same seed up
+-- to the failing iteration on the same Lua interpreter: some properties reuse
+-- instances across iterations, and math.random differs between interpreters.
 
 import random_html, random_selector, random_stack_selector, random_tree, render_tree,
   render_tree_edited, tree_edit_callback, random_edit_callback from require "spec.support.random_html"
@@ -14,7 +15,8 @@ fuzz = (fn) ->
     math.randomseed seed
     ok, err = pcall fn, i
     unless ok
-      error "#{err}\nreproduce with FUZZ_SEED=#{seed - 1} FUZZ_ITERATIONS=1", 0
+      interpreter = jit and jit.version or _VERSION
+      error "#{err}\nreproduce on #{interpreter} with FUZZ_SEED=#{SEED} FUZZ_ITERATIONS=#{i}", 0
 
 -- every 50th input is long enough to use the sanitizer's chunked parsing
 fuzz_html = (i) ->
