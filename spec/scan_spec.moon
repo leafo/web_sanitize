@@ -830,6 +830,96 @@ describe "web_sanitize.query.scan", ->
 
       assert.same [[one <a href="http://leafo">http://leafo</a> and <a href='http://doop'>http://woop <span>http://oop</span></a>]], out
 
+    it "replaces parent attributes after child content", ->
+      out = replace_html '<a href="x"><b>hi</b></a> <a><b>there</b></a>', (stack) ->
+        node = stack\current!
+        switch node.tag
+          when "b"
+            node\replace_inner_html node\inner_html!\upper!
+          when "a"
+            node\replace_attributes { rel: "nofollow" }
+
+      assert.same '<a rel="nofollow"><b>HI</b></a> <a rel="nofollow"><b>THERE</b></a>', out
+
+    it "replaces attributes and content of the same node", ->
+      out = replace_html '<div class="a">hello</div><div>world</div>', (stack) ->
+        node = stack\current!
+        node\replace_attributes { id: "x" }
+        node\replace_inner_html "bye"
+
+      assert.same '<div id="x">bye</div><div id="x">bye</div>', out
+
+    it "discards child changes when parent outer html is replaced", ->
+      out = replace_html "<div><span>a</span><span>b</span></div><p>c</p>", (stack) ->
+        node = stack\current!
+        switch node.tag
+          when "span"
+            node\replace_inner_html "changed"
+          when "div"
+            node\replace_outer_html "[#{node\outer_html!}]"
+
+      assert.same "[<div><span>a</span><span>b</span></div>]<p>c</p>", out
+
+    it "keeps insertion when deletion collapses parent content", ->
+      out = replace_html "<div>a<b>x</b></div>", (stack) ->
+        node = stack\current!
+        switch node.tag
+          when "b"
+            node\replace_outer_html ""
+            node\replace_outer_html "new"
+          when "div"
+            node\replace_inner_html "parent"
+
+      assert.same "<div>parentnew</div>", out
+
+    it "replaces content next to deleted tags", ->
+      out = replace_html "<img><b>x</b><img><i></i><img>", (stack) ->
+        node = stack\current!
+        switch node.tag
+          when "img"
+            node\replace_outer_html ""
+          when "i"
+            node\replace_inner_html "hi"
+
+      assert.same "<b>x</b><i>hi</i>", out
+
+    it "inserts into empty tags", ->
+      out = replace_html "<code></code><code></code>", (stack) ->
+        node = stack\current!
+        node\replace_inner_html "hi"
+        node\replace_attributes { x: "1" }
+
+      assert.same '<code x="1">hi</code><code x="1">hi</code>', out
+
+      out = replace_html "<code></code>", (stack) ->
+        node = stack\current!
+        node\replace_attributes { x: "1" }
+        node\replace_inner_html "hi"
+
+      assert.same '<code x="1">hi</code>', out
+
+    it "replaces adjacent tags with equal length content", ->
+      out = replace_html "<b>1</b><i>2</i><br/>", (stack) ->
+        node = stack\current!
+        switch node.tag
+          when "b"
+            node\replace_outer_html "<u>1</u>"
+          when "i"
+            node\replace_outer_html "<s>2</s>"
+          when "br"
+            node\replace_outer_html "<hr/>"
+
+      assert.same "<u>1</u><s>2</s><hr/>", out
+
+    it "replaces many tags", ->
+      html = string.rep '<img src="data:x">text ', 2000
+      out = replace_html html, (stack) ->
+        node = stack\current!
+        if node.tag == "img"
+          node\replace_outer_html ""
+
+      assert.same string.rep("text ", 2000), out
+
     describe "update attributes", ->
       it "basic update", ->
         out = replace_html '<div a="b" b="c" a="whw" b="&amp;&quot;"></div>', (stack) ->
@@ -850,6 +940,35 @@ describe "web_sanitize.query.scan", ->
           }
 
         assert.same [[<img alt="" src="http://leafo.net/hi.png" />]], out
+
+  describe "_apply_changes_linked", ->
+    import _apply_changes_linked from require "web_sanitize.query.scan_html"
+
+    -- replace_html falls back to the quadratic version when this returns nil,
+    -- so assert common arrangements of changes take the fast path
+    it "applies disjoint deletions", ->
+      assert.same "tt", _apply_changes_linked "<img>t<img>t", {
+        {1, 6, ""}
+        {7, 12, ""}
+      }
+
+    it "applies parent attributes after child content", ->
+      assert.same '<a rel="n"><b>HI</b></a>', _apply_changes_linked '<a href="x"><b>hi</b></a>', {
+        {16, 18, "HI"}
+        {1, 13, '<a rel="n">'}
+      }
+
+    it "keeps insertion when deletion collapses a range", ->
+      assert.same "<div>parentnew</div>", _apply_changes_linked "<div>a<b>x</b></div>", {
+        {7, 15, ""}
+        {7, 15, "new"}
+        {6, 15, "parent"}
+      }
+
+    it "returns nil for changes it can't apply", ->
+      assert.same nil, (_apply_changes_linked "abcdef", { {1, 6, "X"}, {3, 4, "Y"} })
+      assert.same nil, (_apply_changes_linked "abcdef", { {4, 2, "X"} })
+      assert.same nil, (_apply_changes_linked "abcdef", { {1, 9, "X"} })
 
 
   describe "NodeStack", ->

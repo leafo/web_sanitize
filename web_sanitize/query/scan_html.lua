@@ -455,17 +455,8 @@ scan_html = function(html_text, callback, opts)
   local res, err = html:match(html_text)
   return res
 end
-local replace_html
-replace_html = function(html_text, _callback, opts)
-  local changes = { }
-  local callback
-  callback = function(tags, ...)
-    local current = tags[#tags]
-    current.__class.__base.changes = changes
-    return _callback(tags, ...)
-  end
-  scan_html(html_text, callback, opts)
-  local buffer = html_text
+local apply_changes_sequential
+apply_changes_sequential = function(buffer, changes)
   for i, _des_0 in ipairs(changes) do
     local _continue_0 = false
     repeat
@@ -500,7 +491,122 @@ replace_html = function(html_text, _callback, opts)
   end
   return buffer
 end
+local apply_changes_linked
+apply_changes_linked = function(buffer, changes)
+  local max_pos = #buffer + 1
+  local positions = { }
+  for _index_0 = 1, #changes do
+    local _des_0 = changes[_index_0]
+    local a, b
+    a, b = _des_0[1], _des_0[2]
+    if a > b or a < 1 or b > max_pos then
+      return nil
+    end
+    positions[a] = true
+    positions[b] = true
+  end
+  local sorted
+  do
+    local _accum_0 = { }
+    local _len_0 = 1
+    for p in pairs(positions) do
+      _accum_0[_len_0] = p
+      _len_0 = _len_0 + 1
+    end
+    sorted = _accum_0
+  end
+  table.sort(sorted)
+  local gaps = { }
+  local head = {
+    text = buffer:sub(1, (sorted[1] or max_pos) - 1)
+  }
+  local tail = head
+  for i, p in ipairs(sorted) do
+    local gap = { }
+    tail.next = gap
+    gaps[p] = gap
+    local text = {
+      text = buffer:sub(p, (sorted[i + 1] or max_pos) - 1)
+    }
+    gap.next = text
+    tail = text
+  end
+  local find
+  find = function(gap)
+    while gap.merged do
+      gap.merged = gap.merged.merged or gap.merged
+      gap = gap.merged
+    end
+    return gap
+  end
+  for _index_0 = 1, #changes do
+    local _continue_0 = false
+    repeat
+      local _des_0 = changes[_index_0]
+      local a, b, sub
+      a, b, sub = _des_0[1], _des_0[2], _des_0[3]
+      local left = find(gaps[a])
+      local right = find(gaps[b])
+      if left.removed or right.removed then
+        return nil
+      end
+      if left == right then
+        if sub == "" then
+          _continue_0 = true
+          break
+        end
+        left.next = {
+          text = sub,
+          next = left.next
+        }
+      else
+        local node = left.next
+        while node ~= right do
+          if not (node.text) then
+            node.removed = true
+          end
+          node = node.next
+        end
+        if sub == "" then
+          right.merged = left
+          left.next = right.next
+        else
+          left.next = {
+            text = sub,
+            next = right
+          }
+        end
+      end
+      _continue_0 = true
+    until true
+    if not _continue_0 then
+      break
+    end
+  end
+  local buff = { }
+  local node = head
+  while node do
+    if node.text then
+      buff[#buff + 1] = node.text
+    end
+    node = node.next
+  end
+  return table.concat(buff)
+end
+local replace_html
+replace_html = function(html_text, _callback, opts)
+  local changes = { }
+  local callback
+  callback = function(tags, ...)
+    local current = tags[#tags]
+    current.__class.__base.changes = changes
+    return _callback(tags, ...)
+  end
+  scan_html(html_text, callback, opts)
+  return apply_changes_linked(html_text, changes) or apply_changes_sequential(html_text, changes)
+end
 return {
   scan_html = scan_html,
-  replace_html = replace_html
+  replace_html = replace_html,
+  _apply_changes_linked = apply_changes_linked
 }

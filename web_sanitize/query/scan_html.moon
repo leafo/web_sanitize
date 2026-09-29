@@ -318,17 +318,9 @@ scan_html = (html_text, callback, opts) ->
 
   res
 
-replace_html = (html_text, _callback, opts) ->
-  changes = {}
-
-  callback = (tags, ...) ->
-    current = tags[#tags]
-    current.__class.__base.changes = changes
-    _callback tags, ...
-
-  scan_html html_text, callback, opts
-
-  buffer = html_text
+-- Fallback for replace_html when apply_changes_linked gives up. Quadratic, but
+-- its output is the reference behavior for overlapping changes
+apply_changes_sequential = (buffer, changes) ->
   for i, {min, max, sub} in ipairs changes
     continue if min > max
     buffer = buffer\sub(1, min - 1) .. sub .. buffer\sub(max)
@@ -349,4 +341,79 @@ replace_html = (html_text, _callback, opts) ->
 
   buffer
 
-{ :scan_html, :replace_html }
+-- Fast path for replace_html. Output must match apply_changes_sequential,
+-- which works on buffer offsets: after a deletion moves two endpoints to the
+-- same offset, they act as one position, so their gaps are merged here.
+-- Returns nil for inverted or out of bounds changes, and for endpoints inside
+-- an earlier replacement, where the sequential result depends on stale offsets
+apply_changes_linked = (buffer, changes) ->
+  max_pos = #buffer + 1
+  positions = {}
+  for {a, b} in *changes
+    return nil if a > b or a < 1 or b > max_pos
+    positions[a] = true
+    positions[b] = true
+
+  sorted = [p for p in pairs positions]
+  table.sort sorted
+
+  -- the list alternates gaps with non-empty text, so distinct gaps are
+  -- always at distinct offsets. Gaps are the nodes without text
+  gaps = {}
+  head = { text: buffer\sub 1, (sorted[1] or max_pos) - 1 }
+  tail = head
+  for i, p in ipairs sorted
+    gap = {}
+    tail.next = gap
+    gaps[p] = gap
+    text = { text: buffer\sub p, (sorted[i + 1] or max_pos) - 1 }
+    gap.next = text
+    tail = text
+
+  find = (gap) ->
+    while gap.merged
+      gap.merged = gap.merged.merged or gap.merged
+      gap = gap.merged
+    gap
+
+  for {a, b, sub} in *changes
+    left = find gaps[a]
+    right = find gaps[b]
+    return nil if left.removed or right.removed
+
+    if left == right
+      continue if sub == ""
+      left.next = { text: sub, next: left.next }
+    else
+      node = left.next
+      while node != right
+        node.removed = true unless node.text
+        node = node.next
+
+      if sub == ""
+        right.merged = left
+        left.next = right.next
+      else
+        left.next = { text: sub, next: right }
+
+  buff = {}
+  node = head
+  while node
+    buff[#buff + 1] = node.text if node.text
+    node = node.next
+
+  table.concat buff
+
+replace_html = (html_text, _callback, opts) ->
+  changes = {}
+
+  callback = (tags, ...) ->
+    current = tags[#tags]
+    current.__class.__base.changes = changes
+    _callback tags, ...
+
+  scan_html html_text, callback, opts
+
+  apply_changes_linked(html_text, changes) or apply_changes_sequential html_text, changes
+
+{ :scan_html, :replace_html, _apply_changes_linked: apply_changes_linked }
