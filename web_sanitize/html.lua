@@ -130,7 +130,7 @@ Sanitizer = function(opts)
   pop_self_closing_tag = function(str, pos, ...)
     local tag = tag_stack[#tag_stack]
     if self_closing[tag] then
-      return pop_tag(src, pos, ...)
+      return pop_tag(str, pos, ...)
     else
       return false
     end

@@ -527,7 +527,7 @@ scan = function(html_text, callback, opts, NodeClass)
   end)
   local raw_text_tag = #begin_raw_text_tag * check_open_tag * (raw_text_open * (P(1) - raw_text_closer) ^ 0 * (check_close_tag + P(-1))) ^ -1
   local html = (html_comment + cdata_node + raw_text_tag + check_open_tag + check_close_tag + text_node) ^ 0 * -1 * Cmt(Cp(), check_dangling_tags)
-  local res, err = html:match(html_text)
+  local res, _ = html:match(html_text)
   return res
 end
 local apply_changes

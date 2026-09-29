@@ -358,7 +358,7 @@ scan = (html_text, callback, opts, NodeClass) ->
   raw_text_tag = #begin_raw_text_tag * check_open_tag * (raw_text_open * (P(1) - raw_text_closer)^0 * (check_close_tag + P(-1)))^-1
 
   html = (html_comment + cdata_node + raw_text_tag + check_open_tag + check_close_tag + text_node)^0 * -1 * Cmt(Cp!, check_dangling_tags)
-  res, err = html\match html_text
+  res, _ = html\match html_text
 
   res
 

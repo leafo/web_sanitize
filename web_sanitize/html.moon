@@ -106,7 +106,7 @@ Sanitizer = (opts) ->
   pop_self_closing_tag = (str, pos, ...) ->
     tag = tag_stack[#tag_stack]
     if self_closing[tag]
-      pop_tag src, pos, ...
+      pop_tag str, pos, ...
     else
       false
 
