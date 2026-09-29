@@ -131,6 +131,46 @@ describe "web_sanitize.query.scan", ->
         for method in *{"replace_attributes", "update_attributes", "replace_inner_html", "replace_outer_html", "unwrap"}
           assert.is_nil node[method], method
 
+    it "auto closes optional tags", ->
+      visited = (html) ->
+        out = {}
+        scan_html html, (stack) ->
+          node = stack\current!
+          table.insert out, "#{node.tag}=#{node\outer_html!}"
+        out
+
+      assert.same {
+        "p=<p>x"
+        "li=<li><p>x"
+        "li=<li>y"
+        "ul=<ul><li><p>x<li>y</ul>"
+      }, visited "<ul><li><p>x<li>y</ul>"
+
+      assert.same {
+        "td=<td>a"
+        "tr=<tr><td>a"
+        "thead=<thead><tr><td>a"
+        "td=<td>b"
+        "tr=<tr><td>b"
+        "tbody=<tbody><tr><td>b"
+        "table=<table><thead><tr><td>a<tbody><tr><td>b</table>"
+      }, visited "<table><thead><tr><td>a<tbody><tr><td>b</table>"
+
+      assert.same {
+        "option=<option>a"
+        "option=<option>b"
+        "optgroup=<optgroup><option>a<option>b"
+        "option=<option>c"
+        "optgroup=<optgroup><option>c"
+        "select=<select><optgroup><option>a<option>b<optgroup><option>c</select>"
+      }, visited "<select><optgroup><option>a<option>b<optgroup><option>c</select>"
+
+      assert.same {
+        "thead=<thead>"
+        "thead=<thead><thead>"
+        "thead=<thead><thead><thead>"
+      }, visited "<thead><thead><thead>"
+
     it "scans a < that doesn't start a tag as text", ->
       nodes = (html) ->
         out = {}

@@ -345,29 +345,16 @@ do
   end
   EditableHTMLNode = _class_0
 end
-local can_auto_close
-can_auto_close = function(tag_stack, stack_pos, current)
-  local parent = tag_stack[stack_pos]
-  if not (parent) then
-    return false
-  end
-  do
-    local ot_type = optional_tags[parent.tag]
-    if ot_type then
-      if ot_type == true then
-        if current.tag == parent.tag then
-          return true
-        end
-      else
-        for _index_0 = 1, #ot_type do
-          local t = ot_type[_index_0]
-          if t == current.tag then
-            return true
-          end
-        end
-      end
-      return can_auto_close(tag_stack, stack_pos - 1, current)
-    end
+local closes_optional = { }
+for tag, closers in pairs(optional_tags) do
+  local _list_0 = (closers == true and {
+    tag
+  } or closers)
+  for _index_0 = 1, #_list_0 do
+    local closer = _list_0[_index_0]
+    local _update_0 = closer
+    closes_optional[_update_0] = closes_optional[_update_0] or { }
+    table.insert(closes_optional[closer], tag)
   end
 end
 local scan
@@ -416,10 +403,28 @@ scan = function(html_text, callback, opts, NodeClass)
   local root_node = { }
   local tag_stack = NodeStack()
   local pop_tag, last_opened
+  local optional_run_start = { }
+  local can_auto_close
+  can_auto_close = function(node)
+    local start = optional_run_start[#tag_stack]
+    local closes = start and closes_optional[node.tag]
+    if not (closes) then
+      return false
+    end
+    for _index_0 = 1, #closes do
+      local tag = closes[_index_0]
+      local positions = tag_stack._tag_positions[tag]
+      local last = positions and positions[#positions]
+      if last and last >= start then
+        return true
+      end
+    end
+    return false
+  end
   local push_tag
   push_tag = function(str, pos, node)
     node.tag = node.tag:lower()
-    while can_auto_close(tag_stack, #tag_stack, node) do
+    while can_auto_close(node) do
       assert(pop_tag(str, node.pos, node.pos, tag_stack[#tag_stack].tag), "tag stack out of sync, node properties are read-only")
     end
     local parent = tag_stack[#tag_stack] or root_node
@@ -436,6 +441,8 @@ scan = function(html_text, callback, opts, NodeClass)
     setmetatable(node, BufferHTMLNode.__base)
     tag_stack:push(node)
     last_opened = node
+    local idx = #tag_stack
+    optional_run_start[idx] = optional_tags[node.tag] and (optional_run_start[idx - 1] or idx)
     if void_tags_set[node.tag] or node.self_closing then
       node.end_pos = node.inner_pos
       node.end_inner_pos = node.inner_pos

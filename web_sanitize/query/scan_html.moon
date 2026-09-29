@@ -193,25 +193,12 @@ class EditableHTMLNode extends HTMLNode
     table.insert @changes, {@pos, @inner_pos, ""}
     table.insert @changes, {@end_inner_pos, @end_pos, ""}
 
--- can we auto close the parent when visiting current
-can_auto_close = (tag_stack, stack_pos, current) ->
-  parent = tag_stack[stack_pos]
-  return false unless parent
-
-  -- check if adjacent is autoclosing
-  if ot_type = optional_tags[parent.tag]
-    if ot_type == true
-      -- they are the same tag
-      if current.tag == parent.tag
-        return true
-    else -- ot should be array of tag names that can auto close
-      for t in *ot_type
-        if t == current.tag
-          return true
-
-    -- detect if parent if the last item in an element that will end up
-    -- autoclosing, meaning we can also close parent
-    can_auto_close tag_stack, stack_pos - 1, current
+-- the optional tags that opening each tag closes, the reverse of optional_tags
+closes_optional = {}
+for tag, closers in pairs optional_tags
+  for closer in *(closers == true and {tag} or closers)
+    closes_optional[closer] or= {}
+    table.insert closes_optional[closer], tag
 
 scan = (html_text, callback, opts, NodeClass) ->
   assert callback, "missing callback to scan_html"
@@ -224,13 +211,32 @@ scan = (html_text, callback, opts, NodeClass) ->
 
   local pop_tag, last_opened
 
+  -- stack index where the run of consecutive optional elements ending at each
+  -- index starts, false for elements that aren't optional
+  optional_run_start = {}
+
+  -- An opening tag closes the top element if it closes any optional element in
+  -- the run of them at the top of the stack, since closing that one closes the
+  -- ones above it
+  can_auto_close = (node) ->
+    start = optional_run_start[#tag_stack]
+    closes = start and closes_optional[node.tag]
+    return false unless closes
+
+    for tag in *closes
+      positions = tag_stack._tag_positions[tag]
+      last = positions and positions[#positions]
+      return true if last and last >= start
+
+    false
+
   -- Cmt callback for opening tag
   push_tag = (str, pos, node) ->
     node.tag = node.tag\lower! -- normalize tag name
 
     -- handle automatic closing for optional tags
     -- will treat parent tag as a sibling and immediately close it before pushing new tag
-    while can_auto_close tag_stack, #tag_stack, node
+    while can_auto_close node
       -- pop the top by simulating encountering closing tag
       assert pop_tag(str, node.pos, node.pos, tag_stack[#tag_stack].tag),
         "tag stack out of sync, node properties are read-only"
@@ -252,6 +258,9 @@ scan = (html_text, callback, opts, NodeClass) ->
     setmetatable node, BufferHTMLNode.__base
     tag_stack\push node
     last_opened = node
+
+    idx = #tag_stack
+    optional_run_start[idx] = optional_tags[node.tag] and (optional_run_start[idx - 1] or idx)
 
     -- handle void/self closing tags
     if void_tags_set[node.tag] or node.self_closing

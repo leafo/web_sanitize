@@ -522,9 +522,10 @@ untrusted HTML.
 
 ## Processing untrusted input
 
-`sanitize_html`, `extract_text`, `scan_html` and `replace_html` run in linear
-time in the size of the input, including malformed input. Cap the input size
-before calling them to bound the work.
+`sanitize_html`, `extract_text` and `scan_html` run in linear time in the size
+of the input, including malformed input. `replace_html` also sorts the
+positions of its edits, so it takes O(n log n) time in the number of edits. Cap
+the input size before calling them to bound the work.
 
 The scanner calls your callback once for every node, so the callback's own work
 is added to that. Anything in the callback that grows with the nesting depth
@@ -546,9 +547,9 @@ about 300KB. With untrusted input, avoid these:
 
   Keep ancestor parts to plain tag names, and put classes, ids, attributes and
   `:nth-child` only in the last part. `div a[href].link` and `section div p`
-  run in linear time; `.x *` and `div.x *` don't. On a 300KB document nested
-  16,000 levels deep, calling `stack:is(".x *")` for every node took 97
-  seconds, while `stack:is("div *")` took 0.04 seconds.
+  stay fast at any nesting depth; `.x *` and `div.x *` take quadratic time. On
+  a 300KB document nested 16,000 levels deep, calling `stack:is(".x *")` for
+  every node took 97 seconds, while `stack:is("div *")` took 0.04 seconds.
 
 * **Reading the HTML of every element.** `node:outer_html()`,
   `node:inner_html()` and `node:inner_text()` copy the part of the document the
@@ -580,6 +581,7 @@ on undefined behavior will now raise errors.
 * Fix quadratic processing time for:
   * Many edits in one `replace_html` call
   * Deeply nested tags followed by closing tags that aren't open, in the sanitizer and the scanner
+  * Deeply nested tags with optional closing tags, like `thead`, in the scanner
   * Selectors like `a *` checked on every node of a deeply nested document
   * Unterminated comments in `extract_text` and the sanitizer's `strip_comments` option, and unterminated CDATA sections in the scanner
 * Fix a LuaJIT crash in `sanitize_html` on some inputs, and a `too many results to unpack` error when a closing tag closes thousands of open tags
