@@ -301,7 +301,6 @@ Here are a few things to be aware of when using the scanner:
 * Any markup inside HTML comments or CDATA sections is ignored
 * Unclosed tags are considered dangling tags and will be processed after the parser reaches the end of the input (With the exception of void tags (eg. img, hr) which are always automatically closed regardless of if self closing (`<a/>`)  syntax is used.)
 * Attributes automatically have their values HTML entities decoded (eg. &amp;amp; becomes &amp;)
-* All edits are performed after the scan has taken place, not during the scan. If you alter the content of a node's inner or outer html then scanner will not see these changes in the current iteration. Additionally, making edits to a parent node's content will shadow any edits you've made to child nodes. You can work around these limitations by doing multi-pass replacements.
 * Text nodes (when enabled) will treat CDATA tags as separate text nodes. Get the content with `inner_html` method. (`outer_html` will return the CDATA tag)
 
 The scanner exposes two primitive object types: `NodeStack` and `HTMLNode`
@@ -444,6 +443,43 @@ end, { text_nodes = true })
 
 print(formatted_html)
 ```
+
+How edits are applied:
+
+1. A node's callback runs after its closing tag is parsed, so the callbacks
+   for everything inside it have already run.
+2. Edits are recorded against the original source and applied after the scan
+   finishes. Markup inserted by an edit isn't scanned.
+3. `outer_html`, `inner_html` and `inner_text` return the original source.
+   They never include edits, not even ones made to the same node.
+4. When a node's edit replaces text that contains other edits, the node's edit
+   wins. `replace_inner_html` and `replace_outer_html` replace the node's
+   content, so they discard edits made to its children. `replace_attributes`,
+   `update_attributes` and `unwrap` only touch the node's own tags, so edits to
+   its children are kept.
+
+For example, this tries to convert `b` to `strong` and `div` to `section`, but
+the `div` replacement is built from the original source and discards the edit
+to `b`:
+
+```lua
+local html = "<div><b>bold</b></div>"
+
+replace_html(html, function(stack)
+  local node = stack:current()
+  if node.tag == "b" then
+    node:replace_outer_html("<strong>" .. node:inner_html() .. "</strong>")
+  elseif node.tag == "div" then
+    node:replace_outer_html("<section>" .. node:inner_html() .. "</section>")
+  end
+end)
+--> <section><b>bold</b></section>
+```
+
+If you only need to remove the `div`, `node:unwrap()` keeps the edit to `b` and
+gives `<strong>bold</strong>`. Otherwise run `replace_html` twice: convert `b`
+in the first pass and `div` in the second. The second pass reads the output of
+the first, so you get `<section><strong>bold</strong></section>`.
 
 Rules for editing:
 
