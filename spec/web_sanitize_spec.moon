@@ -410,6 +410,28 @@ tests = {
     [[<div lang="<!-- " onclick="alert(4) -->"></div>]]
     [[<div lang="&lt;!-- "></div>]]
   }
+
+  {
+    -- closing tags that aren't open are escaped
+    "<b>x</i></b></b>"
+    "<b>x&lt;/i&gt;</b>&lt;/b&gt;"
+  }
+
+  {
+    "<b><b>x</b>y</b>"
+    "<b><b>x</b>y</b>"
+  }
+
+  {
+    "<B><i>x</b>y"
+    "<B><i>x</i></b>y"
+  }
+
+  {
+    -- closing an outer tag closes the ones inside it
+    "<b><i><u>x</b>y</i>"
+    "<b><i><u>x</u></i></b>y&lt;/i&gt;"
+  }
 }
 
 extract_text_tests = {
@@ -630,6 +652,16 @@ describe "web_sanitize", ->
     for i, {input, expected} in ipairs tests
       it "#{i}: should sanitize and match: #{input}", ->
         assert.are.equal expected, sanitize_html input
+
+    it "closes many open tags at once", ->
+      n = 20000
+      assert.are.equal "<b>#{string.rep "<i>", n}#{string.rep "</i>", n}</b>",
+        sanitize_html "<b>#{string.rep "<i>", n}</b>"
+
+    it "escapes closing tags that aren't open under a deep stack", ->
+      n = 2000
+      assert.are.equal "#{string.rep "<b>", n}#{string.rep "&lt;/i&gt;", n}#{string.rep "</b>", n}",
+        sanitize_html "#{string.rep "<b>", n}#{string.rep "</i>", n}"
 
   describe "extract_text", ->
     describe "to html", ->

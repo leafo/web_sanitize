@@ -34,6 +34,7 @@ Sanitizer = (opts) ->
   } = opts and opts.whitelist or require "web_sanitize.whitelist"
 
   tag_stack = {}
+  open_counts = {}
   attribute_stack = {} -- captured attributes for tags when needed
 
   tag_has_dynamic_add_attribute = (tag) ->
@@ -49,10 +50,13 @@ Sanitizer = (opts) ->
     allowed = allowed_tags[lower_tag]
     return false unless allowed
     insert tag_stack, lower_tag
+    open_counts[lower_tag] = (open_counts[lower_tag] or 0) + 1
     true, tag
 
   check_close_tag = (str, pos, punct, tag, rest) ->
     lower_tag = tag\lower!
+    return false unless (open_counts[lower_tag] or 0) > 0
+
     top = #tag_stack
     pos = top -- holds position in stack where what we are closing is
 
@@ -69,6 +73,7 @@ Sanitizer = (opts) ->
     for i=top, pos + 1, -1
       next_tag = tag_stack[i]
       tag_stack[i] = nil
+      open_counts[next_tag] -= 1
       if attribute_stack[i]
         attribute_stack[i] = nil
 
@@ -79,6 +84,7 @@ Sanitizer = (opts) ->
       k += 3
 
     tag_stack[pos] = nil
+    open_counts[lower_tag] -= 1
     if attribute_stack[pos]
       attribute_stack[pos] = nil
 
@@ -86,10 +92,12 @@ Sanitizer = (opts) ->
     buffer[k + 1] = tag
     buffer[k + 2] = rest
 
-    true, unpack buffer
+    -- one capture, since closing many tags at once can exceed unpack's limit
+    true, concat buffer
 
   pop_tag = (str, pos, ...) ->
     idx = #tag_stack
+    open_counts[tag_stack[idx]] -= 1
     tag_stack[idx] = nil
     if attribute_stack[idx]
       attribute_stack[idx] = nil
@@ -106,6 +114,7 @@ Sanitizer = (opts) ->
 
   fail_tag = ->
     idx = #tag_stack
+    open_counts[tag_stack[idx]] -= 1
     tag_stack[idx] = nil
     if attribute_stack[idx]
       attribute_stack[idx] = nil
@@ -200,6 +209,7 @@ Sanitizer = (opts) ->
 
   (str) ->
     tag_stack = {}
+    open_counts = {}
 
     -- we use the short pattern to avoid the minor performance penalty for text we
     -- know is short enough to not trigger the overflow error

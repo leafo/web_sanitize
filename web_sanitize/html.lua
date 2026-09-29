@@ -36,6 +36,7 @@ Sanitizer = function(opts)
     allowed_tags, add_attributes, self_closing = _obj_0.tags, _obj_0.add_attributes, _obj_0.self_closing
   end
   local tag_stack = { }
+  local open_counts = { }
   local attribute_stack = { }
   local tag_has_dynamic_add_attribute
   tag_has_dynamic_add_attribute = function(tag)
@@ -58,11 +59,15 @@ Sanitizer = function(opts)
       return false
     end
     insert(tag_stack, lower_tag)
+    open_counts[lower_tag] = (open_counts[lower_tag] or 0) + 1
     return true, tag
   end
   local check_close_tag
   check_close_tag = function(str, pos, punct, tag, rest)
     local lower_tag = tag:lower()
+    if not ((open_counts[lower_tag] or 0) > 0) then
+      return false
+    end
     local top = #tag_stack
     pos = top
     while pos >= 1 do
@@ -81,6 +86,8 @@ Sanitizer = function(opts)
       repeat
         local next_tag = tag_stack[i]
         tag_stack[i] = nil
+        local _update_0 = next_tag
+        open_counts[_update_0] = open_counts[_update_0] - 1
         if attribute_stack[i] then
           attribute_stack[i] = nil
         end
@@ -99,17 +106,21 @@ Sanitizer = function(opts)
       end
     end
     tag_stack[pos] = nil
+    local _update_0 = lower_tag
+    open_counts[_update_0] = open_counts[_update_0] - 1
     if attribute_stack[pos] then
       attribute_stack[pos] = nil
     end
     buffer[k] = punct
     buffer[k + 1] = tag
     buffer[k + 2] = rest
-    return true, unpack(buffer)
+    return true, concat(buffer)
   end
   local pop_tag
   pop_tag = function(str, pos, ...)
     local idx = #tag_stack
+    local _update_0 = tag_stack[idx]
+    open_counts[_update_0] = open_counts[_update_0] - 1
     tag_stack[idx] = nil
     if attribute_stack[idx] then
       attribute_stack[idx] = nil
@@ -128,6 +139,8 @@ Sanitizer = function(opts)
   local fail_tag
   fail_tag = function()
     local idx = #tag_stack
+    local _update_0 = tag_stack[idx]
+    open_counts[_update_0] = open_counts[_update_0] - 1
     tag_stack[idx] = nil
     if attribute_stack[idx] then
       attribute_stack[idx] = nil
@@ -230,6 +243,7 @@ Sanitizer = function(opts)
   local html_long = Ct(flatten(Ct(html_chunk * html_chunk ^ -1000)) ^ 0) * -1
   return function(str)
     tag_stack = { }
+    open_counts = { }
     local html
     if #str > 10000 then
       html = html_long
