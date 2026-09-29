@@ -92,7 +92,8 @@ Sanitizer = (opts) ->
     buffer[k + 1] = tag
     buffer[k + 2] = rest
 
-    -- one capture, since closing many tags at once can exceed unpack's limit
+    -- one capture: returning many values here can exceed unpack's limit, and
+    -- has crashed LuaJIT even for small closes
     true, concat buffer
 
   pop_tag = (str, pos, ...) ->

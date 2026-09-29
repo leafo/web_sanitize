@@ -452,6 +452,57 @@ of HTML can be sanitized in 0.01 seconds on my computer. This makes it
 unnecessary in most circumstances to sanitize ahead of time when rendering
 untrusted HTML.
 
+## Processing untrusted input
+
+`sanitize_html`, `extract_text`, `scan_html` and `replace_html` run in linear
+time in the size of the input, including malformed input. Cap the input size
+before calling them to bound the work.
+
+The scanner calls your callback once for every node, so the callback's own work
+is added to that. Anything in the callback that grows with the nesting depth
+makes the total quadratic, and a document nested 16,000 levels deep is only
+about 300KB. With untrusted input, avoid these:
+
+* **Selectors with complex ancestor parts.** `stack:is(query)` and
+  `query_all(html, query)` check the last part of a selector against the
+  current node, and each earlier part against the elements above it:
+  * An ancestor part that is only a tag name, like `div` in `div a`, is found
+    without walking the open elements. So is `*`, which the nearest element
+    always matches.
+  * An ancestor part without a tag name, like `.x` in `.x *`, is checked
+    against the open elements nearest first until one matches, which means
+    every open element when none match.
+  * An ancestor part with a tag name and anything else, like `div.x` in
+    `div.x *`, is checked the same way against the open elements with that
+    tag.
+
+  Keep ancestor parts to plain tag names, and put classes, ids, attributes and
+  `:nth-child` only in the last part. `div a[href].link` and `section div p`
+  run in linear time; `.x *` and `div.x *` don't. On a 300KB document nested
+  16,000 levels deep, calling `stack:is(".x *")` for every node took 97
+  seconds, while `stack:is("div *")` took 0.04 seconds.
+
+* **Reading the HTML of every element.** `node:outer_html()`,
+  `node:inner_html()` and `node:inner_text()` copy the part of the document the
+  node covers. Nested elements overlap, so reading them for every element
+  copies the document once per level of nesting: reading `inner_html` of every
+  element of a 288KB document nested 32,000 levels deep copied 4.6GB. Only read
+  them for the nodes you need. Text nodes never overlap, so reading every text
+  node copies the document at most once.
+
+* **Editing a node from another node's callback, or after replacing it.**
+  Make each node's edits in its own callback:
+  * Replacing the inner or outer HTML of an ancestor from a descendant's
+    callback raises an error (`attempt to compare nil with number`), because
+    the end of the ancestor hasn't been parsed yet. Changing an ancestor's
+    attributes works.
+  * Changing a node after replacing its outer HTML, such as calling
+    `replace_attributes` after `replace_outer_html`, writes the change over the
+    replacement and corrupts the output. It also makes `replace_html` apply
+    every edit with a fallback that copies the whole document once per edit.
+    Make the outer HTML replacement the node's only edit, since it discards
+    the node's other edits anyway.
+
 ## Tests
 
 Requires [Busted][4] and [MoonScript][5].

@@ -699,7 +699,7 @@ describe "web_sanitize", ->
       assert.are.equal "a c <!-- d", extract_text "a <!-- b --> c <!-- d"
       assert.are.equal "a d", extract_text "a <!-- b <!-- c --> d"
       assert.are.equal "x<!--", extract_text "<!---->x<!--"
-      -- the comment ends past where the previous input's comment did
+      -- state from the previous call must not carry over
       assert.are.equal "abcdefgh z", extract_text "abcdefgh <!-- y --> z"
 
   describe "sanitize_html strip tags", ->
@@ -728,7 +728,7 @@ describe "web_sanitize", ->
       assert.are.equal "a  c &lt;!-- d", sanitize_html "a <!-- b --> c <!-- d"
       assert.are.equal "a  d", sanitize_html "a <!-- b <!-- c --> d"
       assert.are.equal "x&lt;!--", sanitize_html "<!---->x<!--"
-      -- the comment ends past where the previous input's comment did
+      -- state from the previous call must not carry over
       assert.are.equal "abcdefgh  z", sanitize_html "abcdefgh <!-- y --> z"
 
   describe "whitelist", ->
