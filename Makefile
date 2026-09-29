@@ -5,6 +5,11 @@ test:: build
 build::
 	moonc web_sanitize.moon web_sanitize/
 
+fuzz: build
+	seed=$$(date +%s); echo "FUZZ_SEED=$$seed"; \
+	FUZZ_ITERATIONS=5000 FUZZ_SEED=$$seed busted spec/fuzz_spec.moon && \
+	FUZZ_ITERATIONS=5000 FUZZ_SEED=$$seed busted --lua=luajit spec/fuzz_spec.moon
+
 local: build
 	luarocks make --lua-version=5.1 --local web_sanitize-dev-1.rockspec
 
