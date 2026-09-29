@@ -568,6 +568,29 @@ make test
 
 ## Changelog
 
+**Sep 29 2026** - 1.8.0
+
+The HTML sanitizer and scanner now run in linear time on malformed and
+adversarial input, and several errors and a crash that untrusted input could
+trigger are fixed. Editing nodes with `replace_html` is also stricter: some
+callbacks that relied on undefined behavior will now raise errors.
+
+* Fix quadratic processing time for:
+  * Many edits in one `replace_html` call
+  * Deeply nested tags followed by closing tags that aren't open, in the sanitizer and the scanner
+  * Selectors like `a *` checked on every node of a deeply nested document
+  * Unterminated comments in `extract_text` and the sanitizer's `strip_comments` option, and unterminated CDATA sections in the scanner
+* Fix a LuaJIT crash in `sanitize_html` on some inputs, and a `too many results to unpack` error when a closing tag closes thousands of open tags
+* Fix an error when scanning a self closing raw text tag like `<script />` at the top level. Markup after a self closing raw text tag is now scanned instead of being read as raw text
+* Fix an error in `update_attributes` on elements with a valueless attribute like `disabled`, and in `replace_attributes` with a `{"name"}` tuple
+* Fix attributes from one call being passed to `add_attributes` functions in the next call when a `Sanitizer` is reused
+* Add `node:unwrap()` for removing an element's tags while keeping its content and the edits made to its children
+* Edit methods now only exist on nodes in `replace_html` callbacks. On `scan_html` nodes they silently did nothing
+* Editing a node after `replace_outer_html` or `unwrap` raises an error. Previously it corrupted the output
+* Replacing the HTML of an ancestor from a descendant's callback raises an "element is still open" error
+* `replace_html` raises an error for edits it can't apply instead of producing corrupted output
+* Document the cost of processing untrusted input, and how `replace_html` applies edits
+
 **Jan 16 2026** - 1.7.0
 
 * Add `unescape_html()` function for decoding HTML entities (named, decimal, and hexadecimal)
