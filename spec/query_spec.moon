@@ -133,6 +133,43 @@ describe "query", ->
         }
         inner_html: {"b", ""}
       }
+
+      {
+        -- skips nearer ancestors with the tag that don't match the rest
+        html: [[<div class="x"><div><div class="y"><span>a</span></div></div></div><div><span>b</span></div>]]
+        query: "div.x span"
+        outer_html: {"<span>a</span>"}
+        inner_html: {"a"}
+      }
+
+      {
+        -- each part of the chain matches below the previous one
+        html: [[<div><span><div><b>a</b></div></span></div><span><div><b>b</b></div></span>]]
+        query: "div span div b"
+        outer_html: {"<b>a</b>"}
+        inner_html: {"a"}
+      }
+
+      {
+        html: [[<pre><div><div><b>a</b></div></div></pre><b>b</b>]]
+        query: "PRE b"
+        outer_html: {"<b>a</b>"}
+        inner_html: {"a"}
+      }
+
+      {
+        html: [[<div><b>a</b></div>]]
+        query: "a b"
+        outer_html: {}
+        inner_html: {}
+      }
+
+      {
+        html: [[<div class="x"><p><b>a</b></p></div><p><b>b</b></p>]]
+        query: ".x p b, a b"
+        outer_html: {"<b>a</b>"}
+        inner_html: {"a"}
+      }
     }
 
     for {:html, :query,  :outer_html, :inner_html} in *tests
@@ -171,6 +208,33 @@ describe "query", ->
       res = unpack res
       assert.same [[<meta data-cool="stuff">]],
         res\outer_html!
+
+  describe "match_query", ->
+    import match_query from require "web_sanitize.query"
+    import parse_query from require "web_sanitize.query.parse_query"
+
+    it "matches descendant selectors on a plain table stack", ->
+      stack = {
+        { tag: "div", attr: { class: "x" }, num: 1 }
+        { tag: "div", num: 1 }
+        { tag: "p", num: 2 }
+        { tag: "span", num: 1 }
+      }
+
+      for {query, expected} in *{
+        {"span", true}
+        {"div span", true}
+        {"div.x span", true}
+        {"div div span", true}
+        {"div.x div p span", true}
+        {"div div div span", false}
+        {"p div span", false}
+        {"a span, div p span", true}
+        {"* span", true}
+        {".x p:nth-child(2) span", true}
+        {"div", false}
+      }
+        assert.same expected, match_query(stack, parse_query(query)), query
 
   describe "parse_query", ->
     import parse_query from require "web_sanitize.query.parse_query"

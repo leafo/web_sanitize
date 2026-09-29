@@ -30,26 +30,50 @@ test_el = (el, q) ->
 
   true
 
+query_el_tag = (query_el) ->
+  for {t, expected} in *query_el
+    return expected\lower! if t == "tag"
+
+-- Used by match_query_single for each ancestor part of a selector. Stacks from
+-- scan_html index open elements by tag, so a part that names a tag only tests
+-- elements with that tag. Other stacks and parts walk every element
+find_ancestor = (stack, stack_idx, query_el) ->
+  tag_positions = stack._tag_positions
+  tag = tag_positions and query_el_tag query_el
+
+  unless tag
+    for idx=stack_idx,1,-1
+      return idx if test_el stack[idx], query_el
+    return nil
+
+  positions = tag_positions[tag]
+  return nil unless positions
+
+  lo, hi = 1, #positions
+  last = 0
+  while lo <= hi
+    mid = math.floor (lo + hi) / 2
+    if positions[mid] <= stack_idx
+      last = mid
+      lo = mid + 1
+    else
+      hi = mid - 1
+
+  for k=last,1,-1
+    idx = positions[k]
+    return idx if test_el stack[idx], query_el
+
+  nil
+
 match_query_single = (stack, query) ->
   return false if #query > #stack
   stack_idx = #stack
+  return false unless test_el stack[stack_idx], query[#query]
 
-  first = true
-  for query_idx=#query,1,-1
-    query_el = query[query_idx]
-
-    matched = false
-    while stack_idx >= 1
-      stack_el = stack[stack_idx]
-      stack_idx -= 1
-      if test_el stack_el, query_el
-        matched = true
-        break
-      else
-        return false if first
-
-    first = false
-    return false unless matched
+  for query_idx=#query - 1,1,-1
+    idx = find_ancestor stack, stack_idx - 1, query[query_idx]
+    return false unless idx
+    stack_idx = idx
 
   true
 

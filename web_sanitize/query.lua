@@ -37,7 +37,7 @@ test_el = function(el, q)
         return false
       end
     elseif "any" == _exp_0 then
-      local _ = nil
+      local _scrap_0 = nil
     elseif "nth-child" == _exp_0 then
       if not (tonumber(expected) == el.num) then
         return false
@@ -52,32 +52,67 @@ test_el = function(el, q)
   end
   return true
 end
+local query_el_tag
+query_el_tag = function(query_el)
+  for _index_0 = 1, #query_el do
+    local _des_0 = query_el[_index_0]
+    local t, expected
+    t, expected = _des_0[1], _des_0[2]
+    if t == "tag" then
+      return expected:lower()
+    end
+  end
+end
+local find_ancestor
+find_ancestor = function(stack, stack_idx, query_el)
+  local tag_positions = stack._tag_positions
+  local tag = tag_positions and query_el_tag(query_el)
+  if not (tag) then
+    for idx = stack_idx, 1, -1 do
+      if test_el(stack[idx], query_el) then
+        return idx
+      end
+    end
+    return nil
+  end
+  local positions = tag_positions[tag]
+  if not (positions) then
+    return nil
+  end
+  local lo, hi = 1, #positions
+  local last = 0
+  while lo <= hi do
+    local mid = math.floor((lo + hi) / 2)
+    if positions[mid] <= stack_idx then
+      last = mid
+      lo = mid + 1
+    else
+      hi = mid - 1
+    end
+  end
+  for k = last, 1, -1 do
+    local idx = positions[k]
+    if test_el(stack[idx], query_el) then
+      return idx
+    end
+  end
+  return nil
+end
 local match_query_single
 match_query_single = function(stack, query)
   if #query > #stack then
     return false
   end
   local stack_idx = #stack
-  local first = true
-  for query_idx = #query, 1, -1 do
-    local query_el = query[query_idx]
-    local matched = false
-    while stack_idx >= 1 do
-      local stack_el = stack[stack_idx]
-      stack_idx = stack_idx - 1
-      if test_el(stack_el, query_el) then
-        matched = true
-        break
-      else
-        if first then
-          return false
-        end
-      end
-    end
-    first = false
-    if not (matched) then
+  if not (test_el(stack[stack_idx], query[#query])) then
+    return false
+  end
+  for query_idx = #query - 1, 1, -1 do
+    local idx = find_ancestor(stack, stack_idx - 1, query[query_idx])
+    if not (idx) then
       return false
     end
+    stack_idx = idx
   end
   return true
 end
